@@ -21,7 +21,7 @@ def _project(args: argparse.Namespace) -> Path:
 
 def cmd_init(args: argparse.Namespace) -> int:
     target = Path(args.dir or ".")
-    for line in project.init(target, copy=args.copy, providers=args.providers):
+    for line in project.init(target, providers=args.providers):
         print(line)
     print("\n== doctor ==")
     checks = doctor.run_checks(target.resolve())
@@ -285,6 +285,28 @@ def cmd_local(args: argparse.Namespace) -> int:
 
 
 # ---------------------------------------------------------------------------
+# Fase 5: orquestadores
+
+
+def cmd_sync(args: argparse.Namespace) -> int:
+    from hefesto import sync
+
+    changes = sync.run(_project(args), check=args.check)
+    print(sync.summary(changes))
+    pending = [c for c in changes if c.action != "unchanged"]
+    if any(c.action == "conflict" for c in changes):
+        return EXIT_BLOCKED
+    return EXIT_INPUT if args.check and pending else EXIT_OK
+
+
+def cmd_prompt(args: argparse.Namespace) -> int:
+    from hefesto import sync
+
+    print(sync.render_prompt(args.step))
+    return EXIT_OK
+
+
+# ---------------------------------------------------------------------------
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -295,7 +317,6 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("init", help="inicializa Hefesto en un proyecto (idempotente)")
     p.add_argument("dir", nargs="?", help="directorio del proyecto")
-    p.add_argument("--copy", action="store_true", help="copia las skills en vez de enlazarlas")
     p.add_argument("--providers", help="proveedores externos autorizados, p. ej. gemini,codex ('' = ninguno)")
     p.set_defaults(func=cmd_init)
 
@@ -391,6 +412,14 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--first", action="store_true", help="al principio de la cadena (por defecto, al final)")
     p.add_argument("--global", dest="global_scope", action="store_true", help="en ~/hefesto/settings.json")
     p.set_defaults(func=cmd_local)
+
+    p = sub.add_parser("sync", help="regenera skills, subagentes, comandos y hooks de Claude, Codex y Gemini")
+    p.add_argument("--check", action="store_true", help="solo comprueba; sale con 1 si hay cambios pendientes")
+    p.set_defaults(func=cmd_sync)
+
+    p = sub.add_parser("prompt", help="imprime un paso del protocolo (para orquestadores sin comandos propios)")
+    p.add_argument("step", choices=["plan", "next", "retro"])
+    p.set_defaults(func=cmd_prompt)
 
     return parser
 

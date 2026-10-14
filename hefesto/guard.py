@@ -123,40 +123,76 @@ def branch_allowed(branch: str) -> bool:
     return branch.startswith("hefesto/")
 
 
-PATH_KEYS = ("file_path", "path", "notebook_path")
+PATH_KEYS = ("file_path", "path", "notebook_path", "absolute_path")
 CONTROL_FILES = (".hefesto/state.json", ".hefesto/trust.json")
+
+# Nombres de herramientas de Gemini CLI y Codex → equivalente de Claude Code.
+TOOL_ALIASES = {
+    "run_shell_command": "Bash", "shell": "Bash", "exec_command": "Bash",
+    "read_file": "Read", "read_many_files": "Read", "write_file": "Write", "replace": "Edit",
+    "glob": "Glob", "search_file_content": "Grep", "grep": "Grep",
+    "apply_patch": "ApplyPatch",
+}
+WRITE_TOOLS = ("Edit", "Write", "MultiEdit", "NotebookEdit", "ApplyPatch")
+PATCH_FILE = re.compile(r"^\*\*\* (?:Add|Update|Delete) File: (.+)$|^\*\*\* Move to: (.+)$", re.M)
+
+
+def _check_bash(command: str, patterns: tuple[str, ...]) -> str | None:
+    label = dangerous_command(command)
+    if label:
+        return f"Hefesto bloquea `{label}`: usa la CLI `hefesto` (finish/discard) o pide al usuario que lo haga."
+    target = branch_switch_target(command)
+    if target is not None and not branch_allowed(target):
+        return f"Hefesto bloquea el cambio a la rama `{target}`: solo se trabaja en ramas `hefesto/*`."
+    for word in re.split(r"[\s'\"=<>|;&()]+", command):
+        if word and not word.startswith("-") and is_protected(word, patterns):
+            return f"Hefesto bloquea el acceso a una ruta protegida (`{word}`)."
+    for control in CONTROL_FILES:
+        if control in command.replace("\\", "/") and re.search(r">|\btee\b|\bsed\s+-i|\bmv\b|\bcp\b|\brm\b", command):
+            return f"`{control}` solo lo modifica la CLI `hefesto`."
+    return None
+
+
+def _check_path(tool: str, value: str, patterns: tuple[str, ...]) -> str | None:
+    if is_protected(value, patterns):
+        return f"Hefesto bloquea el acceso a una ruta protegida (`{value}`)."
+    if tool in WRITE_TOOLS:
+        norm = value.replace("\\", "/")
+        if any(norm.endswith(control) for control in CONTROL_FILES):
+            return f"`{value}` solo lo modifica la CLI `hefesto`."
+    return None
 
 
 def check_tool_use(payload: dict[str, object], protected: Iterable[str] = DEFAULT_PROTECTED) -> str | None:
-    """Decisión del hook `PreToolUse` de Claude: motivo del bloqueo, o None si se permite."""
-    tool = str(payload.get("tool_name") or "")
+    """Decisión de los hooks previos a una herramienta (Claude, Codex, Gemini): motivo del bloqueo o None."""
+    raw_tool = str(payload.get("tool_name") or "")
+    tool = TOOL_ALIASES.get(raw_tool, raw_tool)
     raw_input = payload.get("tool_input")
     tool_input: dict[str, object] = raw_input if isinstance(raw_input, dict) else {}
     patterns = tuple(protected)
     if tool == "Bash":
-        command = str(tool_input.get("command") or "")
-        label = dangerous_command(command)
-        if label:
-            return f"Hefesto bloquea `{label}`: usa la CLI `hefesto` (finish/discard) o pide al usuario que lo haga."
-        target = branch_switch_target(command)
-        if target is not None and not branch_allowed(target):
-            return f"Hefesto bloquea el cambio a la rama `{target}`: solo se trabaja en ramas `hefesto/*`."
-        for word in re.split(r"[\s'\"=<>|;&()]+", command):
-            if word and not word.startswith("-") and is_protected(word, patterns):
-                return f"Hefesto bloquea el acceso a una ruta protegida (`{word}`)."
-        for control in CONTROL_FILES:
-            if control in command.replace("\\", "/") and re.search(r">|\btee\b|\bsed\s+-i|\bmv\b|\bcp\b|\brm\b", command):
-                return f"`{control}` solo lo modifica la CLI `hefesto`."
+        command = tool_input.get("command")
+        if isinstance(command, list):
+            command = " ".join(str(c) for c in command)
+        return _check_bash(str(command or ""), patterns)
+    if tool == "ApplyPatch":
+        patch = str(tool_input.get("command") or tool_input.get("patch") or tool_input.get("input") or "")
+        for match in PATCH_FILE.finditer(patch):
+            reason = _check_path(tool, (match.group(1) or match.group(2)).strip(), patterns)
+            if reason:
+                return reason
         return None
-    for key in PATH_KEYS:
+    values: list[str] = []
+    for key in PATH_KEYS + ("paths",):
         value = tool_input.get(key)
         if isinstance(value, str) and value:
-            if is_protected(value, patterns):
-                return f"Hefesto bloquea el acceso a una ruta protegida (`{value}`)."
-            if tool in ("Edit", "Write", "MultiEdit", "NotebookEdit"):
-                norm = value.replace("\\", "/")
-                if any(norm.endswith(control) for control in CONTROL_FILES):
-                    return f"`{value}` solo lo modifica la CLI `hefesto`."
+            values.append(value)
+        elif isinstance(value, list):
+            values += [v for v in value if isinstance(v, str)]
+    for value in values:
+        reason = _check_path(tool, value, patterns)
+        if reason:
+            return reason
     pattern = tool_input.get("pattern") if tool == "Glob" else None
     if isinstance(pattern, str) and is_protected(pattern, patterns):
         return f"Hefesto bloquea la búsqueda de rutas protegidas (`{pattern}`)."

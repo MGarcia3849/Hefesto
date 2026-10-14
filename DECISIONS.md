@@ -75,3 +75,12 @@ Un proveedor con error de autenticación se salta hasta que el usuario inicia se
 ## ADR-013 — Alcance del Hito 1
 
 `clean` y `discard` (sección 10) quedan para el Hito 4, junto con el resto de la gestión de worktrees del paralelismo. `note`, `resume`, `handoff`, `loop`, `sync`, `prompt` y las skills son del Hito 2. Las plantillas solo mencionan comandos que ya existen.
+
+## ADR-014 — Materialización del protocolo (Fase 5), verificada en las CLIs instaladas
+
+- **Fuente única:** `prompts/protocol/{plan,next,retro}.md` (frontmatter `name`/`description` + cuerpo) y `prompts/<rol>.md`.
+- **Claude Code:** skills en `.claude/skills/hefesto-*/SKILL.md` y subagentes en `.claude/agents/hefesto-<rol>.md` (`model` = primer `claude:*` de la cadena del rol, o `inherit`; el Reviewer solo con `Read, Grep, Glob`).
+- **Codex 0.155:** lee `AGENTS.md`; skills de repositorio en `.agents/skills/` (se invocan con `$nombre`); hooks estables en `.codex/hooks.json` con el mismo esquema que Claude (`SessionStart`, `PreToolUse`; herramientas `Bash` y `apply_patch`; código 2 = bloquear); configuración de proyecto en `.codex/config.toml` (`workspace-write`, `on-request`, sin red). Verificado por las cadenas del binario y `codex features list` (`hooks: stable`), no por documentación publicada.
+- **Gemini 0.50:** lee `GEMINI.md` (importa `@./AGENTS.md`); comandos en `.gemini/commands/hefesto/*.toml` (`/hefesto:next`); descubre skills en `.gemini/skills/` **y** `.agents/skills/`, así que no se duplican; hooks `SessionStart` y `BeforeTool` en `.gemini/settings.json`, en el formato que produce `gemini hooks migrate --from-claude`. Herramientas: `run_shell_command`, `read_file`, `write_file`, `replace`, `glob`…, que `guard.py` traduce.
+- **Skills del framework:** `sync` las copia como `hefesto-skill-<nombre>` en `.claude/skills/` y `.agents/skills/` (copia y no symlink, para que funcionen en Windows sin modo desarrollador y para detectar ediciones a mano). Por eso `init --copy` desaparece: siempre es copia.
+- **Conflictos:** `.hefesto/generated.json` guarda el hash de cada fichero generado. Un fichero editado a mano, o uno que existía antes con otro contenido (p. ej. tu `.gemini/settings.json`), se reporta como conflicto (código 2) y no se toca.

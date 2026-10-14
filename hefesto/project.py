@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -11,7 +10,6 @@ from hefesto import __version__, config, util
 from hefesto.util import EXIT_INPUT, FRAMEWORK_ROOT, HefestoError, atomic_write_json
 
 TEMPLATES = FRAMEWORK_ROOT / "templates" / "project"
-SKILLS_DIR = FRAMEWORK_ROOT / "skills"
 
 GITIGNORE_ENTRIES = (
     ".hefesto/state.json",
@@ -65,31 +63,6 @@ def copy_templates(project: Path) -> list[str]:
         shutil.copyfile(src, dest)
         created.append(rel.as_posix())
     return created
-
-
-def link_skills(project: Path, copy: bool) -> list[str]:
-    """Enlaza (o copia) las skills del framework en `.claude/skills/hefesto-<nombre>`."""
-    linked: list[str] = []
-    if not SKILLS_DIR.is_dir():
-        return linked
-    target_root = project / ".claude" / "skills"
-    for skill in sorted(p for p in SKILLS_DIR.iterdir() if p.is_dir() and not p.name.startswith("_")):
-        if not (skill / "SKILL.md").exists():
-            continue
-        dest = target_root / f"hefesto-{skill.name}"
-        if dest.exists() or dest.is_symlink():
-            continue
-        target_root.mkdir(parents=True, exist_ok=True)
-        if not copy:
-            try:
-                os.symlink(skill, dest, target_is_directory=True)
-                linked.append(dest.name)
-                continue
-            except OSError:
-                pass  # Windows sin modo desarrollador: se copia.
-        shutil.copytree(skill, dest)
-        linked.append(dest.name + " (copia)")
-    return linked
 
 
 def update_gitignore(project: Path) -> list[str]:
@@ -155,7 +128,7 @@ def warn_rejected(cfg: config.Config, rejected: list[str]) -> list[str]:
     return msgs
 
 
-def init(target: Path, copy: bool, providers: str | None) -> list[str]:
+def init(target: Path, providers: str | None) -> list[str]:
     """Inicializa (o completa) un proyecto. Idempotente: nunca sobrescribe."""
     from hefesto import state as state_mod
 
@@ -171,7 +144,6 @@ def init(target: Path, copy: bool, providers: str | None) -> list[str]:
     report += [f"creado {c}" for c in created]
     for sub in ("logs", "evidence"):
         (hefesto_dir(project) / sub).mkdir(parents=True, exist_ok=True)
-    report += [f"skill enlazada {s}" for s in link_skills(project, copy)]
     settings = config.init_project_settings(project)
     if "main_branch" not in settings:
         settings["main_branch"] = detect_main_branch(project)
@@ -193,4 +165,8 @@ def init(target: Path, copy: bool, providers: str | None) -> list[str]:
         report.append("proveedores autorizados: " + (", ".join(merged) if merged else "ninguno (solo Claude)"))
         cfg = config.load(project)
         report += warn_rejected(cfg, rejected)
+    from hefesto import sync
+
+    changes = sync.run(project)
+    report.append("sync: " + sync.summary(changes))
     return report
