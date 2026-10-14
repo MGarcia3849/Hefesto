@@ -26,4 +26,4 @@ case "$(uname -s 2>/dev/null)" in
   *) PYTHONPATH="$root${PYTHONPATH:+:$PYTHONPATH}" ;;
 esac
 export PYTHONPATH
-exec "$py" -m hefesto "$@"
+exec "$py" -P -m hefesto "$@"
