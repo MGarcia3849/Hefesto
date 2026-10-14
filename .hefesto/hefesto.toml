@@ -15,3 +15,7 @@ binary = "agy"   # la CLI gemini ya no admite cuentas individuales (Antigravity)
 # Si Codex no tiene cuota, Gemini hace de Forge antes que Claude (Claude queda libre para revisar).
 [roles.forge]
 use = ["codex", "gemini", "claude:sonnet"]
+
+# Comandos de desarrollo propios que se aprueban solos como verify.
+[trust]
+extra_safe_prefixes = ["python tools/dev.py"]
