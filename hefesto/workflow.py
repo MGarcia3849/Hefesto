@@ -75,13 +75,21 @@ def mark_started(project: Path, task: roadmap.Task, data: dict[str, Any], extra:
 
 
 def start(project: Path, task_id: str) -> dict[str, Any]:
-    """Arranca una tarea (sin aislamiento git; `gitops.start` lo añade)."""
+    """Arranca una tarea: comprueba, sitúa el trabajo en la rama de la fase y marca `[~]`."""
+    from hefesto import gitops
+
     with project_lock(project):
         data = state.load(project)
         rm = roadmap.load_valid(project)
         task = rm.get(task_id)
         check_startable(project, rm, task, data)
-        return mark_started(project, task, data, {})
+        cfg = config.load(project)
+        phases = dict(data.get("phases") or {})
+        info = gitops.prepare_workdir(project, cfg, rm, task, phases)
+        workdir = Path(info["workdir"])
+        extra = {"phases": phases, "branch": info["branch"], "isolation": info["isolation"],
+                 "workdir": str(workdir), "task_base": gitops.head(workdir)}
+        return mark_started(project, task, data, extra)
 
 
 def require_current(data: dict[str, Any], task_id: str) -> None:

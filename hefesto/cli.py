@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 from hefesto import __version__, config, doctor, project
-from hefesto.util import EXIT_INPUT, EXIT_OK, HefestoError
+from hefesto.util import EXIT_BLOCKED, EXIT_INPUT, EXIT_OK, HefestoError
 
 
 def _project(args: argparse.Namespace) -> Path:
@@ -150,6 +150,49 @@ def cmd_trust(args: argparse.Namespace) -> int:
 
 
 # ---------------------------------------------------------------------------
+# Fase 3: aceptación
+
+
+def _print_result(code: int, message: str) -> int:
+    print(message, file=sys.stdout if code == EXIT_OK else sys.stderr)
+    return code
+
+
+def cmd_review(args: argparse.Namespace) -> int:
+    from hefesto import acceptance
+
+    return _print_result(*acceptance.review(_project(args), args.task, args.verdict, args.notes or "", args.run_id,
+                                            args.reviewer, args.author or []))
+
+
+def cmd_done(args: argparse.Namespace) -> int:
+    from hefesto import acceptance
+
+    return _print_result(*acceptance.done(_project(args), args.task))
+
+
+def cmd_finish(args: argparse.Namespace) -> int:
+    from hefesto import acceptance
+
+    return _print_result(*acceptance.finish(_project(args), args.phase, args.pr))
+
+
+def cmd_evidence(args: argparse.Namespace) -> int:
+    from hefesto import evidence, state
+
+    proj = _project(args)
+    if args.target == "verify":
+        errors = evidence.verify_chain(proj, state.load(proj).get("evidence_head"))
+        if errors:
+            return _print_result(EXIT_BLOCKED, "Cadena de evidencias rota:\n  - " + "\n  - ".join(errors))
+        count = len(evidence.load_all(proj))
+        print(f"Cadena de evidencias íntegra ({count} evidencias).")
+        return EXIT_OK
+    print(json.dumps(evidence.show(proj, args.target), indent=2, ensure_ascii=False))
+    return EXIT_OK
+
+
+# ---------------------------------------------------------------------------
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -201,6 +244,28 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("trust", help="aprueba los comandos verify del ROADMAP (solo humanos, TTY)")
     p.set_defaults(func=cmd_trust)
+
+    p = sub.add_parser("review", help="registra el veredicto del Reviewer (regla de independencia)")
+    p.add_argument("task")
+    p.add_argument("--verdict", choices=["pass", "fail"], required=True)
+    p.add_argument("--notes", default="")
+    p.add_argument("--run-id", help="run_id de `hefesto run reviewer`")
+    p.add_argument("--reviewer", help="proveedor:modelo si la revisión no pasó por `hefesto run`")
+    p.add_argument("--author", action="append", help="proveedor:modelo que escribió el cambio (repetible)")
+    p.set_defaults(func=cmd_review)
+
+    p = sub.add_parser("done", help="verify confiado y en verde + revisión pass → checkpoint, [x] y evidencia")
+    p.add_argument("task")
+    p.set_defaults(func=cmd_done)
+
+    p = sub.add_parser("finish", help="integra la rama de la fase en la principal (rebase, tests, confirmación)")
+    p.add_argument("phase", nargs="?", help="fase (por defecto, la primera abierta)")
+    p.add_argument("--pr", action="store_true", help="sube la rama y abre un PR en borrador (github.pr = true)")
+    p.set_defaults(func=cmd_finish)
+
+    p = sub.add_parser("evidence", help="muestra la evidencia de una tarea o comprueba la cadena (`verify`)")
+    p.add_argument("target", help="TASK-NNN o `verify`")
+    p.set_defaults(func=cmd_evidence)
 
     return parser
 
