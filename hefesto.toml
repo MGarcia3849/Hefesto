@@ -1,0 +1,87 @@
+# Configuración global por defecto de Hefesto (capa 0).
+# Sobrescríbela en ~/hefesto/hefesto.toml (global) o en .hefesto/hefesto.toml (proyecto).
+# Hefesto nunca escribe en ficheros TOML: lo que guarda por comandos va a settings.json.
+schema_version = 1
+
+[orchestrator]
+default = "claude"                        # claude | codex | gemini | auto
+use = ["claude:opus", "codex", "gemini"]  # orden para --orchestrator auto y para el relevo por cuota
+
+# Cadenas de preferencia por rol: el primero habilitado, autorizado y sin cooldown gana.
+# Formato: "proveedor" (modelo por defecto del adaptador) o "proveedor:modelo".
+[roles.core]
+use = ["claude:opus", "claude:sonnet", "codex", "gemini"]
+[roles.runner]
+use = ["gemini", "codex", "claude:haiku"]
+[roles.forge]
+use = ["codex", "claude:sonnet"]
+[roles.visual]
+use = ["claude:sonnet", "codex"]
+[roles.reviewer]
+use = ["claude:sonnet", "codex", "gemini"]
+
+[adapters.claude]
+enabled = true
+[adapters.gemini]
+enabled = true
+binary = "auto"        # auto | gemini | agy
+model = ""             # vacío = modelo por defecto de la CLI
+[adapters.codex]
+enabled = true
+model = ""
+[adapters.local]
+enabled = false        # API compatible con OpenAI; se activa con `hefesto local enable`
+model = ""
+base_url = ""
+
+[quota]
+cooldown_default_minutes = 60       # si la CLI no informa de cuándo se restablece
+pause_loop_when_role_exhausted = true
+probe = false                       # sonda de una llamada mínima antes de delegar
+probe_max_age_minutes = 30
+near_limit_threshold = 0.9          # solo si la CLI expone su uso
+max_calls_per_provider_per_loop = { claude = 15, codex = 25, gemini = 40, local = 100 }
+
+[limits]
+max_parallel_tasks = 6              # 1 = todo en serie
+adaptive_concurrency = true
+stop_policy = "finish_running"      # finish_running | cancel_running
+max_attempts = 3
+max_tasks_per_loop = 8
+max_turns_per_task = 15
+timeout_seconds = 600
+verify_timeout_seconds = 900
+
+[limits.max_parallel_per_model]     # máximos; la concurrencia real se adapta a los rate limits
+"claude:haiku" = 3
+"claude:sonnet" = 1
+"claude:opus" = 1
+"gemini:default" = 3
+"codex:default" = 1
+"local:*" = 1
+
+[limits.packet_max_tokens]          # tamaño máximo del paquete de tarea (estimado: 4 caracteres = 1 token)
+default = 24000
+"claude:haiku" = 16000
+
+[execution]
+branch_mode = "phase"               # phase: una rama hefesto/<fase> por fase; task: una por tarea
+isolation = "auto"                  # auto | branch | worktree
+finish_strategy = "squash"          # squash | merge, al integrar en la rama principal
+main_branch = "auto"                # auto = la rama que había al hacer init (main/master)
+test_command = ""                   # suite completa que `finish` ejecuta; vacío = solo los verify
+
+[reviewer]
+# Jerarquía para la regla de independencia: un revisor del mismo proveedor solo vale
+# si su nivel es estrictamente superior al del autor. Sin nivel = no comparable.
+tiers = { "claude:haiku" = 1, "claude:sonnet" = 2, "claude:opus" = 3 }
+
+[guard]
+max_file_mb = 5                     # binarios mayores se bloquean en el checkpoint
+protected_paths = [".env", ".env.*", "*.pem", "*.key", "*.p12", "*.pfx", "id_rsa*", "id_ed25519*", "id_ecdsa*", "*.keystore", "*.jks", "credentials.json", "service-account*.json"]
+
+[github]
+pr = false                          # habilita `hefesto finish --pr`
+
+[privacy]
+redact_secrets = true

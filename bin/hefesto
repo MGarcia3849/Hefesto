@@ -1,0 +1,29 @@
+#!/usr/bin/env sh
+# Lanzador mínimo de Hefesto: resuelve su instalación y ejecuta `python -m hefesto`.
+set -e
+self="$0"
+while [ -L "$self" ]; do
+  target=$(readlink "$self")
+  case "$target" in
+    /*) self="$target" ;;
+    *) self="$(dirname "$self")/$target" ;;
+  esac
+done
+root=$(cd "$(dirname "$self")/.." && pwd -P)
+py=""
+for candidate in python3 python; do
+  if command -v "$candidate" >/dev/null 2>&1 && "$candidate" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)' >/dev/null 2>&1; then
+    py="$candidate"
+    break
+  fi
+done
+if [ -z "$py" ]; then
+  echo "hefesto: se necesita Python >= 3.11" >&2
+  exit 3
+fi
+case "$(uname -s 2>/dev/null)" in
+  MINGW*|MSYS*|CYGWIN*) PYTHONPATH="$(cygpath -w "$root")${PYTHONPATH:+;$PYTHONPATH}" ;;
+  *) PYTHONPATH="$root${PYTHONPATH:+:$PYTHONPATH}" ;;
+esac
+export PYTHONPATH
+exec "$py" -m hefesto "$@"
