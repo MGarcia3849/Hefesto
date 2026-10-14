@@ -8,3 +8,10 @@ timeout_seconds = 1500
 # Claude (el orquestador) escribe los contratos como Core: lo revisa otro proveedor.
 [roles.reviewer]
 use = ["codex", "gemini", "claude:sonnet"]
+
+[adapters.gemini]
+binary = "agy"   # la CLI gemini ya no admite cuentas individuales (Antigravity)
+
+# Si Codex no tiene cuota, Gemini hace de Forge antes que Claude (Claude queda libre para revisar).
+[roles.forge]
+use = ["codex", "gemini", "claude:sonnet"]
