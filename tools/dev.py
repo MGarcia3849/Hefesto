@@ -1,6 +1,6 @@
 """Tareas de desarrollo (equivalen a los objetivos del Makefile; útiles donde no hay `make`).
 
-    python tools/dev.py lint | test | smoke
+    python tools/dev.py lint | test | smoke | smoke-live
 """
 
 from __future__ import annotations
@@ -83,11 +83,37 @@ def smoke() -> int:
         return smoke_flow(Path(tmp) / "proyecto", env, _hefesto)
 
 
+def smoke_live() -> int:
+    """Llamadas reales y mínimas a los proveedores. Gasta cuota: exige confirmación en terminal."""
+    if not (sys.stdin.isatty() and sys.stdout.isatty()):
+        print("smoke-live: exige una terminal interactiva (gasta cuota real).")
+        return 2
+    print("smoke-live hará una llamada mínima REAL por proveedor autorizado (runner y reviewer). Gasta cuota.")
+    if input("¿Continuar? [s/N] ").strip().lower() not in ("s", "si", "sí", "y", "yes"):
+        print("Cancelado.")
+        return 0
+    with tempfile.TemporaryDirectory(prefix="hefesto-live-") as tmp:
+        project = Path(tmp) / "proyecto"
+        project.mkdir()
+        env = dict(os.environ, PYTHONPATH=str(ROOT))
+        steps = [("init", str(project), "--providers", "gemini,codex"),
+                 ("-C", str(project), "providers", "status"),
+                 ("-C", str(project), "run", "runner", "Responde solo con la palabra: listo"),
+                 ("-C", str(project), "run", "reviewer", "Responde solo con: VEREDICTO: pass")]
+        for step in steps:
+            result = _hefesto(project, *step, env=env)
+            print(f"$ hefesto {' '.join(step)} → {result.returncode}\n{result.stdout}{result.stderr}")
+            if result.returncode != 0:
+                return 1
+    print("smoke-live: OK")
+    return 0
+
+
 def main(argv: list[str]) -> int:
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8")
-    commands = {"lint": lint, "test": test, "smoke": smoke}
+    commands = {"lint": lint, "test": test, "smoke": smoke, "smoke-live": smoke_live}
     if len(argv) != 1 or argv[0] not in commands:
         print(__doc__)
         return 1

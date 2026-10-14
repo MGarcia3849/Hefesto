@@ -46,8 +46,21 @@ def static_available(cfg: config.Config, provider: str) -> tuple[bool, str]:
 
 
 def available(cfg: config.Config, provider: str) -> tuple[bool, str]:
-    """Disponible para recibir trabajo ahora."""
-    return static_available(cfg, provider)
+    """Disponible para recibir trabajo ahora: estático + sin cooldown, sin error de auth y bajo su tope."""
+    from hefesto import quota
+
+    ok, reason = static_available(cfg, provider)
+    if not ok:
+        return ok, reason
+    current = quota.provider_state(provider)
+    if current["status"] == "cooldown":
+        return False, f"en cooldown hasta {current['cooldown_until']}"
+    if current["status"] == "auth_error":
+        return False, "error de autenticación (inicia sesión y `hefesto providers reset " + provider + "`)"
+    cap = (cfg.get("quota", "max_calls_per_provider_per_loop", default={}) or {}).get(provider)
+    if isinstance(cap, int) and quota.calls_in_loop(provider) >= cap:
+        return False, f"tope de {cap} llamadas en este loop alcanzado"
+    return True, "ok"
 
 
 def tier(cfg: config.Config, mid: str) -> int | None:

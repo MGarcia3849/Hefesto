@@ -128,4 +128,4 @@ def main(name: str) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main(Path(sys.argv[0]).name.split(".")[0]))
+    sys.exit(main(str(globals().get("FAKE_NAME") or Path(sys.argv[0]).name.split(".")[0])))

@@ -1,4 +1,3 @@
-import runpy, sys
+import runpy
 from pathlib import Path
-sys.argv[0] = "claude"
-runpy.run_path(str(Path(__file__).with_name("fake_agent.py")), run_name="__main__")
+runpy.run_path(str(Path(__file__).with_name("fake_agent.py")), init_globals={"FAKE_NAME": "claude"}, run_name="__main__")

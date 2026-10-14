@@ -193,6 +193,98 @@ def cmd_evidence(args: argparse.Namespace) -> int:
 
 
 # ---------------------------------------------------------------------------
+# Fase 4: adaptadores y enrutado
+
+
+def cmd_run(args: argparse.Namespace) -> int:
+    from hefesto import router
+
+    outcome = router.run(_project(args), args.role, args.prompt, args.task, args.dry_run)
+    if args.dry_run:
+        for hop in outcome.hops:
+            print(f"{hop.entry:<16} {hop.model_id:<22} {hop.outcome}")
+        if outcome.code:
+            print(f"Ningún proveedor disponible para `{args.role}`.")
+        return outcome.code
+    print(json.dumps(outcome.to_dict(), ensure_ascii=False, indent=2))
+    return outcome.code
+
+
+def cmd_packet(args: argparse.Namespace) -> int:
+    from hefesto import packet, providers, roadmap, state
+
+    proj = _project(args)
+    cfg = config.load(proj)
+    rm = roadmap.load_valid(proj)
+    task = rm.get(args.task)
+    role = args.role or task.role
+    data = state.load(proj)
+    workdir = Path(data["workdir"]) if data.get("current_task_id") == task.id and data.get("workdir") else proj
+    entry = args.model or (cfg.role_chain(role) or ["claude"])[0]
+    pkt = packet.build(proj, cfg, role, args.instruction or "(sin instrucción adicional)", task, rm, data,
+                       providers.model_id(cfg, entry), workdir)
+    path = packet.save(proj, pkt, task.id, role)
+    print(pkt.text)
+    print(f"\n[paquete: ~{pkt.tokens} tokens de {pkt.max_tokens}; guardado en {path.relative_to(proj).as_posix()}]",
+          file=sys.stderr)
+    return EXIT_OK
+
+
+def cmd_route(args: argparse.Namespace) -> int:
+    from hefesto import roadmap, router
+
+    proj = _project(args)
+    cfg = config.load(proj)
+    task = roadmap.load_valid(proj).get(args.task)
+    if task.size == "L":
+        print(f"{task.id} es L: el Core debe dividirla en tareas M/S antes de ejecutar nada.")
+        steps = [("core", "dividir la tarea")]
+    elif task.size == "S":
+        steps = [(task.role, "un solo intento de implementación"), ("reviewer", "revisión ligera")]
+    else:
+        steps = [(task.role, "implementación"), ("reviewer", "revisión"), ("forge", "si fallan dos intentos")]
+    print(f"Ruta de {task.id} (size {task.size}) — sin llamadas a proveedores:")
+    for role, why in steps:
+        hops = router.plan_route(cfg, role)
+        chosen = next((h for h in hops if h.outcome == "elegido"), None)
+        skipped = [f"{h.entry} ({h.outcome})" for h in hops if h.outcome != "elegido"]
+        print(f"  {role:<9} {why:<34} → {chosen.model_id if chosen else 'NINGUNO disponible'}"
+              + (f"   saltados: {'; '.join(skipped)}" if skipped else ""))
+    return EXIT_OK
+
+
+def cmd_providers(args: argparse.Namespace) -> int:
+    from hefesto import admin, quota
+
+    proj = _project(args)
+    if args.action == "status":
+        print(admin.status_table(proj))
+    elif args.action == "reset":
+        if not args.name:
+            raise HefestoError("Indica el proveedor: `hefesto providers reset NOMBRE`.", EXIT_INPUT)
+        quota.reset(args.name)
+        print(f"{args.name}: estado reiniciado (sin cooldown ni error de auth).")
+    else:
+        if not args.name:
+            raise HefestoError(f"Indica el proveedor: `hefesto providers {args.action} NOMBRE`.", EXIT_INPUT)
+        print(admin.add_or_remove(proj, args.action, args.name))
+    return EXIT_OK
+
+
+def cmd_local(args: argparse.Namespace) -> int:
+    from hefesto import admin
+
+    proj = _project(args)
+    if args.action == "enable":
+        if not args.base_url or not args.model:
+            raise HefestoError("`local enable` requiere --base-url y --model.", EXIT_INPUT)
+        print(admin.local_enable(proj, args.base_url, args.model, args.role, args.first, args.global_scope))
+    else:
+        print(admin.local_disable(proj, args.global_scope))
+    return EXIT_OK
+
+
+# ---------------------------------------------------------------------------
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -266,6 +358,39 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("evidence", help="muestra la evidencia de una tarea o comprueba la cadena (`verify`)")
     p.add_argument("target", help="TASK-NNN o `verify`")
     p.set_defaults(func=cmd_evidence)
+
+    p = sub.add_parser("run", help="delega en el proveedor que toque según rol, allowlist y cuota")
+    p.add_argument("role", choices=list(config.ROLES))
+    p.add_argument("prompt", help="instrucción del orquestador (viaja dentro del paquete de la tarea)")
+    p.add_argument("--task", help="tarea (por defecto, la que está en curso)")
+    p.add_argument("--dry-run", action="store_true", help="dice a qué proveedor iría, sin llamar a nada")
+    p.set_defaults(func=cmd_run)
+
+    p = sub.add_parser("packet", help="genera y muestra el paquete de contexto de una tarea")
+    p.add_argument("task")
+    p.add_argument("--role", choices=list(config.ROLES))
+    p.add_argument("--model", help="proveedor[:modelo] para el límite de tamaño (por defecto, el primero del rol)")
+    p.add_argument("--instruction", help="instrucción del orquestador a incluir")
+    p.set_defaults(func=cmd_packet)
+
+    p = sub.add_parser("route", help="ruta, roles y proveedores previstos para una tarea, sin llamadas")
+    p.add_argument("task")
+    p.add_argument("--dry-run", action="store_true", required=True, help="obligatorio: route nunca llama a nada")
+    p.set_defaults(func=cmd_route)
+
+    p = sub.add_parser("providers", help="estado de proveedores, allowlist del proyecto y cooldowns")
+    p.add_argument("action", choices=["status", "add", "remove", "reset"])
+    p.add_argument("name", nargs="?", choices=list(config.PROVIDERS))
+    p.set_defaults(func=cmd_providers)
+
+    p = sub.add_parser("local", help="activa o desactiva el modelo local (API compatible con OpenAI)")
+    p.add_argument("action", choices=["enable", "disable"])
+    p.add_argument("--base-url")
+    p.add_argument("--model")
+    p.add_argument("--role", choices=list(config.ROLES), help="añade `local` a la cadena de este rol")
+    p.add_argument("--first", action="store_true", help="al principio de la cadena (por defecto, al final)")
+    p.add_argument("--global", dest="global_scope", action="store_true", help="en ~/hefesto/settings.json")
+    p.set_defaults(func=cmd_local)
 
     return parser
 

@@ -92,7 +92,8 @@ class HefestoTestCase(unittest.TestCase):
 
 def path_with_fakes(target: Path, *names: str) -> str:
     """PATH con `target` (que recibe solo los fakes pedidos) más git, bash y python."""
-    target.mkdir(parents=True, exist_ok=True)
+    shutil.rmtree(target, ignore_errors=True)
+    target.mkdir(parents=True)
     for name in names:
         src = FAKES / name
         if os.name == "nt":
@@ -113,19 +114,61 @@ def path_with_fakes(target: Path, *names: str) -> str:
 
 def smoke_flow(project: Path, env: dict[str, str],
                hefesto: Callable[..., subprocess.CompletedProcess[str]]) -> int:
-    """Recorrido de humo con procesos reales de `hefesto` (sin proveedores reales)."""
+    """init → TASK-001 (verify: true) → trust → start → runner falso → reviewer falso → done.
+
+    Todo con procesos reales de `hefesto` y CLIs falsas; `trust` (humano, TTY) se simula en proceso.
+    """
+    import json
+
     project.mkdir(parents=True)
-    env = dict(env, **GIT_ENV)
-    steps: list[tuple[str, ...]] = [
-        ("init", str(project), "--providers", "gemini,codex"),
-        ("-C", str(project), "config", "validate"),
-        ("-C", str(project), "status"),
-    ]
-    for step in steps:
-        result = hefesto(project, *step, env=env)
-        print(f"$ hefesto {' '.join(step)}\n{result.stdout}{result.stderr}")
-        if result.returncode != 0:
-            print(f"smoke: falló `hefesto {' '.join(step)}` con código {result.returncode}")
-            return 1
+    work = project.parent
+    scenario = work / "scenario.json"
+    scenario.write_text(json.dumps({
+        "gemini": {"mode": "ok", "summary": "creado src/hola.py", "write": {"src/hola.py": "print('hola')\n"}},
+        "claude": {"mode": "ok", "summary": "VEREDICTO: pass\nsin observaciones"},
+    }), encoding="utf-8")
+    env = dict(env, **GIT_ENV, HEFESTO_FAKE_SCENARIO=str(scenario), HEFESTO_FAKE_LOG=str(work / "calls.jsonl"),
+               PATH=path_with_fakes(work / "bin", "claude", "codex", "gemini"))
+
+    def step(*args: str, expect: int = 0) -> subprocess.CompletedProcess[str]:
+        result = hefesto(project, *args, env=env)
+        print(f"$ hefesto {' '.join(args)}  → {result.returncode}\n{result.stdout}{result.stderr}".rstrip() + "\n")
+        if result.returncode != expect:
+            raise AssertionError(f"`hefesto {' '.join(args)}` devolvió {result.returncode} (esperado {expect})")
+        return result
+
+    try:
+        step("init", str(project), "--providers", "gemini,codex")
+        (project / ".hefesto" / "ROADMAP.md").write_text(
+            "# ROADMAP\n\n## Fase 1 — Humo\n- [ ] TASK-001: Saludo\n  - verify: `true`\n  - files: src/\n"
+            "  - role: runner\n  - size: S\n", encoding="utf-8")
+        for args in (("add", "-A"), ("commit", "-q", "-m", "inicial")):
+            subprocess.run(["git", *args], cwd=project, env=env, check=True, capture_output=True)
+        saved = dict(os.environ)
+        os.environ.update(env)
+        try:
+            from hefesto import cli
+
+            with tty(True, ["s"]), contextlib.redirect_stdout(io.StringIO()):
+                if cli.main(["-C", str(project), "trust"]) != 0:
+                    raise AssertionError("trust falló")
+        finally:
+            os.environ.clear()
+            os.environ.update(saved)
+        step("-C", str(project), "start", "TASK-001")
+        runner = json.loads(step("-C", str(project), "run", "runner", "Crea src/hola.py").stdout)
+        reviewer = json.loads(step("-C", str(project), "run", "reviewer", "Revisa el diff").stdout)
+        if (runner["provider"], reviewer["provider"]) != ("gemini", "claude"):
+            raise AssertionError(f"enrutado inesperado: {runner['provider']} / {reviewer['provider']}")
+        step("-C", str(project), "review", "TASK-001", "--verdict", "pass", "--run-id", reviewer["run_id"])
+        step("-C", str(project), "done", "TASK-001")
+        step("-C", str(project), "evidence", "verify")
+        status = step("-C", str(project), "status").stdout
+        log = subprocess.run(["git", "log", "--format=%s", "-2"], cwd=project, capture_output=True, text=True).stdout
+        if "COMPLETED" not in status or "hefesto(TASK-001): Saludo [verified]" not in log:
+            raise AssertionError(f"estado o commit incoherente:\n{status}\n{log}")
+    except AssertionError as exc:
+        print(f"smoke: FALLO — {exc}")
+        return 1
     print("smoke: OK")
     return 0

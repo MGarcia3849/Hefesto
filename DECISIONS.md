@@ -37,3 +37,41 @@ Registro de las desviaciones respecto a `HEFESTO_V2_1.md` y de lo verificado en 
 ## ADR-004 — Comprobación de TTY sin variable de entorno de escape
 
 `trust`, `unblock`, `promote` y similares exigen `stdin` y `stdout` en terminal. No existe ninguna variable de entorno que lo simule (un agente podría usarla); los tests sustituyen la función en proceso.
+
+## ADR-005 — Dos commits por tarea: código y evidencia
+
+La evidencia debe contener el hash del commit resultante, y un commit no puede contener su propio hash. `done` hace `hefesto(TASK-NNN): … [verified]` (código + ROADMAP `[x]`) y después `hefesto(TASK-NNN): evidence`. `last_checkpoint` apunta al primero. Para revertir una tarea se revierten ambos.
+
+## ADR-006 — Cadena de evidencias: `seq` + hash de la anterior + cabeza local
+
+Cada evidencia lleva `seq`, `prev_sha256` (SHA-256 de la anterior con saltos de línea normalizados, estable ante `autocrlf`) y `prev_task_id`. `state.json` (local) guarda la cabeza (`evidence_head`), de modo que `evidence verify` detecta también el borrado de la última evidencia.
+
+## ADR-007 — Ficheros de control en modo worktree
+
+`.hefesto/` (ROADMAP, evidencias, DECISIONS, LEARNINGS) vive siempre en la copia principal, que es la única fuente de verdad. En modo `worktree`, el checkpoint copia esos ficheros al worktree antes de commitear. En `finish`, si la copia principal tiene esos ficheros modificados y su contenido coincide con el de la rama, se devuelven a su versión de HEAD antes de integrar (su contenido entra con la propia integración). Si no coinciden, `finish` se detiene.
+
+## ADR-008 — Ramas: `hefesto/<fase>` y, en `branch_mode = task`, `hefesto/<fase>-task-nnn`
+
+Git no permite `hefesto/fase-1` y `hefesto/fase-1/TASK-001` a la vez (conflicto fichero/directorio en `refs/heads`). Las ramas por tarea usan un guion. Una fase nueva parte de la rama abierta de la fase anterior si sigue sin integrar (para que sus dependencias estén presentes), o de la rama principal. `finish` rebasa con `--onto <principal> <base de la fase>`, de modo que solo se reaplican los commits de esa fase.
+
+## ADR-009 — Adaptadores: prompt por stdin; `agy` recibe el paquete por fichero
+
+El paquete puede superar el límite de 32 767 caracteres de la línea de órdenes de Windows, así que se pasa por stdin (`claude -p`, `codex exec -`, `gemini -p` añade stdin). Para `agy` no se ha podido verificar que lea stdin en `-p`: recibe una instrucción corta que apunta al paquete guardado en `.hefesto/logs/packets/` (con `--add-dir`). Sin flags que salten permisos: Claude `--permission-mode acceptEdits|plan`, Codex `-s workspace-write|read-only`, Gemini `--approval-mode auto_edit|plan`, agy `--mode accept-edits|plan`.
+
+## ADR-010 — Patrones de cuota y rate limit sin verificar contra salidas reales
+
+Los patrones de `hefesto/adapters/*.py` salen de mensajes conocidos de cada CLI (p. ej. Claude «usage limit reached|<epoch>», Codex «You've hit your usage limit», Gemini «RESOURCE_EXHAUSTED» / «Quota exceeded»). No se han provocado errores reales de cuota para confirmarlos. Si una CLI cambia sus mensajes, el error se clasifica como fallo genérico, que sí cuenta como intento: hay que revisar los patrones al ver un caso real (`.hefesto/logs/runs/`).
+
+## ADR-011 — `auth_error` persiste hasta `providers reset`
+
+Un proveedor con error de autenticación se salta hasta que el usuario inicia sesión y ejecuta `hefesto providers reset NOMBRE`. Los cooldowns de cuota, en cambio, vencen solos.
+
+## ADR-012 — Escalado y códigos de salida
+
+- `fail` sale con 0 y devuelve el rol del siguiente intento; con 2 si salta el circuit breaker. `done` con `verify` en rojo sale con 1 (intentos restantes) o 2 (breaker).
+- El tercer intento pasa a `forge` solo si la tarea era de `runner`. Las tareas `core`, `visual` y `forge` conservan su rol.
+- `review --verdict fail` cuenta como intento (es un fallo real del trabajo).
+
+## ADR-013 — Alcance del Hito 1
+
+`clean` y `discard` (sección 10) quedan para el Hito 4, junto con el resto de la gestión de worktrees del paralelismo. `note`, `resume`, `handoff`, `loop`, `sync`, `prompt` y las skills son del Hito 2. Las plantillas solo mencionan comandos que ya existen.
