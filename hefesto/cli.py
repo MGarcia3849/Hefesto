@@ -98,6 +98,58 @@ def cmd_hook(args: argparse.Namespace) -> int:
 
 
 # ---------------------------------------------------------------------------
+# Fase 2: ciclo de tareas
+
+
+def cmd_next(args: argparse.Namespace) -> int:
+    from hefesto import workflow
+
+    task, reason = workflow.do_next(_project(args))
+    if task is None:
+        print(f"Sin tarea disponible: {reason}.")
+        return EXIT_OK
+    prefix = "En curso" if reason == "en curso" else "Siguiente"
+    print(f"{prefix}: {task.id} — {task.title}\n  role: {task.role}  size: {task.size}\n  files: "
+          f"{', '.join(task.files)}\n  verify: {task.verify}")
+    return EXIT_OK
+
+
+def cmd_start(args: argparse.Namespace) -> int:
+    from hefesto import workflow
+
+    data = workflow.start(_project(args), args.task)
+    print(f"{args.task} en curso (run {data['run_id']}, rol {data['active_role']}).")
+    if data.get("branch"):
+        print(f"  rama: {data['branch']}  aislamiento: {data.get('isolation')}  directorio: {data.get('workdir')}")
+    print(f"  siguiente: {data['next_action']}")
+    return EXIT_OK
+
+
+def cmd_fail(args: argparse.Namespace) -> int:
+    from hefesto import workflow
+
+    code, message = workflow.fail(_project(args), args.task, args.reason)
+    print(message if code else f"Intento registrado. Rol del siguiente intento: {message}")
+    return code
+
+
+def cmd_unblock(args: argparse.Namespace) -> int:
+    from hefesto import workflow
+
+    print(workflow.unblock(_project(args), args.task, args.note))
+    return EXIT_OK
+
+
+def cmd_trust(args: argparse.Namespace) -> int:
+    from hefesto import roadmap, trust
+
+    proj = _project(args)
+    _count, messages = trust.approve_interactive(proj, roadmap.load_valid(proj))
+    print("\n".join(messages))
+    return EXIT_OK
+
+
+# ---------------------------------------------------------------------------
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -129,6 +181,26 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("hook", help="puente para los hooks de Claude Code (lee JSON por stdin)")
     p.add_argument("event", choices=["pre-tool-use"])
     p.set_defaults(func=cmd_hook)
+
+    p = sub.add_parser("next", help="siguiente tarea pendiente respetando dependencias y bloqueos")
+    p.set_defaults(func=cmd_next)
+
+    p = sub.add_parser("start", help="inicia una tarea (con lock y aislamiento git)")
+    p.add_argument("task")
+    p.set_defaults(func=cmd_start)
+
+    p = sub.add_parser("fail", help="registra un intento fallido y devuelve el rol del siguiente")
+    p.add_argument("task")
+    p.add_argument("reason")
+    p.set_defaults(func=cmd_fail)
+
+    p = sub.add_parser("unblock", help="desbloquea una tarea tras el circuit breaker (solo humanos, TTY)")
+    p.add_argument("task")
+    p.add_argument("note")
+    p.set_defaults(func=cmd_unblock)
+
+    p = sub.add_parser("trust", help="aprueba los comandos verify del ROADMAP (solo humanos, TTY)")
+    p.set_defaults(func=cmd_trust)
 
     return parser
 

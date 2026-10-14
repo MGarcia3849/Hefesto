@@ -5,7 +5,7 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-from hefesto import state
+from hefesto import roadmap, state
 
 
 def current_branch(path: Path) -> str:
@@ -25,5 +25,16 @@ def render(project: Path) -> str:
     ]
     if data.get("last_error"):
         lines.append(f"  error:     {str(data['last_error'])[:200]}")
+    rm = roadmap.parse(roadmap.roadmap_path(project)) if roadmap.roadmap_path(project).exists() else None
+    if rm is not None and rm.tasks:
+        counts = {m: sum(1 for t in rm.tasks if t.marker == m) for m in roadmap.MARKERS}
+        lines.append(f"  roadmap:   {counts['x']}/{len(rm.tasks)} hechas, {counts['~']} en curso, "
+                     f"{counts['!']} bloqueadas, {counts[' ']} pendientes")
+        errors = roadmap.validate(rm, project)
+        if errors:
+            lines.append(f"  aviso:     ROADMAP inválido ({len(errors)} errores): {errors[0]}")
+        elif data["status"] in ("IDLE", "COMPLETED"):
+            task, reason = roadmap.next_task(rm)
+            lines.append(f"  próxima:   {task.id + ': ' + task.title if task else reason}")
     lines.append(f"  siguiente: {data['next_action']}")
     return "\n".join(lines)

@@ -24,6 +24,26 @@ INITIAL: dict[str, Any] = {
 }
 
 
+TRANSITIONS: dict[str, tuple[str, ...]] = {
+    "IDLE": ("IDLE", "IN_PROGRESS", "COMPLETED"),
+    "IN_PROGRESS": ("IN_PROGRESS", "IDLE", "BLOCKED_NEED_ARCHITECT_REVIEW", "COMPLETED"),
+    "BLOCKED_NEED_ARCHITECT_REVIEW": ("IDLE",),
+    "COMPLETED": ("COMPLETED", "IDLE", "IN_PROGRESS"),
+}
+
+
+def transition(data: dict[str, Any], new_status: str) -> dict[str, Any]:
+    """Devuelve una copia con el nuevo estado; rechaza transiciones ilegales."""
+    current = data.get("status")
+    if new_status not in STATUSES:
+        raise HefestoError(f"Estado desconocido {new_status!r}", EXIT_CONFLICT)
+    if new_status not in TRANSITIONS.get(str(current), ()):
+        raise HefestoError(f"Transición ilegal {current} → {new_status}", EXIT_CONFLICT)
+    out = dict(data)
+    out["status"] = new_status
+    return out
+
+
 def state_path(project: Path) -> Path:
     return project / ".hefesto" / "state.json"
 
