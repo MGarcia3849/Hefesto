@@ -1,3 +1,14 @@
 __pycache__/
 *.pyc
 .hefesto-smoke/
+
+# Hefesto
+.hefesto/state.json
+.hefesto/.lock/
+.hefesto/trust.json
+.hefesto/logs/
+.hefesto/STOP
+.hefesto/worktree/
+.hefesto/worktrees/
+.hefesto/progress.jsonl
+graphify-out/

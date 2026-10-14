@@ -1,0 +1,10 @@
+# Configuración del proyecto: Hefesto construyéndose a sí mismo.
+[execution]
+test_command = "python tools/dev.py lint && python tools/dev.py test"
+
+[limits]
+timeout_seconds = 1500
+
+# Claude (el orquestador) escribe los contratos como Core: lo revisa otro proveedor.
+[roles.reviewer]
+use = ["codex", "gemini", "claude:sonnet"]

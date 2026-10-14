@@ -1,0 +1,25 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "hefesto status"
+          }
+        ]
+      }
+    ],
+    "BeforeTool": [
+      {
+        "matcher": "run_shell_command|read_file|read_many_files|write_file|replace|glob|search_file_content",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "hefesto hook pre-tool-use"
+          }
+        ]
+      }
+    ]
+  }
+}

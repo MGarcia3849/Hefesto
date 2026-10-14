@@ -1,0 +1,8 @@
+# Generado por `hefesto sync`. No lo edites: los cambios a mano se detectan como conflicto.
+# Modo más restrictivo que permite trabajar: escribir solo en el
+# proyecto, sin red y pidiendo aprobación para lo demás.
+sandbox_mode = "workspace-write"
+approval_policy = "on-request"
+
+[sandbox_workspace_write]
+network_access = false
