@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from hefesto import adapters, config, guard, log, packet, providers, quota, roadmap, state
+from hefesto import adapters, config, guard, log, packet, preflight, providers, quota, roadmap, state
 from hefesto.adapters.base import AdapterResult, Call
 from hefesto.util import EXIT_BLOCKED, EXIT_INPUT, EXIT_OK, EXIT_UNAVAILABLE, HefestoError
 from hefesto.workflow import new_run_id
@@ -92,7 +92,7 @@ def run(project: Path, role: str, instruction: str, task_id: str | None = None, 
     for entry in cfg.role_chain(role):
         provider, model = providers.split_entry(entry)
         mid = providers.model_id(cfg, entry)
-        ok, reason = providers.available(cfg, provider)
+        ok, reason = preflight.ensure(project, cfg, provider)
         if not ok:
             hops.append(Hop(entry, mid, f"saltado: {reason}"))
             continue

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from hefesto.adapters.base import Adapter, AdapterResult, Call, last_json_object
+from hefesto.adapters.base import ORCHESTRATOR_SHELL, Adapter, AdapterResult, Call, last_json_object
 
 
 class ClaudeAdapter(Adapter):
@@ -22,6 +22,10 @@ class ClaudeAdapter(Adapter):
         if call.model and call.model != "default":
             argv += ["--model", call.model]
         argv += ["--permission-mode", "plan" if call.read_only else "acceptEdits"]
+        if call.orchestrator:
+            argv += ["--allowedTools", " ".join(f"Bash({c}:*)" for c in ORCHESTRATOR_SHELL)]
+            if call.max_turns:
+                argv += ["--max-turns", str(call.max_turns)]
         return argv
 
     def parse(self, stdout: str, stderr: str, returncode: int, call: Call) -> AdapterResult:

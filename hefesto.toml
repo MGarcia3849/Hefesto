@@ -51,6 +51,7 @@ max_tasks_per_loop = 8
 max_turns_per_task = 15
 timeout_seconds = 600
 verify_timeout_seconds = 900
+orchestrator_timeout_seconds = 3600 # una iteración completa de `loop`
 
 [limits.max_parallel_per_model]     # máximos; la concurrencia real se adapta a los rate limits
 "claude:haiku" = 3

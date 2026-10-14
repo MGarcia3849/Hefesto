@@ -2,7 +2,7 @@
 
 Framework de orquestación multiagente para trabajar con tus suscripciones de **Claude**, **ChatGPT (Codex)** y **Google (Gemini)**, sin usar la API de pago. El estado, los intentos, la verificación y los commits los gestiona la CLI `hefesto`, con lógica determinista y cubierta por tests. Ningún prompt es fuente de verdad.
 
-> Estado: **Hito 1 — núcleo en serie** (`v2.1.0-m1`). La especificación completa está en [`HEFESTO_V2_1.md`](HEFESTO_V2_1.md) y las desviaciones, en [`DECISIONS.md`](DECISIONS.md).
+> Estado: **Hito 2 — multi-orquestador y autonomía** (`v2.1.0-m2`). La especificación completa está en [`HEFESTO_V2_1.md`](HEFESTO_V2_1.md) y las desviaciones, en [`DECISIONS.md`](DECISIONS.md).
 
 ## Requisitos
 
@@ -38,9 +38,42 @@ hefesto done TASK-001            # verify + commit + evidencia encadenada
 hefesto finish                   # integra la fase en la rama principal (rebase, tests, tu confirmación)
 ```
 
-En modo interactivo basta con abrir `claude`, `codex` o `gemini` en el proyecto: `CLAUDE.md`, `AGENTS.md` y `GEMINI.md` les explican el protocolo. Con Claude Code, los hooks de `.claude/settings.json` inyectan `hefesto status` al empezar y bloquean `git push`, `reset --hard`, `rm -rf`, los cambios de rama fuera de `hefesto/*` y la lectura de secretos.
+## Orquestador intercambiable
 
-## Comandos (Hito 1)
+Cualquiera de las tres CLIs puede conducir el ciclo. Abre una en el proyecto y lanza el paso `next`:
+
+| Herramienta | Ciclo de una tarea | Planificar | Retro |
+|---|---|---|---|
+| Claude Code | `/hefesto-next` | `/hefesto-plan` | `/hefesto-retro` |
+| Codex CLI | `$hefesto-next` | `$hefesto-plan` | `$hefesto-retro` |
+| Gemini CLI | `/hefesto:next` | `/hefesto:plan` | `/hefesto:retro` |
+| Otra | `hefesto prompt next` | `hefesto prompt plan` | `hefesto prompt retro` |
+
+`hefesto sync` genera todo eso desde una única fuente (`prompts/protocol/`): skills y subagentes de Claude, skills en `.agents/skills/` (Codex y Gemini), comandos de Gemini y hooks de las tres CLIs. Si editas a mano un fichero generado, `sync` lo detecta y no lo sobrescribe.
+
+### Relevo cuando se acaba la cuota
+
+El orquestador registra su progreso con `hefesto note`. Si te quedas sin cuota en una CLI:
+
+```bash
+hefesto handoff --reason quota        # nota final, cooldown del saliente y el comando para abrir el siguiente
+codex "$hefesto-next"                 # el nuevo orquestador empieza con `hefesto resume`
+```
+
+`hefesto resume` muestra la tarea, los intentos, las delegaciones ya hechas (para no repetirlas), las notas, el último error y el `git diff --stat`.
+
+### Modo autónomo
+
+```bash
+hefesto loop --orchestrator auto --max-tasks 3 --wait
+hefesto stop                          # desde otra terminal: para antes de la siguiente iteración
+```
+
+Con `auto`, si el orquestador se queda sin cuota a mitad, la siguiente iteración la retoma el siguiente de `orchestrator.use` desde `hefesto resume`, sin sumar intentos. Si el rol que toca no tiene ningún proveedor con cuota, el loop se **pausa**: sin `--wait` termina con código 3 indicando cuándo vuelve a haber cuota; con `--wait` espera, comprobando `STOP`. El loop no ejecuta nunca `trust`, `unblock` ni `finish`: son acciones humanas.
+
+Antes de delegar, `hefesto providers check [--probe]` muestra el preflight de cada proveedor. La sonda (`--probe`, o `quota.probe = true`) gasta una llamada mínima y se cachea; confirma que el proveedor responde **ahora**, no que la cuota alcance para toda la tarea.
+
+## Comandos
 
 | Comando | Qué hace |
 |---|---|
@@ -57,6 +90,10 @@ En modo interactivo basta con abrir `claude`, `codex` o `gemini` en el proyecto:
 | `evidence TASK` / `evidence verify` | Evidencia de una tarea; integridad de la cadena de hashes. |
 | `providers status\|add\|remove\|reset` | Proveedores, allowlist del proyecto y cooldowns. |
 | `local enable\|disable` | Modelo local compatible con OpenAI (desactivado por defecto). |
+| `providers check [--probe]` | Preflight de cuota de los proveedores (`unknown` si la CLI no expone su uso). |
+| `sync [--check]` / `prompt plan\|next\|retro` | Materializa el protocolo para las tres CLIs / imprime un paso. |
+| `note "…"` / `resume [--json]` / `handoff` | Progreso continuo y relevo entre orquestadores. |
+| `loop [--orchestrator …] [--max-tasks N] [--max-turns M] [--wait]` / `stop` | Ciclo headless con topes, relevo automático y parada limpia. |
 
 Códigos de salida: `0` correcto · `1` entrada inválida o `verify` en rojo con intentos restantes · `2` circuit breaker o barrera de seguridad · `3` dependencia o proveedor no disponible · `4` conflicto de estado o lock.
 
@@ -65,8 +102,9 @@ Códigos de salida: `0` correcto · `1` entrada inválida o `verify` en rojo con
 | Orquestador | Protección |
 |---|---|
 | Claude Code | Hooks `SessionStart` y `PreToolUse` + reglas `deny` de permisos + comprobaciones de la CLI. |
-| Codex CLI | Sandbox de la propia CLI (`workspace-write` para implementar, `read-only` para revisar) + comprobaciones de la CLI. |
-| Gemini CLI / agy | Modo de aprobación (`auto_edit`/`plan`) + comprobaciones de la CLI. |
+| Codex CLI | Hooks `SessionStart` y `PreToolUse` (`.codex/hooks.json`) + sandbox `workspace-write` sin red (`.codex/config.toml`; `read-only` para revisar) + comprobaciones de la CLI. |
+| Gemini CLI | Hooks `SessionStart` y `BeforeTool` (`.gemini/settings.json`) + modo de aprobación (`auto_edit`/`plan`) + comprobaciones de la CLI. |
+| agy | Solo el modo (`accept-edits`/`plan`) + comprobaciones de la CLI: sin hooks verificados. |
 
 Las comprobaciones de la CLI (`guard.py`) se aplican siempre, pase lo que pase en el agente: rama `hefesto/*`, `git add` limitado a los `files` de la tarea, secretos por nombre y por contenido, y binarios grandes.
 
@@ -75,6 +113,10 @@ Las comprobaciones de la CLI (`guard.py`) se aplican siempre, pase lo que pase e
 - Hefesto no inventa cuota restante: si una CLI no la expone, el dato es `unknown`.
 - Ante `quota` o `rate_limit`, el proveedor entra en cooldown (hasta la hora de reinicio si la CLI la indica, o 60 minutos) y la petición pasa al siguiente de la cadena **sin gastar intento**.
 - Las variables `*_API_KEY` se eliminan del entorno de las CLIs hijas, para que facturen por suscripción, y `doctor` avisa si existen.
+
+## Skills del framework
+
+`sync` instala en cada proyecto (como `hefesto-skill-<nombre>`): `git-checkpointer`, `test-runner`, `skill-creator`, `retro`, `frontend-taste`, `motion-system` y `ui-anatomy`. Las propuestas nuevas van a `skills/_proposals/` y nunca se activan solas.
 
 ## Desarrollo
 

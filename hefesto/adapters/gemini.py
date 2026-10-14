@@ -9,7 +9,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from hefesto.adapters.base import Adapter, AdapterResult, Call, last_json_object
+from hefesto.adapters.base import ORCHESTRATOR_SHELL, Adapter, AdapterResult, Call, last_json_object
 
 STDIN_INSTRUCTION = "Sigue exactamente las instrucciones del paquete recibido por la entrada estándar."
 
@@ -39,6 +39,8 @@ class GeminiAdapter(Adapter):
             return argv + (["--model", model] if model else [])
         argv = [binary, "-p", STDIN_INSTRUCTION, "-o", "json",
                 "--approval-mode", "plan" if call.read_only else "auto_edit"]
+        if call.orchestrator:
+            argv += ["--allowed-tools", *(f"run_shell_command({c})" for c in ORCHESTRATOR_SHELL)]
         return argv + (["-m", model] if model else [])
 
     def stdin_for(self, call: Call) -> str:

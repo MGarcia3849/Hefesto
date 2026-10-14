@@ -53,6 +53,7 @@ class HefestoTestCase(unittest.TestCase):
         self.env_patch = mock.patch.dict(os.environ, {
             "HEFESTO_HOME": str(self.tmp / "home"),
             "HEFESTO_STATE_DIR": str(self.tmp / "state"),
+            "PYTHONPATH": str(ROOT),
             **GIT_ENV,
         })
         self.env_patch.start()

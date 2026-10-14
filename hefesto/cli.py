@@ -254,10 +254,12 @@ def cmd_route(args: argparse.Namespace) -> int:
 
 
 def cmd_providers(args: argparse.Namespace) -> int:
-    from hefesto import admin, quota
+    from hefesto import admin, preflight, quota
 
     proj = _project(args)
-    if args.action == "status":
+    if args.action == "check":
+        print(preflight.render(preflight.check_all(proj, args.probe)))
+    elif args.action == "status":
         print(admin.status_table(proj))
     elif args.action == "reset":
         if not args.name:
@@ -303,6 +305,49 @@ def cmd_prompt(args: argparse.Namespace) -> int:
     from hefesto import sync
 
     print(sync.render_prompt(args.step))
+    return EXIT_OK
+
+
+# ---------------------------------------------------------------------------
+# Fase 6: autonomía
+
+
+def cmd_note(args: argparse.Namespace) -> int:
+    from hefesto import progress
+
+    record = progress.note(_project(args), args.text)
+    print(f"Nota registrada ({record['orchestrator']}, tarea {record['task_id'] or '-'}).")
+    return EXIT_OK
+
+
+def cmd_resume(args: argparse.Namespace) -> int:
+    from hefesto import progress
+
+    info = progress.resume_data(_project(args))
+    print(json.dumps(info, ensure_ascii=False, indent=2) if args.json else progress.render_resume(info))
+    return EXIT_OK
+
+
+def cmd_handoff(args: argparse.Namespace) -> int:
+    from hefesto import progress
+
+    print(progress.handoff(_project(args), args.to, args.reason, args.source))
+    return EXIT_OK
+
+
+def cmd_loop(args: argparse.Namespace) -> int:
+    from hefesto import loop
+
+    result = loop.run(_project(args), args.orchestrator, args.max_tasks, args.max_turns, args.wait)
+    print(f"{result.message}\n(tareas completadas: {result.completed}, iteraciones: {result.iterations})")
+    return result.code
+
+
+def cmd_stop(args: argparse.Namespace) -> int:
+    from hefesto import loop
+
+    path = loop.request_stop(_project(args))
+    print(f"Creado {path}. El loop se detendrá antes de la siguiente iteración; borrarlo es una acción humana.")
     return EXIT_OK
 
 
@@ -400,8 +445,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.set_defaults(func=cmd_route)
 
     p = sub.add_parser("providers", help="estado de proveedores, allowlist del proyecto y cooldowns")
-    p.add_argument("action", choices=["status", "add", "remove", "reset"])
+    p.add_argument("action", choices=["status", "check", "add", "remove", "reset"])
     p.add_argument("name", nargs="?", choices=list(config.PROVIDERS))
+    p.add_argument("--probe", action="store_true", help="con `check`: sonda de una llamada mínima por proveedor")
     p.set_defaults(func=cmd_providers)
 
     p = sub.add_parser("local", help="activa o desactiva el modelo local (API compatible con OpenAI)")
@@ -416,6 +462,31 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("sync", help="regenera skills, subagentes, comandos y hooks de Claude, Codex y Gemini")
     p.add_argument("--check", action="store_true", help="solo comprueba; sale con 1 si hay cambios pendientes")
     p.set_defaults(func=cmd_sync)
+
+    p = sub.add_parser("note", help="registra un paso de progreso de la tarea en curso")
+    p.add_argument("text")
+    p.set_defaults(func=cmd_note)
+
+    p = sub.add_parser("resume", help="resumen para que cualquier orquestador continúe donde lo dejó el anterior")
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(func=cmd_resume)
+
+    p = sub.add_parser("handoff", help="relevo limpio a otro orquestador")
+    p.add_argument("--to", choices=["claude", "codex", "gemini"])
+    p.add_argument("--reason", choices=["quota", "manual"], default="manual")
+    p.add_argument("--from", dest="source", choices=["claude", "codex", "gemini"],
+                   help="orquestador saliente (por defecto, el detectado)")
+    p.set_defaults(func=cmd_handoff)
+
+    p = sub.add_parser("loop", help="ciclo headless con topes, STOP y relevo automático")
+    p.add_argument("--orchestrator", choices=["claude", "codex", "gemini", "auto"])
+    p.add_argument("--max-tasks", type=int)
+    p.add_argument("--max-turns", type=int)
+    p.add_argument("--wait", action="store_true", help="si no hay cuota, espera al primer cooldown_until")
+    p.set_defaults(func=cmd_loop)
+
+    p = sub.add_parser("stop", help="crea .hefesto/STOP para detener el loop")
+    p.set_defaults(func=cmd_stop)
 
     p = sub.add_parser("prompt", help="imprime un paso del protocolo (para orquestadores sin comandos propios)")
     p.add_argument("step", choices=["plan", "next", "retro"])

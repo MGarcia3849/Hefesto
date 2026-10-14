@@ -84,3 +84,15 @@ Un proveedor con error de autenticación se salta hasta que el usuario inicia se
 - **Gemini 0.50:** lee `GEMINI.md` (importa `@./AGENTS.md`); comandos en `.gemini/commands/hefesto/*.toml` (`/hefesto:next`); descubre skills en `.gemini/skills/` **y** `.agents/skills/`, así que no se duplican; hooks `SessionStart` y `BeforeTool` en `.gemini/settings.json`, en el formato que produce `gemini hooks migrate --from-claude`. Herramientas: `run_shell_command`, `read_file`, `write_file`, `replace`, `glob`…, que `guard.py` traduce.
 - **Skills del framework:** `sync` las copia como `hefesto-skill-<nombre>` en `.claude/skills/` y `.agents/skills/` (copia y no symlink, para que funcionen en Windows sin modo desarrollador y para detectar ediciones a mano). Por eso `init --copy` desaparece: siempre es copia.
 - **Conflictos:** `.hefesto/generated.json` guarda el hash de cada fichero generado. Un fichero editado a mano, o uno que existía antes con otro contenido (p. ej. tu `.gemini/settings.json`), se reporta como conflicto (código 2) y no se toca.
+
+## ADR-015 — Loop y orquestadores headless (Fase 6)
+
+- Cada iteración pasa al orquestador el paso `next` + un apartado «modo autónomo» (una tarea, sin `trust`/`unblock`/`finish`). El proceso hijo recibe `HEFESTO_ORCHESTRATOR`, `HEFESTO_LOOP_ID` y `HEFESTO_ROLE=orchestrator`, de modo que `note` sabe quién escribe.
+- Permisos del orquestador sin saltarse nada: Claude `--permission-mode acceptEdits --allowedTools "Bash(hefesto:*) …"` y `--max-turns`; Gemini `--approval-mode auto_edit --allowed-tools run_shell_command(hefesto) …` (el flag está marcado como obsoleto en favor del motor de políticas, pero funciona en 0.50); Codex `exec -s workspace-write`.
+- **Sin verificar con llamadas reales:** que el sandbox `workspace-write` de Codex en Windows permita a `hefesto done` escribir en `.git` (commit). Si no lo permite, Codex puede orquestar todo menos el `done`, que quedará indicado en `next_action` para el siguiente orquestador o para el usuario.
+- `--max-turns` solo lo aplica Claude; en Codex y Gemini el tope efectivo es `orchestrator_timeout_seconds` y el límite de iteraciones del loop (`max_tasks × (max_attempts + 3)`). Dos iteraciones seguidas sin ningún cambio de estado detienen el loop para no quemar cuota.
+- La sonda de cuota es una llamada en modo solo lectura («Responde únicamente con la palabra: ok»), cacheada `probe_max_age_minutes` en `~/.hefesto/providers.json`.
+
+## ADR-016 — El Hito 2 no se ha construido «con Hefesto»
+
+La especificación propone escribir las fases del Hito 2 en adelante como ROADMAP del propio repositorio y ejecutarlas con su ciclo, repartiendo el coste entre las tres suscripciones. Se ha construido directamente en esta sesión porque: (1) el núcleo aún no se ha probado con llamadas reales y (2) habría gastado cuota de las tres cuentas sin la aprobación explícita del usuario. Queda como opción para los hitos 3 y 4, empezando por `make smoke-live`.

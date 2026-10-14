@@ -17,6 +17,9 @@ from hefesto import config, log
 from hefesto.guard import redact
 from hefesto.util import filtered_env
 
+# Comandos que un orquestador headless puede ejecutar sin pedir aprobación.
+ORCHESTRATOR_SHELL = ("hefesto", "graphify", "git status", "git diff", "git log")
+
 ERROR_TYPES = ("missing_binary", "auth", "quota", "rate_limit", "timeout", "invalid_output", "denied_by_policy")
 READ_ONLY_ROLES = ("reviewer",)
 SUMMARY_CHARS = 1500
@@ -70,11 +73,19 @@ class Call:
     project: Path
     packet_path: Path | None = None
     timeout: int = 600
+    orchestrator: bool = False
+    max_turns: int | None = None
+    env: dict[str, str] = field(default_factory=dict)
     extra: dict[str, Any] = field(default_factory=dict)
 
     @property
     def read_only(self) -> bool:
-        return self.role in READ_ONLY_ROLES
+        return self.role in READ_ONLY_ROLES and not self.orchestrator
+
+    def child_env(self) -> dict[str, str]:
+        """Entorno del proceso hijo: sin claves de API y con el rol de Hefesto identificado."""
+        return filtered_env({"HEFESTO_ROLE": "orchestrator" if self.orchestrator else self.role, **self.env},
+                            strip_credentials=False)
 
 
 class Adapter:
@@ -127,7 +138,7 @@ class Adapter:
         try:
             proc = subprocess.run(argv, input=self.stdin_for(call), cwd=call.workdir, capture_output=True, text=True,
                                   encoding="utf-8", errors="replace", timeout=call.timeout,
-                                  env=filtered_env(strip_credentials=False))
+                                  env=call.child_env())
             stdout, stderr, code = proc.stdout or "", proc.stderr or "", proc.returncode
         except subprocess.TimeoutExpired:
             path = log.write_text(call.project, rel_log, f"$ {' '.join(argv[:6])}\n[timeout {call.timeout}s]")

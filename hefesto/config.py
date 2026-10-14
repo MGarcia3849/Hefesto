@@ -51,6 +51,7 @@ POSITIVE_INTS: tuple[tuple[str, ...], ...] = (
     ("limits", "max_turns_per_task"),
     ("limits", "timeout_seconds"),
     ("limits", "verify_timeout_seconds"),
+    ("limits", "orchestrator_timeout_seconds"),
     ("quota", "cooldown_default_minutes"),
     ("quota", "probe_max_age_minutes"),
     ("guard", "max_file_mb"),

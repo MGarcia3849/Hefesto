@@ -100,3 +100,17 @@ class OtherOrchestratorGuardTests(HefestoTestCase):
         self.assertIsNotNone(self.check("apply_patch", command=patch))
         ok = "*** Begin Patch\n*** Add File: src/nuevo.py\n+x = 1\n*** End Patch"
         self.assertIsNone(self.check("apply_patch", command=ok))
+
+
+class FrameworkSkillsTests(HefestoTestCase):
+    def test_seven_skills_have_valid_frontmatter_and_are_synced(self) -> None:
+        names = sorted(p.name for p in sync.SKILLS_DIR.iterdir() if p.is_dir() and not p.name.startswith("_"))
+        self.assertEqual(names, ["frontend-taste", "git-checkpointer", "motion-system", "retro", "skill-creator",
+                                 "test-runner", "ui-anatomy"])
+        self.init_project()
+        for name in names:
+            text = (sync.SKILLS_DIR / name / "SKILL.md").read_text(encoding="utf-8")
+            self.assertTrue(text.startswith(f"---\nname: hefesto-skill-{name}\ndescription: "), name)
+            self.assertIn("## Criterios de aceptación", text, name)
+            for root in (".claude/skills", ".agents/skills"):
+                self.assertTrue((self.project / root / f"hefesto-skill-{name}" / "SKILL.md").exists())
