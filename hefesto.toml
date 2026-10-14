@@ -90,3 +90,11 @@ redact_secrets = true
 [trust]
 auto_safe = true
 extra_safe_prefixes = []
+
+[skills_sources]
+npm_version = "1.7.2"
+trusted_owners = ["anthropics", "vercel-labs", "microsoft"]
+git_base = "https://github.com"
+
+[packs_context]
+query_budget = 1500

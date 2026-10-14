@@ -25,24 +25,26 @@ Pregunta al usuario, en **UNA sola interacción** al comienzo, la confirmación 
 Comprueba si el directorio `~/hefesto` existe en el equipo del usuario:
 
 ### Si `~/hefesto` NO existe:
-Clona el tag seleccionado y ejecuta el instalador:
+Clona el tag seleccionado y ejecuta el instalador con `--add-to-path` (cubierto por la autorización inicial del punto 1):
 ```bash
 git clone --branch <tag> <URL> ~/hefesto
-bash ~/hefesto/install.sh
+bash ~/hefesto/install.sh --add-to-path
 ```
 *(En Windows, ejecuta `install.sh` desde Git Bash. El instalador es idempotente y crea tanto `hefesto` como `hefesto.cmd` en `~/.local/bin` o en la ruta indicada por `$HEFESTO_BIN_DIR`).*
 
-#### Configuración de PATH si `hefesto` no se encuentra:
-Tras `install.sh`, si `hefesto` no se encuentra en el comando actual, el agente añade el directorio del lanzador al PATH del usuario (cubierto por la autorización inicial):
+Con `--add-to-path`, el instalador añade automáticamente el directorio del lanzador al PATH del usuario (en Windows vía PowerShell sobre el PATH de usuario sin duplicar; en Linux, macOS y WSL añadiendo la línea a `~/.profile`). Este cambio queda cubierto por la autorización inicial del punto 1. Abre una terminal nueva para que surta efecto.
+
+#### Alternativa manual para la sesión actual o si se instaló sin `--add-to-path`:
+Si se necesita usar `hefesto` en la sesión actual sin abrir una terminal nueva, o si se ejecutó el instalador sin `--add-to-path`:
 - **Git Bash (sesión actual):**
   ```bash
   export PATH="$HOME/.local/bin:$PATH"
   ```
-- **Persistente en Windows (PowerShell), sin duplicar la entrada:**
+- **Persistente en Windows (PowerShell manual como alternativa), sin duplicar la entrada:**
   ```powershell
   $d="$HOME\.local\bin"; $p=[Environment]::GetEnvironmentVariable("Path","User"); if (($p -split ";") -notcontains $d) { [Environment]::SetEnvironmentVariable("Path", $p.TrimEnd(";") + ";" + $d, "User") }
   ```
-- **Linux, macOS y WSL:** añade `~/.local/bin` al perfil de la shell (`~/.bashrc` o `~/.zshrc`) si no está.
+- **Linux, macOS y WSL:** añade `~/.local/bin` al perfil de la shell (`~/.profile`, `~/.bashrc` o `~/.zshrc`) si no está.
 
 ### Si `~/hefesto` YA existe:
 
@@ -52,7 +54,7 @@ Para un agente sin terminal interactiva (cubierto por la única autorización in
 ```bash
 git -C ~/hefesto fetch --tags
 git -C ~/hefesto checkout <tag>
-bash ~/hefesto/install.sh
+bash ~/hefesto/install.sh --add-to-path
 ```
 Y ejecuta `hefesto migrate` y `hefesto sync` en el proyecto si hace falta.
 

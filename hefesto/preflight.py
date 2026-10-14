@@ -70,7 +70,22 @@ def probe(project: Path, cfg: config.Config, provider: str) -> dict[str, object]
 def ensure(project: Path, cfg: config.Config, provider: str) -> tuple[bool, str]:
     """Preflight completo para una delegación: niveles 1 y 3 (si `quota.probe` está activo)."""
     ok, reason = providers.available(cfg, provider)
-    if not ok or not cfg.get("quota", "probe"):
+    if not ok:
+        return ok, reason
+    from hefesto import limits
+
+    threshold_val = cfg.get("quota", "near_limit_threshold", default=0.9)
+    try:
+        threshold = float(threshold_val) if threshold_val is not None else 0.9
+    except (ValueError, TypeError):
+        threshold = 0.9
+    try:
+        limit_reason = limits.near_limit(provider, threshold)
+    except Exception:
+        limit_reason = None
+    if limit_reason:
+        return False, limit_reason
+    if not cfg.get("quota", "probe"):
         return ok, reason
     if not probe_is_fresh(cfg, provider):
         record = probe(project, cfg, provider)

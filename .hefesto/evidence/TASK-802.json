@@ -1,0 +1,112 @@
+{
+  "attempts": 3,
+  "base_commit": "5fd0123fc9df14461755752f0eb7f03c4fbfbb37",
+  "branch": "hefesto/fase-8-ecosistema-de-skills-y-packs",
+  "commit": "d4b11f41273ea457eeb1088e81938097da900ef3",
+  "contract": [],
+  "created_at": "2026-10-14T15:15:37+00:00",
+  "files": [
+    {
+      "path": "hefesto.toml",
+      "sha256": "3b83e7fc2522b8814fe96212cb53655c560428095214c97fa19a4f2aea2e75a8"
+    },
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "bda12436beb62bd245b37fb7b1255f45f751ab7d6d8074d4ba77f670be0774db"
+    },
+    {
+      "path": "hefesto/config.py",
+      "sha256": "6bd8742fe9dbe47f6098d26478ee9be805f60b3ca0fc716d5e545e7d78dd80ba"
+    },
+    {
+      "path": "hefesto/doctor.py",
+      "sha256": "567d095af9498e35b1c39920147e878a1c98848b5a6db4b85b1f683e12f2cce6"
+    },
+    {
+      "path": "hefesto/skills.py",
+      "sha256": "4ca8a7e23274393615a4ac148a4a64d211ff816a02955240ff7a854bbd8a4a3e"
+    },
+    {
+      "path": "tests/test_skills_input.py",
+      "sha256": "17f724884becf47d5a6810cf7390b95e7db1dca8326f17929b79c669a22699df"
+    }
+  ],
+  "phase": "Fase 8 — Ecosistema de skills y packs",
+  "prev_sha256": "06131f637244eff8fd912f253d9ba6987703bd54bf353272177027c173954a40",
+  "prev_task_id": "TASK-801",
+  "providers": [
+    "claude:sonnet",
+    "codex:default",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-14T15:15:34+00:00",
+    "attempt": 2,
+    "authors": [
+      "codex:default",
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "",
+    "reviewer": "claude:sonnet",
+    "run_id": "3dbc89ae8c74",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "816cdb5e245a",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "776719f71814",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "1094a48e6b68",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "1368c426e19a",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "fb27bbcd7cfe",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "forge",
+      "run_id": "d034d6e1c4cf",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "3dbc89ae8c74",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 16,
+  "task_id": "TASK-802",
+  "title": "`hefesto skill TÉRMINO` y `hefesto skill find` (skills.sh, versión fijada, solo busca)",
+  "verify": {
+    "command": "python -m unittest tests.test_skills_ecosystem.LocalSearchTests tests.test_skills_ecosystem.FindTests && python tools/dev.py lint",
+    "duration_seconds": 1.877,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-802-a3-2026-10-14T151537+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (52 ficheros Python)\n.....\n----------------------------------------------------------------------\nRan 5 tests in 1.173s\n\nOK",
+    "sha256": "4f0f04518634524c52ec9bdcb039b36b883fcfa187e63e7d4e7f60c56f2d49a5",
+    "trust": "auto"
+  }
+}

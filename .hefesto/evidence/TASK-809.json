@@ -1,0 +1,68 @@
+{
+  "attempts": 1,
+  "base_commit": "baf9ab03a8549e8627f69fdd1fa02ccdfce461f6",
+  "branch": "hefesto/fase-8-ecosistema-de-skills-y-packs",
+  "commit": "a68fc708dfb144f50db6297effff582a5aa132bb",
+  "contract": [],
+  "created_at": "2026-10-14T18:00:38+00:00",
+  "files": [
+    {
+      "path": "BOOTSTRAP.md",
+      "sha256": "a93bd5aaa39be7dc2175756ea0ee74aab08711109ba9dc34313c28e8decc5c93"
+    },
+    {
+      "path": "install.sh",
+      "sha256": "243c0649cd97b4efc3f1fa8466ca5001105db8dd81040952ca7495f9bd211278"
+    },
+    {
+      "path": "tests/test_install_path.py",
+      "sha256": "ef1b37447fa119780e16df78ecca29a4759f2589a9dec53260be94c1b3746e8e"
+    }
+  ],
+  "phase": "Fase 8 — Ecosistema de skills y packs",
+  "prev_sha256": "4dbaa425b7da233667030b0786d5cf4b50e206a027cb07bdbe1035611f4ab9fe",
+  "prev_task_id": "TASK-803",
+  "providers": [
+    "claude:sonnet",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-14T18:00:35+00:00",
+    "attempt": 0,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "",
+    "reviewer": "claude:sonnet",
+    "run_id": "40a76ce61de3",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "2f2e47af91b4",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "40a76ce61de3",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 18,
+  "task_id": "TASK-809",
+  "title": "`install.sh --add-to-path` añade el lanzador al PATH de usuario",
+  "verify": {
+    "command": "python -m unittest tests.test_install_path && python tools/dev.py lint",
+    "duration_seconds": 1.687,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-809-a1-2026-10-14T180038+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (54 ficheros Python)\ns..\n----------------------------------------------------------------------\nRan 3 tests in 1.059s\n\nOK (skipped=1)",
+    "sha256": "4b6d0d785c57ffd440687e7bc8013a4844f4db27d9c7069fa9f5b0a1b2d1372e",
+    "trust": "auto"
+  }
+}

@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from hefesto import config, guard, roadmap
+from hefesto import config, guard, packs, roadmap, skills
 from hefesto.util import FRAMEWORK_ROOT
 
 CHARS_PER_TOKEN = 4
@@ -20,7 +20,7 @@ MAX_FILE_BYTES = 200_000
 PROMPTS_DIR = FRAMEWORK_ROOT / "prompts"
 
 # Prioridad: 0 nunca se recorta; cuanto mayor, antes se recorta.
-P_ESSENTIAL, P_RETRY, P_CONTRACT, P_FILES, P_MEMORY = 0, 1, 1, 2, 3
+P_ESSENTIAL, P_RETRY, P_CONTRACT, P_FILES, P_MEMORY, P_GRAPH = 0, 1, 1, 2, 3, 3
 
 
 @dataclass
@@ -151,6 +151,11 @@ def build(project: Path, cfg: config.Config, role: str, instruction: str, task: 
         memory = _memory_entries(project, task)
         if memory:
             sections.append(Section("Decisiones y lecciones relevantes", P_MEMORY, memory))
+        if packs.is_pack_enabled(project, "context"):
+            graph_extract = packs.query_graph(project, workdir, task, cfg)
+            if graph_extract:
+                clean_graph = skills.sanitize_text(guard.redact(graph_extract))
+                sections.append(Section("Grafo de código", P_GRAPH, [("", clean_graph)]))
     max_tokens = max_tokens_for(cfg, model_id)
     omitted = _fit(sections, max_tokens * CHARS_PER_TOKEN)
     omitted += [f"{s} — omitido" for s in skipped]

@@ -1,0 +1,36 @@
+"""npx falso para tests: imita `npx -y skills@<versión> find TÉRMINO` con la salida real (colores ANSI).
+
+Resultados configurables con `HEFESTO_FAKE_SKILLS` (JSON: lista de [nombre, instalaciones]). Cada llamada se
+registra en `HEFESTO_FAKE_LOG`. Solo acepta exactamente `-y skills@<versión> find <término>`; cualquier otra
+forma (incluido `add`) falla con 1 y queda registrada.
+"""
+import json
+import os
+import re
+import sys
+import time
+
+DEFAULT = [["anthropics/skills@frontend-design", "984.3K"], ["acme/ui-kit@pretty-ui", "1.2K"],
+           ["nadie/cosas@sospechosa", "42"]]
+
+
+def main() -> int:
+    argv = sys.argv[1:]
+    log = os.environ.get("HEFESTO_FAKE_LOG")
+    if log:
+        with open(log, "a", encoding="utf-8") as fh:
+            fh.write(json.dumps({"name": "npx", "argv": argv, "t": time.time()}) + "\n")
+    if len(argv) != 4 or argv[0] != "-y" or not re.fullmatch(r"skills@\d+\.\d+\.\d+", argv[1]) or argv[2] != "find":
+        print("forma no permitida en el fake", file=sys.stderr)
+        return 1
+    results = json.loads(os.environ.get("HEFESTO_FAKE_SKILLS") or json.dumps(DEFAULT))
+    sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]
+    print("\x1b[38;5;102mInstall with\x1b[0m npx skills add <owner/repo@skill>\n")
+    for name, installs in results:
+        owner_repo, skill = name.split("@")
+        print(f"\x1b[38;5;145m{name}\x1b[0m \x1b[36m{installs} installs\x1b[0m")
+        print(f"\x1b[38;5;102m└ https://skills.sh/{owner_repo}/{skill}\x1b[0m\n")
+    return 0
+
+
+sys.exit(main())

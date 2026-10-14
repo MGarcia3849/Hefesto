@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import json
 import platform
+import re
 import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from hefesto import config, state
+from hefesto import config, state, util
 from hefesto.util import (
     EXIT_OK,
     EXIT_UNAVAILABLE,
@@ -47,6 +48,50 @@ def _binary(name: str, required: bool = False, purpose: str = "") -> Check:
         level = WARN if required else MISSING
         return Check(level, name, f"no encontrado{(' — ' + purpose) if purpose else ''}", required)
     return Check(OK, name, f"{_version(path)}  ({path})", required)
+
+
+def _node_check() -> Check:
+    path = which("node")
+    if not path:
+        return Check(MISSING, "node", "no encontrado — opcional: skills externas")
+    ver = _version(path)
+    match = re.search(r"v?(\d+)\.(\d+)", ver)
+    if match:
+        major, minor = int(match.group(1)), int(match.group(2))
+        if (major, minor) < (22, 20):
+            return Check(WARN, "node", f"{ver}  ({path}) — anterior a 22.20 (se recomienda Node >= 22.20)")
+    return Check(OK, "node", f"{ver}  ({path})")
+
+
+def _npx_check() -> Check:
+    path = util.which("npx")
+    if not path:
+        return Check(MISSING, "npx", "no encontrado — opcional: `hefesto skill find`")
+    return Check(OK, "npx", path)
+
+
+def _graphify_version() -> str:
+    try:
+        from hefesto import packs
+
+        catalog = packs.load_catalog()
+        for entry in catalog.values():
+            if entry.get("binary") == "graphify" and "version" in entry:
+                return str(entry["version"])
+        if "context" in catalog and "version" in catalog["context"]:
+            return str(catalog["context"]["version"])
+    except Exception:
+        pass
+    return "0.9.13"
+
+
+def _graphify_check() -> Check:
+    path = util.which("graphify")
+    if not path:
+        return Check(MISSING, "graphify", "no encontrado — opcional: pack context")
+    ver = _graphify_version()
+    return Check(OK, "graphify", f"{path} (versión fijada {ver})")
+
 
 
 def auth_status(provider: str) -> str:
@@ -97,10 +142,20 @@ def run_checks(project: Path | None) -> list[Check]:
         checks.append(Check(WARN, "gemini/agy", "ninguna CLI de Google instalada"))
     for prov in ("claude", "codex", "gemini"):
         checks.append(Check(INFO, f"auth {prov}", auth_status(prov)))
-    checks.append(_binary("node", purpose="opcional: skills externas"))
-    checks.append(_binary("npx", purpose="opcional: `hefesto skill find`"))
+    from hefesto import limits
+
+    for prov in ("claude", "codex", "gemini"):
+        checks.append(Check(INFO, f"límites {prov}", limits.limits_summary(prov)))
+    checks.append(_node_check())
+    checks.append(_npx_check())
+    try:
+        cfg = config.load(project, validate_layers=False)
+        npm_ver = cfg.get("skills_sources", "npm_version", default="1.7.2")
+    except Exception:
+        npm_ver = "1.7.2"
+    checks.append(Check(INFO, "skills (npm)", f"versión fijada {npm_ver}"))
     checks.append(_binary("shellcheck", purpose="opcional: lint de install.sh"))
-    checks.append(_binary("graphify", purpose="opcional: pack context"))
+    checks.append(_graphify_check())
     keys = present_api_keys()
     if keys:
         checks.append(Check(WARN, "API keys", "en el entorno: " + ", ".join(keys)
@@ -147,6 +202,23 @@ def project_checks(project: Path) -> list[Check]:
         checks.append(Check(WARN, "lock", detail))
     else:
         checks.append(Check(OK, "lock", "libre"))
+
+    try:
+        from hefesto import packs
+
+        listed = packs.list_packs(project)
+        active = [p for p in listed if p["enabled"]]
+        if active:
+            for p in active:
+                if p["missing"]:
+                    checks.append(Check(WARN, f"pack {p['name']}", f"activo — falta: {', '.join(p['missing'])}"))
+                else:
+                    checks.append(Check(OK, f"pack {p['name']}", "activo"))
+        else:
+            checks.append(Check(INFO, "packs", "ninguno activo"))
+    except Exception as exc:
+        checks.append(Check(WARN, "packs", str(exc)))
+
     return checks
 
 

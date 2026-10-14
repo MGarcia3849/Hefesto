@@ -120,3 +120,88 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - size: S
   - parallel: false
   - accept: el verify de una tarea con `contract:` comprueba que sus tests fallan y deja de tener sentido tras implementar; finish lo omite (indicándolo en el resumen) y sigue ejecutando la suite completa y el verify del resto; test nuevo con una fase que tiene tarea de contrato e implementación
+
+## Fase 8 — Ecosistema de skills y packs
+- [x] TASK-801: Contratos del ecosistema de skills (skill, skill find, skill fetch, promote, skill update)
+  - verify: `python -m py_compile tests/test_skills_ecosystem.py && python -m unittest tests.test_skills_ecosystem 2>&1 | grep -q FAILED`
+  - files: tests/test_skills_ecosystem.py, tests/fakes/npx
+  - role: core
+  - depends_on: none
+  - size: S
+  - parallel: false
+  - contract: tests/test_skills_ecosystem.py
+  - accept: los tests fijan búsqueda local, búsqueda en skills.sh con versión fijada y sin instalar, descarga a _proposals a un commit con SOURCE.json e informe de riesgos, y promote con confirmación; fallan por falta de implementación
+- [x] TASK-802: `hefesto skill TÉRMINO` y `hefesto skill find` (skills.sh, versión fijada, solo busca)
+  - verify: `python -m unittest tests.test_skills_ecosystem.LocalSearchTests tests.test_skills_ecosystem.FindTests && python tools/dev.py lint`
+  - files: hefesto/skills.py, hefesto/cli.py, hefesto.toml, hefesto/config.py, hefesto/doctor.py, tests/test_skills_input.py
+  - role: runner
+  - depends_on: TASK-801
+  - size: M
+  - parallel: false
+  - accept: la búsqueda local encuentra por nombre, descripción, tags y contenido; find usa npx skills con la versión fijada en la config, no instala nada, puntúa la confianza y sin Node sale con 3
+- [x] TASK-803: `skill fetch`, `promote` y `skill update` con informe de riesgos
+  - verify: `python -m unittest tests.test_skills_ecosystem && python tools/dev.py lint`
+  - files: hefesto/skills.py, hefesto/cli.py, hefesto/sync.py, tests/test_skills_security.py
+  - role: runner
+  - depends_on: TASK-802
+  - size: M
+  - parallel: false
+  - accept: fetch deja la skill solo en skills/_proposals con SOURCE.json y hashes sin ejecutar nada; el informe detecta scripts, red/shell e instrucciones de saltarse reglas; promote exige TTY o --yes con las barreras de siempre y conserva el commit de origen; update repite el circuito
+- [x] TASK-809: `install.sh --add-to-path` añade el lanzador al PATH de usuario
+  - verify: `python -m unittest tests.test_install_path && python tools/dev.py lint`
+  - files: install.sh, BOOTSTRAP.md, tests/test_install_path.py
+  - role: runner
+  - depends_on: none
+  - size: S
+  - parallel: false
+  - accept: solo con --add-to-path (nunca por defecto) añade el bin al PATH de usuario sin duplicar: en Git Bash sobre Windows con PowerShell, en Linux/macOS añadiendo una línea al perfil de la shell; con HEFESTO_PATH_DRY_RUN=1 solo imprime lo que haría (los tests usan esto y nunca tocan el PATH real); BOOTSTRAP.md usa el flag
+- [x] TASK-804: Contratos de los packs y del pack context (Graphify)
+  - verify: `python -m py_compile tests/test_packs.py && python -m unittest tests.test_packs 2>&1 | grep -q FAILED`
+  - files: tests/test_packs.py, tests/fakes/graphify
+  - role: core
+  - depends_on: TASK-803
+  - size: S
+  - parallel: false
+  - contract: tests/test_packs.py
+  - accept: los tests fijan el catálogo de packs, pack list/enable/disable/update sin instaladores oficiales, coste adicional, confirmación de cambios, política de bloqueo y la integración de Graphify; fallan por falta de implementación
+- [x] TASK-805: Catálogo de packs y `hefesto pack list|enable|disable|update`
+  - verify: `python -m unittest tests.test_packs.CatalogTests tests.test_packs.PackCommandTests tests.test_packs.PolicyTests && python tools/dev.py lint`
+  - files: catalog/, hefesto/packs.py, hefesto/cli.py, hefesto/sync.py, hefesto/guard.py, hefesto/skills.py, hefesto/doctor.py, tests/test_packs_policy.py
+  - role: runner
+  - depends_on: TASK-804
+  - size: M
+  - parallel: false
+  - accept: catálogo con los 11 packs de la especificación y sin Docker; enable nunca ejecuta instaladores; skills de packs solo en proyectos con el pack activo; media-gen exige --accept-extra-cost; reverse muestra los cambios y pide confirmación; la política de video bloquea el render en la nube
+- [x] TASK-806: Pack context: Graphify en init/enable, done, paquete y resume
+  - verify: `python -m unittest tests.test_packs && python tools/dev.py lint && python tools/dev.py test`
+  - files: hefesto/packs.py, hefesto/acceptance.py, hefesto/packet.py, hefesto/progress.py, hefesto/project.py, hefesto.toml, hefesto/config.py, hefesto/doctor.py, tests/test_context_pack.py
+  - role: runner
+  - depends_on: TASK-805
+  - size: M
+  - parallel: false
+  - accept: grafo inicial con extract --code-only al activar; update tras cada checkpoint de done; extracto del grafo en el paquete y en resume; nunca install ni hook install; sin API keys y con GRAPHIFY_QUERY_LOG_DISABLE=1; sin graphify el ciclo sigue
+- [x] TASK-815: Contratos de límites de uso (5 h y semanal) y del panel de actividad en directo
+  - verify: `python -m py_compile tests/test_limits_watch.py && python -m unittest tests.test_limits_watch 2>&1 | grep -q FAILED`
+  - files: tests/test_limits_watch.py, tests/fakes/claude, tests/fakes/codex, tests/fakes/fake_agent.py, tests/helpers.py
+  - role: core
+  - depends_on: none
+  - size: S
+  - parallel: false
+  - contract: tests/test_limits_watch.py
+  - accept: los tests fijan la lectura local de límites de Codex y Claude, `hefesto limits`, el salto preventivo de proveedores cerca del límite, el registro de agentes activos con salida en directo, `hefesto jobs` y `hefesto watch --once`; fallan por falta de implementación
+- [x] TASK-816: `hefesto limits`, línea de estado de Claude y preflight por porcentaje de uso
+  - verify: `python -m unittest tests.test_limits_watch.LimitsTests tests.test_limits_watch.PreflightLimitTests tests.test_limits_watch.StatuslineTests && python tools/dev.py lint`
+  - files: hefesto/limits.py, hefesto/preflight.py, hefesto/cli.py, hefesto/sync.py, hefesto/doctor.py, hefesto/providers.py, hefesto/activity.py, tests/test_limits_robustness.py
+  - role: runner
+  - depends_on: TASK-815
+  - size: M
+  - parallel: false
+  - accept: lee los porcentajes reales de 5 h y semanal de Codex (logs de sesión) y Claude (caché de la línea de estado) sin llamadas; Gemini unknown; el enrutador salta un proveedor por encima del umbral sin gastar intento
+- [x] TASK-817: Agentes activos con salida en directo, `hefesto jobs` y `hefesto watch`
+  - verify: `python -m unittest tests.test_limits_watch tests.test_activity_robustness tests.test_adapters && python tools/dev.py lint`
+  - files: hefesto/activity.py, hefesto/adapters/, hefesto/router.py, hefesto/loop.py, hefesto/cli.py, tests/fakes/fake_agent.py, tests/test_activity_robustness.py
+  - role: runner
+  - depends_on: TASK-816
+  - size: M
+  - parallel: false
+  - accept: cada delegación y cada iteración del loop se registra como activa con PID, rol, proveedor, tarea y hora, y escribe su salida en el log mientras ocurre; jobs la lista; watch la refresca con los límites arriba; nada queda huérfano si el proceso muere

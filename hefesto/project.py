@@ -33,6 +33,7 @@ LOCAL_EXCLUDES = (
     ".codex/config.toml",
     ".gemini/settings.json",
     ".gemini/commands/hefesto/",
+    "graphify-out/",
 )
 
 LOCAL_ROOT_SKIPPED = {
@@ -247,4 +248,10 @@ def init(target: Path, providers: str | None = None, shared: bool = False) -> li
 
     changes = sync.run(project)
     report.append("sync: " + sync.summary(changes))
+    from hefesto import packs
+
+    if packs.is_pack_enabled(project, "context") and not (project / "graphify-out" / "graph.json").is_file():
+        code, out = packs.run_graphify(project, ["extract", ".", "--code-only"])
+        if out:
+            report.append(out)
     return report

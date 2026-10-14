@@ -1,0 +1,63 @@
+{
+  "attempts": 1,
+  "base_commit": "19834bcc0a4aa150b92d02203aa0f2bc6bc399ab",
+  "branch": "hefesto/fase-8-ecosistema-de-skills-y-packs",
+  "commit": "3896984c73df1dfc3ddd45a24149298dc37f251e",
+  "contract": [
+    "tests/test_limits_watch.py"
+  ],
+  "created_at": "2026-10-14T19:06:08+00:00",
+  "files": [
+    {
+      "path": "tests/fakes/fake_agent.py",
+      "sha256": "439553b458f51fa3f592b53a512d9ecca0b2d08d5dc88f9f31dc976a1482188e"
+    },
+    {
+      "path": "tests/helpers.py",
+      "sha256": "c29f62f2246867e47c194c50421f675770c13ca0f3b0bea016a245f3f5b12027"
+    },
+    {
+      "path": "tests/test_limits_watch.py",
+      "sha256": "0e06c6dcceae499cf53f27c521cad3eabb306d97f9187a3afdaaaa2e1f6e5120"
+    }
+  ],
+  "phase": "Fase 8 — Ecosistema de skills y packs",
+  "prev_sha256": "dda2e0def54165cc271ee21b059e4069a8f8c7722ac133d687d614c82cdbb0db",
+  "prev_task_id": "TASK-805",
+  "providers": [
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-14T19:06:06+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "",
+    "reviewer": "gemini:default",
+    "run_id": "2461f4ad9690",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "reviewer",
+      "run_id": "2461f4ad9690",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 21,
+  "task_id": "TASK-815",
+  "title": "Contratos de límites de uso (5 h y semanal) y del panel de actividad en directo",
+  "verify": {
+    "command": "python -m py_compile tests/test_limits_watch.py && python -m unittest tests.test_limits_watch 2>&1 | grep -q FAILED",
+    "duration_seconds": 0.245,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-815-a1-2026-10-14T190607+0000.log",
+    "output_summary": "",
+    "sha256": "41d8e17e8981a352605c6156904047ba89cc13745af504eda87393c41d8cca2d",
+    "trust": "auto"
+  }
+}

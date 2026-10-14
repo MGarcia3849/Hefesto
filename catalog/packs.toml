@@ -1,0 +1,124 @@
+[packs.context]
+kind = "tool"
+source = "Graphify-Labs/graphify"
+license = "Apache-2.0"
+default = "recommended"
+extra_cost = false
+requires = ["Python >= 3.10"]
+binary = "graphify"
+version = "0.9.13"
+install = "uv tool install graphifyy==0.9.13"
+
+[packs.memory]
+kind = "tool"
+source = "basicmachines-co/basic-memory"
+license = "MIT"
+default = "recommended"
+extra_cost = false
+requires = ["Python >= 3.10", "versión a verificar"]
+binary = "basic-memory"
+version = "0.1.0"
+install = "uv tool install basic-memory==0.1.0"
+
+[packs.usage]
+kind = "tool"
+source = "ryoppippi/ccusage"
+license = "MIT"
+default = "recommended"
+extra_cost = false
+requires = ["Node >= 18", "versión a verificar"]
+binary = "ccusage"
+version = "1.0.0"
+install = "npm install -g ccusage@1.0.0"
+
+[packs.sandbox]
+kind = "tool"
+source = "git/git"
+license = "GPL-2.0"
+default = "recommended"
+extra_cost = false
+requires = ["git >= 2.20 con soporte de worktree", "versión a verificar"]
+binary = "git"
+version = "2.20.0"
+install = "instalar git del sistema operativo"
+
+[packs.spec]
+kind = "tool"
+source = "github/spec-kit"
+license = "MIT"
+default = "off"
+extra_cost = false
+requires = ["Python >= 3.10", "versión a verificar"]
+binary = "specify"
+version = "0.1.0"
+install = "uv tool install specify==0.1.0"
+
+[packs.tokens]
+kind = "tool"
+source = "rtk-ai/rtk"
+license = "MIT"
+default = "proposed"
+extra_cost = false
+requires = ["Rust / Cargo", "versión a verificar"]
+binary = "rtk"
+version = "0.1.0"
+install = "cargo install rtk"
+
+[packs.design]
+kind = "skills"
+source = "Leonxlnx/taste-skill"
+license = "MIT"
+default = "proposed"
+extra_cost = false
+requires = []
+skills = [
+    "design-taste-frontend",
+    "redesign-existing-projects",
+    "minimalist-ui",
+    "high-end-visual-design",
+    "gpt-taste",
+    "full-output-enforcement",
+]
+overlay = "Reglas de adaptación de Hefesto para diseño: escala de espaciado fija, tokens de color, contraste y accesibilidad."
+
+[packs.anatomy]
+kind = "skills"
+source = "wheresryan22/anatomy"
+license = "MIT"
+default = "off"
+extra_cost = false
+requires = ["Node >= 20.10", "Chrome/Chromium"]
+skills = ["anatomy"]
+overlay = "Reglas de adaptación de Hefesto para diagramas anatómicos: SVG autocontenido con capas y etiquetas."
+
+[packs.video]
+kind = "skills"
+source = "heygen-com/hyperframes"
+license = "Apache-2.0"
+default = "off"
+extra_cost = false
+requires = ["Node >= 22", "FFmpeg"]
+skills = ["hyperframes", "media-use"]
+overlay = "Reglas de adaptación de Hefesto para video: render exclusivamente local sin servicios externos."
+policy_block = ["(?i)\\bcloud\\s+render\\b", "--cloud", "(?i)\\baws\\s+lambda\\b", "--lambda"]
+
+[packs.reverse]
+kind = "skills"
+source = "morluto/rea"
+license = "MIT"
+default = "off"
+extra_cost = false
+requires = ["Solo se usa con software propio o autorizado expresamente."]
+skills = ["rea"]
+overlay = "Reglas de adaptación de Hefesto para ingeniería inversa: análisis local seguro."
+confirm_changes = ["Registra un servidor MCP en Claude Code, Codex y Gemini"]
+
+[packs.media-gen]
+kind = "skills"
+source = "higgsfield-ai/skills"
+license = "Proprietary"
+default = "off"
+extra_cost = true
+requires = ["Cuenta de pago con créditos propia"]
+skills = ["higgsfield"]
+overlay = "Reglas de adaptación de Hefesto para generación de medios: requiere confirmación de coste adicional."

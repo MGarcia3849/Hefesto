@@ -87,24 +87,45 @@ def cmd_status(args: argparse.Namespace) -> int:
 
 
 def cmd_hook(args: argparse.Namespace) -> int:
-    from hefesto import guard
+    try:
+        from hefesto import guard
 
-    raw = sys.stdin.read()
-    try:
-        payload = json.loads(raw) if raw.strip() else {}
-    except json.JSONDecodeError:
-        print("hefesto hook: entrada JSON inválida; se bloquea por seguridad.", file=sys.stderr)
+        raw = sys.stdin.read()
+        try:
+            payload = json.loads(raw) if raw.strip() else {}
+        except json.JSONDecodeError:
+            print("hefesto hook: entrada JSON inválida; se bloquea por seguridad.", file=sys.stderr)
+            return 2
+        try:
+            proj: Path | None = (
+                project.find_project(Path(payload.get("cwd") or "."))
+                if isinstance(payload, dict)
+                else None
+            )
+        except Exception:
+            proj = None
+
+        fail_closed = False
+        try:
+            cfg = config.load(proj)
+            protected = cfg.get("guard", "protected_paths", default=list(guard.DEFAULT_PROTECTED))
+        except Exception:
+            protected = list(guard.DEFAULT_PROTECTED)
+            fail_closed = True
+
+        reason = guard.check_tool_use(
+            payload if isinstance(payload, dict) else {},
+            protected,
+            project=proj,
+            fail_closed=fail_closed,
+        )
+        if reason:
+            print(reason, file=sys.stderr)
+            return 2  # Claude Code: código 2 = bloquear la herramienta y mostrar el motivo.
+        return EXIT_OK
+    except Exception as exc:
+        print(f"hefesto hook: error inesperado ({exc}); se bloquea por seguridad.", file=sys.stderr)
         return 2
-    try:
-        proj: Path | None = project.find_project(Path(payload.get("cwd") or ".")) if isinstance(payload, dict) else None
-    except HefestoError:
-        proj = None
-    protected = config.load(proj).get("guard", "protected_paths", default=list(guard.DEFAULT_PROTECTED))
-    reason = guard.check_tool_use(payload if isinstance(payload, dict) else {}, protected)
-    if reason:
-        print(reason, file=sys.stderr)
-        return 2  # Claude Code: código 2 = bloquear la herramienta y mostrar el motivo.
-    return EXIT_OK
 
 
 # ---------------------------------------------------------------------------
@@ -424,6 +445,476 @@ def cmd_migrate(args: argparse.Namespace) -> int:
 
 
 # ---------------------------------------------------------------------------
+# Fase 8: ecosistema de skills y packs
+
+
+def cmd_skill(args: argparse.Namespace) -> int:
+    from hefesto import skills, util
+    from hefesto.util import FRAMEWORK_ROOT, hefesto_home
+
+    tokens: list[str] = getattr(args, "args", []) or []
+    if not tokens:
+        raise HefestoError(
+            "Indica un término o subcomando: `hefesto skill TÉRMINO` o `hefesto skill find TÉRMINO`.",
+            EXIT_INPUT,
+        )
+
+    subcmd = tokens[0].lower()
+    if subcmd == "find":
+        if len(tokens) < 2:
+            raise HefestoError("Indica el término a buscar: `hefesto skill find TÉRMINO`.", EXIT_INPUT)
+        term = " ".join(tokens[1:])
+        results = skills.find(term, owner=getattr(args, "owner", None))
+        if not results:
+            print(f"No se encontraron skills para '{term}'.")
+            return EXIT_OK
+        headers = ["NOMBRE", "INSTALACIONES", "ESTRELLAS", "CONFIANZA", "URL"]
+        rows = [
+            [
+                str(r.get("name", "")),
+                str(r.get("installs", "")),
+                str(r.get("stars", "")),
+                str(r.get("trust", "")),
+                str(r.get("url", "")),
+            ]
+            for r in results
+        ]
+        widths = [len(h) for h in headers]
+        for row in rows:
+            for i, col in enumerate(row):
+                widths[i] = max(widths[i], len(col))
+        print("  ".join(h.ljust(widths[i]) for i, h in enumerate(headers)))
+        for row in rows:
+            print("  ".join(col.ljust(widths[i]) for i, col in enumerate(row)))
+        return EXIT_OK
+
+    if subcmd == "fetch":
+        if len(tokens) < 2:
+            raise HefestoError("Indica la especificación: `hefesto skill fetch OWNER/REPO@SKILL`.", EXIT_INPUT)
+        spec = tokens[1]
+        path = skills.fetch(spec)
+        print(f"Propuesta descargada en: {path}")
+        source = util.read_json(path / "SOURCE.json", default={})
+        risks = source.get("risks", []) if isinstance(source, dict) else []
+        print("== Informe de riesgos ==")
+        if risks:
+            for r in risks:
+                print(f"- [{skills.sanitize_text(str(r.get('kind', '')))}] {skills.sanitize_text(str(r.get('file', '')))}: {skills.sanitize_text(str(r.get('detail', '')))}")
+        else:
+            print("Sin riesgos detectados.")
+        return EXIT_OK
+
+    if subcmd == "update":
+        if len(tokens) < 2:
+            raise HefestoError("Indica el nombre de la skill: `hefesto skill update SKILL`.", EXIT_INPUT)
+        skill_name = tokens[1]
+        promoted_dir = hefesto_home() / "skills" / "promoted" / skill_name
+        path = skills.update(skill_name)
+        print(f"Propuesta actualizada en: {path}")
+
+        import difflib
+
+        old_files: set[str] = set()
+        if promoted_dir.is_dir():
+            for p in sorted(promoted_dir.rglob("*")):
+                if p.is_file() and p.name != "SOURCE.json":
+                    old_files.add(p.relative_to(promoted_dir).as_posix())
+
+        new_files: set[str] = set()
+        if path.is_dir():
+            for p in sorted(path.rglob("*")):
+                if p.is_file() and p.name != "SOURCE.json":
+                    new_files.add(p.relative_to(path).as_posix())
+
+        all_rels = sorted(old_files | new_files)
+        changed_binaries: list[str] = []
+
+        for rel in all_rels:
+            old_p = promoted_dir / rel
+            new_p = path / rel
+            old_bytes = old_p.read_bytes() if old_p.is_file() else None
+            new_bytes = new_p.read_bytes() if new_p.is_file() else None
+
+            if old_bytes == new_bytes:
+                continue
+
+            old_text = skills.decode_text(old_bytes) if old_bytes is not None else None
+            new_text = skills.decode_text(new_bytes) if new_bytes is not None else None
+
+            is_old_text = (old_bytes is None) or (old_text is not None)
+            is_new_text = (new_bytes is None) or (new_text is not None)
+
+            if is_old_text and is_new_text:
+                old_lines = old_text.splitlines(keepends=True) if old_text is not None else []
+                new_lines = new_text.splitlines(keepends=True) if new_text is not None else []
+                fromfile = f"promoted/{skill_name}/{rel}" if old_bytes is not None else "/dev/null"
+                tofile = f"_proposals/{path.name}/{rel}" if new_bytes is not None else "/dev/null"
+                diff = list(difflib.unified_diff(
+                    old_lines,
+                    new_lines,
+                    fromfile=fromfile,
+                    tofile=tofile,
+                ))
+                if diff:
+                    sys.stdout.write(skills.sanitize_text("".join(diff)))
+            else:
+                changed_binaries.append(rel)
+
+        if changed_binaries:
+            print("== Ficheros binarios modificados ==")
+            for b in changed_binaries:
+                print(f"- {skills.sanitize_text(b)}")
+
+        source = util.read_json(path / "SOURCE.json", default={})
+        risks = source.get("risks", []) if isinstance(source, dict) else []
+        print("== Informe de riesgos ==")
+        if risks:
+            for r in risks:
+                print(f"- [{skills.sanitize_text(str(r.get('kind', '')))}] {skills.sanitize_text(str(r.get('file', '')))}: {skills.sanitize_text(str(r.get('detail', '')))}")
+        else:
+            print("Sin riesgos detectados.")
+
+        return EXIT_OK
+
+    term = " ".join(tokens)
+    roots: list[Path] = [
+        FRAMEWORK_ROOT / "skills",
+        hefesto_home() / "skills" / "promoted",
+    ]
+    try:
+        proj = _project(args)
+    except HefestoError:
+        proj = None
+    if proj is not None and (proj / ".claude" / "skills").is_dir():
+        roots.append(proj / ".claude" / "skills")
+
+    results = skills.search_local(term, roots)
+    if not results:
+        print(f"No se encontraron skills locales para '{term}'.")
+        print(f"Puedes buscar en el registro público con:\n  hefesto skill find {term}")
+        print("O redactar una nueva con la skill hefesto-skill-skill-creator.")
+        return EXIT_OK
+
+    for r in results:
+        path = Path(r["path"])
+        print(f"== {path} ==")
+        try:
+            print(skills.sanitize_text(path.read_text(encoding="utf-8")))
+        except OSError:
+            pass
+    return EXIT_OK
+
+
+def cmd_promote(args: argparse.Namespace) -> int:
+    from hefesto import skills
+
+    if getattr(args, "yes", False):
+        _check_yes_barriers(args)
+    path = skills.promote(args.name, yes=getattr(args, "yes", False))
+    print(f"Skill promovida en: {path}")
+    return EXIT_OK
+
+
+def cmd_pack_list(args: argparse.Namespace) -> int:
+    from hefesto import packs
+
+    try:
+        proj: Path | None = _project(args)
+    except HefestoError:
+        proj = None
+    items = packs.list_packs(proj)
+    if not items:
+        print("No hay packs en el catálogo.")
+        return EXIT_OK
+    headers = ["NOMBRE", "TIPO", "ESTADO", "POR DEFECTO", "COSTE", "FALTA"]
+    rows = []
+    for p in items:
+        status_s = "activo" if p["enabled"] else "inactivo"
+        cost_s = "adicional" if p["extra_cost"] else "incluido"
+        missing_s = ", ".join(p["missing"]) if p["missing"] else "-"
+        rows.append([
+            p["name"],
+            p["kind"] or "",
+            status_s,
+            p["default"] or "",
+            cost_s,
+            missing_s,
+        ])
+    widths = [len(h) for h in headers]
+    for r in rows:
+        for i, val in enumerate(r):
+            widths[i] = max(widths[i], len(val))
+    print("  ".join(h.ljust(widths[i]) for i, h in enumerate(headers)))
+    for r in rows:
+        print("  ".join(val.ljust(widths[i]) for i, val in enumerate(r)))
+    return EXIT_OK
+
+
+def cmd_pack_enable(args: argparse.Namespace) -> int:
+    from hefesto import packs
+
+    if getattr(args, "yes", False):
+        _check_yes_barriers(args)
+    proj = _project(args)
+    msg = packs.enable(
+        proj,
+        args.name,
+        yes=getattr(args, "yes", False),
+        accept_extra_cost=getattr(args, "accept_extra_cost", False),
+    )
+    if msg:
+        print(msg)
+    if getattr(msg, "has_conflicts", False):
+        return EXIT_BLOCKED
+    return EXIT_OK
+
+
+def cmd_pack_disable(args: argparse.Namespace) -> int:
+    from hefesto import packs
+
+    proj = _project(args)
+    msg = packs.disable(proj, args.name)
+    if msg:
+        print(msg)
+    if getattr(msg, "has_conflicts", False):
+        return EXIT_BLOCKED
+    return EXIT_OK
+
+
+def cmd_pack_update(args: argparse.Namespace) -> int:
+    from hefesto import packs
+
+    proj = _project(args)
+    paths = packs.update(proj, args.name)
+    if paths:
+        for p in paths:
+            print(f"Propuesta actualizada en: {p}")
+    return EXIT_OK
+
+
+def cmd_limits(args: argparse.Namespace) -> int:
+    from hefesto import limits
+
+    if getattr(args, "json", False):
+        print(json.dumps(limits.all_limits(), indent=2, ensure_ascii=False))
+        return EXIT_OK
+    print(limits.render_table())
+    return EXIT_OK
+
+
+def cmd_statusline(args: argparse.Namespace) -> int:
+    try:
+        from hefesto import limits
+
+        raw = sys.stdin.read()
+        print(limits.handle_statusline(raw))
+    except Exception:
+        print("hefesto")
+    return EXIT_OK
+
+
+def _read_last_log_lines(path: Path, max_bytes: int = 8192, n_lines: int = 8) -> list[str]:
+    try:
+        if not path.is_file():
+            return []
+        with open(path, "rb") as fh:
+            fh.seek(0, os.SEEK_END)
+            size = fh.tell()
+            offset = max(0, size - max_bytes)
+            fh.seek(offset)
+            raw = fh.read()
+        text = raw.decode("utf-8", errors="replace")
+        lines = text.splitlines()
+        if offset > 0 and len(lines) > 1:
+            lines = lines[1:]
+        non_empty = [ln.strip() for ln in lines if ln.strip()]
+        return non_empty[-n_lines:] if non_empty else []
+    except OSError:
+        return []
+
+
+def summarize_log_line(line: str) -> str:
+    from hefesto import skills
+
+    clean = skills.ANSI_RE.sub("", line).strip()
+    if not clean:
+        return ""
+    if clean.startswith("{") and clean.endswith("}"):
+        try:
+            data = json.loads(clean)
+        except Exception:
+            data = None
+        if isinstance(data, dict):
+            su = data.get("step_update")
+            if isinstance(su, dict):
+                delta = su.get("text_delta")
+                if isinstance(delta, str) and delta.strip():
+                    return delta.strip()[:160]
+                call = su.get("tool_call") or su.get("call")
+                if isinstance(call, dict):
+                    name = str(call.get("name") or "tool")
+                    args = call.get("args") or call.get("input")
+                    target = ""
+                    if isinstance(args, dict):
+                        target = str(args.get("path") or args.get("file_path") or args.get("command") or args.get("target") or "")
+                    elif isinstance(args, str):
+                        target = args
+                    return f"{name} {target}".strip()[:160]
+                if su.get("state"):
+                    return f"[{su.get('state')}] {su.get('step_type', '')}".strip()[:160]
+            if data.get("event") == "result":
+                res = data.get("result")
+                if isinstance(res, dict) and res.get("response"):
+                    return str(res.get("response")).strip()[:160]
+            msg = data.get("message")
+            if isinstance(msg, dict):
+                content = msg.get("content")
+                if isinstance(content, list) and content:
+                    first = content[0]
+                    if isinstance(first, dict):
+                        if first.get("type") == "tool_use":
+                            name = str(first.get("name") or "tool")
+                            inp = first.get("input")
+                            target = ""
+                            if isinstance(inp, dict):
+                                target = str(inp.get("path") or inp.get("file_path") or inp.get("command") or inp.get("target") or "")
+                            elif isinstance(inp, str):
+                                target = inp
+                            return f"{name} {target}".strip()[:160]
+                        if first.get("type") == "text":
+                            return str(first.get("text") or "").strip()[:160]
+            cb = data.get("content_block")
+            if isinstance(cb, dict) and cb.get("type") == "tool_use":
+                return f"tool: {cb.get('name', '')}".strip()[:160]
+            item = data.get("item")
+            if isinstance(item, dict):
+                if item.get("text"):
+                    return str(item.get("text")).strip()[:160]
+                if item.get("type") == "tool_call":
+                    return f"tool: {item.get('name', '')}".strip()[:160]
+            for key in ("response", "result", "text", "summary", "error"):
+                val = data.get(key)
+                if isinstance(val, str) and val.strip():
+                    return val.strip()[:160]
+    return clean[:160]
+
+
+def _active_log_lines(project: Path, raw_path: str, n_lines: int) -> list[str]:
+    from hefesto import activity
+
+    try:
+        path = activity.resolve_log_path(project, raw_path)
+    except (OSError, ValueError, RuntimeError):
+        return ["(ruta de log no válida)"]
+    return _read_last_log_lines(path, max_bytes=8192, n_lines=n_lines)
+
+
+def cmd_jobs(args: argparse.Namespace) -> int:
+    from hefesto import activity, skills, util
+
+    proj = _project(args)
+    active = activity.list_active(proj)
+    items: list[dict[str, Any]] = []
+    now = util.utcnow()
+    for entry in active:
+        item = dict(entry)
+        try:
+            started = util.parse_iso(entry.get("started_at") or util.now_iso())
+            elapsed = max(0, int((now - started).total_seconds()))
+        except Exception:
+            elapsed = 0
+        item["seconds"] = elapsed
+        item["elapsed_seconds"] = elapsed
+        last_lines = _active_log_lines(proj, entry.get("log_path", ""), n_lines=1)
+        raw_last = last_lines[-1] if last_lines else ""
+        item["last_line"] = skills.sanitize_text(skills.ANSI_RE.sub("", raw_last))
+        items.append(item)
+
+    if getattr(args, "json", False):
+        print(json.dumps(items, indent=2, ensure_ascii=False))
+        return EXIT_OK
+
+    if not items:
+        print("No hay agentes activos.")
+        return EXIT_OK
+
+    headers = ["TIPO", "ROL", "PROVEEDOR", "TAREA", "TIEMPO", "ÚLTIMA LÍNEA"]
+    rows = []
+    for it in items:
+        rows.append([
+            str(it.get("kind") or "worker"),
+            str(it.get("role") or ""),
+            str(it.get("provider") or ""),
+            str(it.get("task_id") or "-"),
+            f"{it.get('seconds', 0)}s",
+            str(it.get("last_line") or ""),
+        ])
+    widths = [len(h) for h in headers]
+    for r in rows:
+        for i, val in enumerate(r):
+            widths[i] = max(widths[i], len(val))
+    print("  ".join(h.ljust(widths[i]) for i, h in enumerate(headers)))
+    for r in rows:
+        print("  ".join(val.ljust(widths[i]) for i, val in enumerate(r)))
+    return EXIT_OK
+
+
+def cmd_watch(args: argparse.Namespace) -> int:
+    import io
+    import time
+    from hefesto import activity, limits, skills, util
+
+    proj = _project(args)
+    interval = float(getattr(args, "interval", 2.0) or 2.0)
+    once = getattr(args, "once", False)
+
+    def render() -> str:
+        buf = io.StringIO()
+        buf.write("== Límites ==\n")
+        buf.write(limits.render_table() + "\n\n")
+
+        active = activity.list_active(proj)
+        if not active:
+            buf.write("No hay agentes activos.\n")
+        else:
+            now = util.utcnow()
+            for entry in active:
+                prov = str(entry.get("provider") or "")
+                role = str(entry.get("role") or "")
+                task = str(entry.get("task_id") or "-")
+                try:
+                    started = util.parse_iso(entry.get("started_at") or util.now_iso())
+                    elapsed = max(0, int((now - started).total_seconds()))
+                except Exception:
+                    elapsed = 0
+                buf.write(f"[{prov}] rol={role} tarea={task} ({elapsed}s)\n")
+                lines = _active_log_lines(proj, entry.get("log_path", ""), n_lines=8)
+                if not lines:
+                    buf.write("  (sin salida)\n")
+                else:
+                    for l in lines:
+                        summary = summarize_log_line(l)
+                        clean = skills.sanitize_text(skills.ANSI_RE.sub("", summary))
+                        buf.write(f"  {clean}\n")
+                buf.write("\n")
+        return buf.getvalue().rstrip() + "\n"
+
+    if once:
+        sys.stdout.write(render())
+        sys.stdout.flush()
+        return EXIT_OK
+
+    try:
+        while True:
+            sys.stdout.write("\033[2J\033[H")
+            sys.stdout.write(render())
+            sys.stdout.flush()
+            time.sleep(interval)
+    except KeyboardInterrupt:
+        return EXIT_OK
+
+
+# ---------------------------------------------------------------------------
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -586,6 +1077,52 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("prompt", help="imprime un paso del protocolo (para orquestadores sin comandos propios)")
     p.add_argument("step", choices=["plan", "next", "retro"])
     p.set_defaults(func=cmd_prompt)
+
+    p = sub.add_parser("skill", help="busca y gestiona skills locales y del registro público")
+    p.add_argument("args", nargs="*", help="subcomando (find, fetch, update) o término de búsqueda")
+    p.add_argument("--owner", help="filtra por propietario en `skill find`")
+    p.set_defaults(func=cmd_skill)
+
+    p = sub.add_parser("promote", help="promueve una propuesta de skill a promovidas")
+    p.add_argument("name", help="nombre de la propuesta (en skills/_proposals)")
+    p.add_argument("--yes", action="store_true", help="promueve sin confirmación interactiva ni TTY")
+    p.set_defaults(func=cmd_promote)
+
+    p = sub.add_parser("pack", help="catálogo y gestión de packs externos curados")
+    psub = p.add_subparsers(dest="pack_cmd", metavar="ACCIÓN", required=True)
+
+    c = psub.add_parser("list", help="muestra los packs del catálogo y su estado")
+    c.set_defaults(func=cmd_pack_list)
+
+    c = psub.add_parser("enable", help="activa un pack en el proyecto")
+    c.add_argument("name", help="nombre del pack")
+    c.add_argument("--yes", action="store_true", help="activa sin confirmación interactiva ni TTY")
+    c.add_argument("--accept-extra-cost", action="store_true", help="acepta costes adicionales del pack")
+    c.set_defaults(func=cmd_pack_enable)
+
+    c = psub.add_parser("disable", help="desactiva un pack en el proyecto")
+    c.add_argument("name", help="nombre del pack")
+    c.set_defaults(func=cmd_pack_disable)
+
+    c = psub.add_parser("update", help="descarga la nueva versión de las skills de un pack")
+    c.add_argument("name", help="nombre del pack")
+    c.set_defaults(func=cmd_pack_update)
+
+    p = sub.add_parser("limits", help="uso real de ventanas de 5 h y semanal de cada proveedor")
+    p.add_argument("--json", action="store_true", help="emite la lista de límites en JSON")
+    p.set_defaults(func=cmd_limits)
+
+    p = sub.add_parser("statusline", help="comando de línea de estado para Claude Code (lee JSON por stdin)")
+    p.set_defaults(func=cmd_statusline)
+
+    p = sub.add_parser("jobs", help="muestra los agentes activos y la última línea de su log")
+    p.add_argument("--json", action="store_true", help="emite la lista de agentes activos en JSON")
+    p.set_defaults(func=cmd_jobs)
+
+    p = sub.add_parser("watch", help="monitor de límites y actividad de agentes en directo")
+    p.add_argument("--once", action="store_true", help="imprime una vez y sale")
+    p.add_argument("--interval", type=float, default=2.0, help="intervalo de refresco en segundos (por defecto 2)")
+    p.set_defaults(func=cmd_watch)
 
     return parser
 

@@ -47,7 +47,7 @@ def static_available(cfg: config.Config, provider: str) -> tuple[bool, str]:
 
 def available(cfg: config.Config, provider: str) -> tuple[bool, str]:
     """Disponible para recibir trabajo ahora: estático + sin cooldown, sin error de auth y bajo su tope."""
-    from hefesto import quota
+    from hefesto import limits, quota
 
     ok, reason = static_available(cfg, provider)
     if not ok:
@@ -60,6 +60,11 @@ def available(cfg: config.Config, provider: str) -> tuple[bool, str]:
     cap = (cfg.get("quota", "max_calls_per_provider_per_loop", default={}) or {}).get(provider)
     if isinstance(cap, int) and quota.calls_in_loop(provider) >= cap:
         return False, f"tope de {cap} llamadas en este loop alcanzado"
+    threshold_val = cfg.get("quota", "near_limit_threshold", default=0.9)
+    threshold = float(threshold_val) if threshold_val is not None else 0.9
+    limit_reason = limits.near_limit(provider, threshold)
+    if limit_reason:
+        return False, limit_reason
     return True, "ok"
 
 

@@ -56,11 +56,13 @@ def resume_data(project: Path) -> dict[str, Any]:
     data = state.load(project)
     out: dict[str, Any] = {"status": data["status"], "task": None, "next_action": data["next_action"],
                            "last_error": data.get("last_error"), "notes": [], "runs": [], "review": None,
-                           "diff_stat": "", "branch": data.get("branch"), "workdir": data.get("workdir")}
+                           "diff_stat": "", "branch": data.get("branch"), "workdir": data.get("workdir"),
+                           "graph": ""}
     notes = read_jsonl(progress_path(project))
     if data.get("current_task_id"):
-        from hefesto import roadmap
+        from hefesto import packs, roadmap
 
+        cfg = config.load(project)
         task = roadmap.load_valid(project).get(data["current_task_id"])
         out["task"] = {"id": task.id, "title": task.title, "role": data.get("active_role") or task.role,
                        "attempts": data["attempts"], "verify": task.verify, "files": task.files}
@@ -75,6 +77,10 @@ def resume_data(project: Path) -> dict[str, Any]:
             stat = gitops.git(workdir, "diff", "--stat", data["task_base"], check=False).stdout.strip()
             untracked = [p for p in gitops.dirty_paths(workdir) if p not in stat]
             out["diff_stat"] = stat + (f"\n sin versionar: {', '.join(untracked[:10])}" if untracked else "")
+        if packs.is_pack_enabled(project, "context"):
+            graph_extract = packs.query_graph(project, workdir, task, cfg)
+            from hefesto import skills
+            out["graph"] = skills.sanitize_text(redact(graph_extract))
     out["notes"] = notes[-MAX_NOTES:]
     return out
 
@@ -101,6 +107,10 @@ def render_resume(info: dict[str, Any]) -> str:
         lines += [f"  - [{n.get('orchestrator')}] {n.get('text')}" for n in info["notes"]]
     if info.get("diff_stat"):
         lines.append("cambios de la tarea:\n" + "\n".join("  " + line for line in info["diff_stat"].splitlines()))
+    if info.get("graph"):
+        lines.append("grafo de código:")
+        graph_lines = [l.strip() for l in info["graph"].strip().splitlines() if l.strip()]
+        lines += [f"  {l[:160]}" for l in graph_lines[:8]]
     lines.append(f"siguiente acción: {info['next_action']}")
     return "\n".join(lines)
 

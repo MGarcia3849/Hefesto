@@ -1,0 +1,118 @@
+{
+  "attempts": 3,
+  "base_commit": "902a165cb85c9b5b551f474bd0ecd695b71bf87e",
+  "branch": "hefesto/fase-8-ecosistema-de-skills-y-packs",
+  "commit": "af8a40c56ec65df4d2017a426955a50145772ba1",
+  "contract": [],
+  "created_at": "2026-10-14T20:26:31+00:00",
+  "files": [
+    {
+      "path": "hefesto/activity.py",
+      "sha256": "b188ac38c8aec458513919876c20d073d682358b61ea14102660d750a523fe08"
+    },
+    {
+      "path": "hefesto/adapters/base.py",
+      "sha256": "1f8b498b992cb861a580f210b263decb1e555260bfa33845391454c359074105"
+    },
+    {
+      "path": "hefesto/adapters/claude.py",
+      "sha256": "50230f0dc0441a9eb5750c731b7b4c06f8913cfb295ce742a2b0777f41be3a64"
+    },
+    {
+      "path": "hefesto/adapters/gemini.py",
+      "sha256": "6e49d2467c046eb1195859f233bf6288be2fe240e81490bb6f2df68ffd75964d"
+    },
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "dbb927dfb1fc7030c3a26668ece874aba85f1e684c414078b20ba492d875197a"
+    },
+    {
+      "path": "hefesto/loop.py",
+      "sha256": "0d92f1b047645733ebadab19c3d82c972491ccd62b4c2b864116f7312a01548a"
+    },
+    {
+      "path": "hefesto/router.py",
+      "sha256": "c6fa1c4fe97b5db40f0836367335fc192c26f78bba60e3a8edfd20bdf5c3b43f"
+    },
+    {
+      "path": "tests/fakes/fake_agent.py",
+      "sha256": "fcae7c5c42118b9b3f78ccfc0eceef9a31fa28ac23fef8f1f61df0f535a926f1"
+    },
+    {
+      "path": "tests/test_activity_robustness.py",
+      "sha256": "d85f330cce73ffa268b8a4da165f8062ab52bb83827a3ea40c013f8917bfcd8a"
+    }
+  ],
+  "phase": "Fase 8 — Ecosistema de skills y packs",
+  "prev_sha256": "1d1888961483968e8b714f318ca843e9281a25a168f47c3ea4d8f673448cd9bd",
+  "prev_task_id": "TASK-816",
+  "providers": [
+    "claude:sonnet",
+    "codex:default",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-14T20:25:21+00:00",
+    "attempt": 2,
+    "authors": [
+      "codex:default",
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "",
+    "reviewer": "claude:sonnet",
+    "run_id": "8ec92f91644d",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "cae0a5dcb885",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "ac494b0e5121",
+      "success": false
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "b825c006a28d",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "forge",
+      "run_id": "0f18a2d78b9b",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "7f6214dcf854",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "8ec92f91644d",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 23,
+  "task_id": "TASK-817",
+  "title": "Agentes activos con salida en directo, `hefesto jobs` y `hefesto watch`",
+  "verify": {
+    "command": "python -m unittest tests.test_limits_watch tests.test_activity_robustness tests.test_adapters && python tools/dev.py lint",
+    "duration_seconds": 69.003,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-817-a3-2026-10-14T202630+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (62 ficheros Python)\n.......................................................\n----------------------------------------------------------------------\nRan 55 tests in 68.152s\n\nOK",
+    "sha256": "a33c975fffefbff5c659a2be5a2b96de6d5c9e377a3842eebc08bcca0ce4f67a",
+    "trust": "auto"
+  }
+}

@@ -6,6 +6,7 @@ Hefesto lee TOML (lo edita el usuario) y escribe solo `settings.json`, nunca TOM
 from __future__ import annotations
 
 import copy
+import re
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -55,6 +56,7 @@ POSITIVE_INTS: tuple[tuple[str, ...], ...] = (
     ("quota", "cooldown_default_minutes"),
     ("quota", "probe_max_age_minutes"),
     ("guard", "max_file_mb"),
+    ("packs_context", "query_budget"),
 )
 
 DEFAULTS_PATH = FRAMEWORK_ROOT / "hefesto.toml"
@@ -279,6 +281,15 @@ def validate(cfg: Config) -> list[str]:
     extra = cfg.get("trust", "extra_safe_prefixes", default=[])
     if not isinstance(extra, list) or not all(isinstance(x, str) for x in extra):
         errors.append("trust.extra_safe_prefixes debe ser una lista de textos")
+    npm_version = cfg.get("skills_sources", "npm_version")
+    if not isinstance(npm_version, str) or not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", npm_version):
+        errors.append("skills_sources.npm_version debe ser exactamente X.Y.Z (solo dígitos y puntos)")
+    trusted = cfg.get("skills_sources", "trusted_owners")
+    if trusted is not None and (not isinstance(trusted, list) or not all(isinstance(x, str) for x in trusted)):
+        errors.append("skills_sources.trusted_owners debe ser una lista de textos")
+    git_base = cfg.get("skills_sources", "git_base")
+    if git_base is not None and not isinstance(git_base, str):
+        errors.append("skills_sources.git_base debe ser texto")
     return errors
 
 

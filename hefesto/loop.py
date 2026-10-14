@@ -148,7 +148,9 @@ def run(project: Path, orchestrator: str | None, max_tasks: int | None, max_turn
                          name)
             run_id = new_run_id()
             call = Call(role="core", prompt=prompt, task_id=None, run_id=run_id,
-                        model=providers.split_entry(entry)[1], workdir=project, project=project,
+                        model=providers.split_entry(entry)[1],
+                        model_id=providers.model_id(cfg, entry),
+                        workdir=project, project=project,
                         timeout=int(cfg.get("limits", "orchestrator_timeout_seconds")), orchestrator=True,
                         max_turns=max_turns, env={"HEFESTO_ORCHESTRATOR": name, "HEFESTO_LOOP_ID": loop_id})
             result = adapters.get(cfg, name).run(call)

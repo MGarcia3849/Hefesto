@@ -8,8 +8,9 @@ from __future__ import annotations
 import fnmatch
 import re
 import shlex
-from pathlib import PurePosixPath
-from typing import Iterable
+import sys
+from pathlib import Path, PurePosixPath
+from typing import Any, Iterable
 
 DEFAULT_PROTECTED = (
     ".env", ".env.*", "*.pem", "*.key", "*.p12", "*.pfx", "id_rsa*", "id_ed25519*", "id_ecdsa*",
@@ -126,7 +127,7 @@ def branch_allowed(branch: str) -> bool:
 
 
 PATH_KEYS = ("file_path", "path", "notebook_path", "absolute_path")
-CONTROL_FILES = (".hefesto/state.json", ".hefesto/trust.json")
+CONTROL_FILES = (".hefesto/state.json", ".hefesto/trust.json", ".hefesto/settings.json")
 
 # Nombres de herramientas de Gemini CLI y Codex → equivalente de Claude Code.
 TOOL_ALIASES = {
@@ -195,7 +196,119 @@ def _check_path(tool: str, value: str, patterns: tuple[str, ...]) -> str | None:
     return None
 
 
-def check_tool_use(payload: dict[str, object], protected: Iterable[str] = DEFAULT_PROTECTED) -> str | None:
+def _check_pack_policies(project: Path | None, cmd_str: str, fail_closed: bool = False) -> str | None:
+    cat: dict[str, dict[str, Any]] | None = None
+    try:
+        from hefesto import packs
+        cat = packs.load_catalog()
+    except Exception as exc:
+        print(f"hefesto hook: aviso: no se pudo leer el catálogo de packs: {exc}", file=sys.stderr)
+
+    settings_readable = True
+    settings: dict[str, object] = {}
+    if project is not None:
+        try:
+            from hefesto import config
+            settings_path = config.project_settings_path(project)
+            if not settings_path.is_file():
+                raise FileNotFoundError(f"No existe {settings_path}")
+            settings = config.read_settings(settings_path)
+        except Exception as exc:
+            settings_readable = False
+            print(f"hefesto hook: aviso: no se pudo leer settings.json: {exc}", file=sys.stderr)
+    else:
+        settings_readable = False
+
+    packs_data = settings.get("packs", {}) if isinstance(settings, dict) else {}
+    active_packs = {
+        name for name, pdata in packs_data.items()
+        if isinstance(pdata, dict) and pdata.get("enabled")
+    }
+
+    # (b) si el catálogo no se puede leer o es inválido:
+    # si settings.json es legible y algún pack está activo (enabled true), bloquear el comando con código 2
+    # y un mensaje claro (no se puede verificar la política); si no hay ningún pack activo, dejar pasar.
+    if cat is None:
+        if settings_readable and active_packs:
+            return "Hefesto bloquea este comando: no se puede verificar la política de packs porque el catálogo no se puede leer o es inválido."
+        if settings_readable and not active_packs:
+            return None
+        if fail_closed or not settings_readable:
+            return "Hefesto bloquea este comando: no se puede verificar la política de packs."
+        return None
+
+    # (a) si settings.json del proyecto no se puede leer: bloquear lo que encaje con cualquier policy_block válida
+    # del catálogo (como ahora)
+    if not settings_readable or fail_closed:
+        for pack_name, entry in cat.items():
+            pb = entry.get("policy_block")
+            if pb and isinstance(pb, list):
+                for pat in pb:
+                    if not isinstance(pat, str):
+                        continue
+                    try:
+                        compiled = re.compile(pat)
+                        if compiled.search(cmd_str):
+                            return f"Hefesto bloquea este comando según la política del pack '{pack_name}'."
+                    except re.error as exc:
+                        print(
+                            f"hefesto hook: aviso: expresión de policy_block inválida en pack '{pack_name}' ({pat!r}): {exc}",
+                            file=sys.stderr,
+                        )
+        return None
+
+    has_invalid_regex = False
+    invalid_regex_packs: set[str] = set()
+    compiled_by_pack: list[tuple[str, list[re.Pattern[str]]]] = []
+
+    for name, entry in cat.items():
+        pb = entry.get("policy_block")
+        if pb and isinstance(pb, list):
+            pack_patterns: list[re.Pattern[str]] = []
+            for pat in pb:
+                if not isinstance(pat, str):
+                    has_invalid_regex = True
+                    invalid_regex_packs.add(name)
+                    continue
+                try:
+                    compiled = re.compile(pat)
+                    pack_patterns.append(compiled)
+                except re.error as exc:
+                    has_invalid_regex = True
+                    invalid_regex_packs.add(name)
+                    print(
+                        f"hefesto hook: aviso: expresión de policy_block inválida en pack '{name}' ({pat!r}): {exc}",
+                        file=sys.stderr,
+                    )
+            if pack_patterns:
+                compiled_by_pack.append((name, pack_patterns))
+
+    # (c) una regex inválida de un pack activo bloquea.
+    for broken_pack in invalid_regex_packs:
+        if broken_pack in active_packs:
+            return f"Hefesto bloquea este comando: no se puede verificar la política del pack '{broken_pack}' (expresión regular inválida)."
+
+    for pack_name, patterns in compiled_by_pack:
+        if pack_name in active_packs:
+            for pat in patterns:
+                if pat.search(cmd_str):
+                    return f"Hefesto bloquea este comando según la política del pack '{pack_name}'."
+
+    if has_invalid_regex:
+        for pack_name, patterns in compiled_by_pack:
+            for pat in patterns:
+                if pat.search(cmd_str):
+                    return f"Hefesto bloquea este comando según la política del pack '{pack_name}'."
+
+    return None
+
+
+def check_tool_use(
+    payload: dict[str, object],
+    protected: Iterable[str] = DEFAULT_PROTECTED,
+    project: Path | None = None,
+    fail_closed: bool = False,
+) -> str | None:
     """Decisión de los hooks previos a una herramienta (Claude, Codex, Gemini): motivo del bloqueo o None."""
     raw_tool = str(payload.get("tool_name") or "")
     tool = TOOL_ALIASES.get(raw_tool, raw_tool)
@@ -206,7 +319,22 @@ def check_tool_use(payload: dict[str, object], protected: Iterable[str] = DEFAUL
         command = tool_input.get("command")
         if isinstance(command, list):
             command = " ".join(str(c) for c in command)
-        return _check_bash(str(command or ""), patterns)
+        cmd_str = str(command or "")
+        reason = _check_bash(cmd_str, patterns)
+        if reason:
+            return reason
+        proj = project
+        if proj is None and isinstance(payload, dict) and payload.get("cwd"):
+            try:
+                from hefesto import project as proj_mod
+                proj = proj_mod.find_project(Path(str(payload["cwd"])))
+            except Exception:
+                proj = None
+        if proj is not None or fail_closed:
+            reason = _check_pack_policies(proj, cmd_str, fail_closed=fail_closed)
+            if reason:
+                return reason
+        return None
     if tool == "ApplyPatch":
         patch = str(tool_input.get("command") or tool_input.get("patch") or tool_input.get("input") or "")
         for match in PATCH_FILE.finditer(patch):

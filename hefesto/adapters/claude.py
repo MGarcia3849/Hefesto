@@ -1,10 +1,25 @@
-"""Claude Code en modo headless: `claude -p --output-format json`, prompt por stdin."""
+"""Claude Code en modo headless: `claude -p --output-format stream-json --verbose`, prompt por stdin."""
 
 from __future__ import annotations
 
 import re
+from typing import Any
 
-from hefesto.adapters.base import ORCHESTRATOR_SHELL, Adapter, AdapterResult, Call, last_json_object
+from hefesto.adapters.base import ORCHESTRATOR_SHELL, Adapter, AdapterResult, Call, last_json_object, loads_or_none
+
+
+def _find_claude_result(stdout: str) -> dict[str, Any] | None:
+    for line in reversed(stdout.splitlines()):
+        line = line.strip()
+        if not line:
+            continue
+        obj = loads_or_none(line)
+        if isinstance(obj, dict) and obj.get("type") == "result":
+            return obj
+    obj = last_json_object(stdout)
+    if isinstance(obj, dict):
+        return obj
+    return None
 
 
 class ClaudeAdapter(Adapter):
@@ -18,7 +33,7 @@ class ClaudeAdapter(Adapter):
     }
 
     def command(self, binary: str, call: Call) -> list[str]:
-        argv = [binary, "-p", "--output-format", "json"]
+        argv = [binary, "-p", "--output-format", "stream-json", "--verbose"]
         if call.model and call.model != "default":
             argv += ["--model", call.model]
         argv += ["--permission-mode", "plan" if call.read_only else "acceptEdits"]
@@ -29,7 +44,7 @@ class ClaudeAdapter(Adapter):
         return argv
 
     def parse(self, stdout: str, stderr: str, returncode: int, call: Call) -> AdapterResult:
-        data = last_json_object(stdout)
+        data = _find_claude_result(stdout)
         text = f"{stdout}\n{stderr}"
         if not isinstance(data, dict) or "result" not in data and "is_error" not in data:
             return self.failure_from_text(call, text, returncode)

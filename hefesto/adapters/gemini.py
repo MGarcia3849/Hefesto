@@ -9,9 +9,23 @@ import re
 from pathlib import Path
 from typing import Any
 
-from hefesto.adapters.base import ORCHESTRATOR_SHELL, Adapter, AdapterResult, Call, last_json_object
+from hefesto.adapters.base import ORCHESTRATOR_SHELL, Adapter, AdapterResult, Call, last_json_object, loads_or_none
 
 STDIN_INSTRUCTION = "Sigue exactamente las instrucciones del paquete recibido por la entrada estándar."
+
+
+def _find_agy_result(stdout: str) -> dict[str, Any] | None:
+    for line in reversed(stdout.splitlines()):
+        line = line.strip()
+        if not line:
+            continue
+        obj = loads_or_none(line)
+        if isinstance(obj, dict) and obj.get("event") == "result":
+            res = obj.get("result")
+            if isinstance(res, dict):
+                return res
+            return obj
+    return None
 
 
 class GeminiAdapter(Adapter):
@@ -43,7 +57,7 @@ class GeminiAdapter(Adapter):
             instruction = (f"Lee el paquete de la tarea en {packet} y sigue exactamente sus instrucciones."
                            if packet else STDIN_INSTRUCTION)
             instruction += " Estás en modo headless: no puedes ejecutar comandos de shell; solo debes leer y editar ficheros."
-            argv = [binary, "-p", instruction, "--output-format", "json",
+            argv = [binary, "-p", instruction, "--output-format", "stream-json",
                     "--mode", "plan" if call.read_only else "accept-edits"]
             if packet:
                 argv += ["--add-dir", str(packet.parent)]
@@ -61,9 +75,17 @@ class GeminiAdapter(Adapter):
         return call.prompt
 
     def parse(self, stdout: str, stderr: str, returncode: int, call: Call) -> AdapterResult:
-        data = last_json_object(stdout)
+        data: Any = None
+        binary = self.binary()
+        if binary and self.is_agy(binary):
+            data = _find_agy_result(stdout)
+        if data is None:
+            data = last_json_object(stdout)
+            if isinstance(data, dict) and data.get("event") == "result" and isinstance(data.get("result"), dict):
+                data = data["result"]
         if not isinstance(data, dict):
             return self.failure_from_text(call, stdout + "\n" + stderr, returncode)
+
         error = data.get("error")
         if error:
             message = error.get("message") if isinstance(error, dict) else str(error)

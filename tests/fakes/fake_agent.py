@@ -71,10 +71,34 @@ def log_call(name: str, argv: list[str], stdin: str) -> None:
         fh.write(json.dumps(record) + "\n")
 
 
+STREAM = False  # True si la CLI se invocó con `--output-format stream-json` (Claude y agy)
+
+
+def emit_steps(name: str, sc: dict[str, object]) -> None:
+    """Pasos intermedios en vivo (con flush), en el formato de streaming de cada CLI."""
+    steps = list(sc.get("steps") or [])  # type: ignore[call-overload]
+    delay = float(sc.get("step_delay", 0) or 0)  # type: ignore[arg-type]
+    for step in steps:
+        if name == "claude":
+            line = json.dumps({"type": "assistant", "message": {"content": [{"type": "text", "text": step}]}})
+        elif name == "codex":
+            line = json.dumps({"type": "item.completed", "item": {"type": "reasoning", "text": step}})
+        elif name == "agy":
+            line = json.dumps({"event": "step_update", "step_update": {"state": "DONE", "step_type": "agent_response",
+                                                                      "text_delta": step}})
+        else:
+            line = str(step)
+        print(line, flush=True)
+        time.sleep(delay)
+
+
 def output(name: str, summary: str, model: str) -> str:
     if name == "claude":
-        return json.dumps({"type": "result", "subtype": "success", "is_error": False, "result": summary,
-                           "usage": {"input_tokens": 120, "output_tokens": 40}, "modelUsage": {model: {}}})
+        result = json.dumps({"type": "result", "subtype": "success", "is_error": False, "result": summary,
+                             "usage": {"input_tokens": 120, "output_tokens": 40}, "modelUsage": {model: {}}})
+        if STREAM:
+            return json.dumps({"type": "system", "subtype": "init", "model": model}) + "\n" + result
+        return result
     if name == "codex":
         events = [{"type": "thread.started", "thread_id": "t1"},
                   {"type": "item.completed", "item": {"type": "agent_message", "text": summary}},
@@ -82,6 +106,9 @@ def output(name: str, summary: str, model: str) -> str:
         return "\n".join(json.dumps(e) for e in events)
     if name == "gemini":
         return json.dumps({"response": summary, "stats": {"models": {model: {"tokens": {"prompt": 90, "candidates": 20}}}}})
+    if name == "agy" and STREAM:
+        return (json.dumps({"event": "init", "conversation_id": "c1"}) + "\n"
+                + json.dumps({"event": "result", "result": {"status": "SUCCESS", "response": summary}}))
     return json.dumps({"result": summary})
 
 
@@ -133,7 +160,9 @@ def orchestrate(name: str, sc: dict[str, object]) -> int:
 
 
 def main(name: str) -> int:
+    global STREAM
     argv = sys.argv[1:]
+    STREAM = any(argv[i] in ("--output-format", "-o") and argv[i + 1] == "stream-json" for i in range(len(argv) - 1))
     if "--version" in argv or "-v" in argv:
         print(f"{name} fake 0.0.0")
         return 0
@@ -176,6 +205,7 @@ def main(name: str) -> int:
     if mode == "garbage":
         print("<<esto no es JSON>>")
         return 0
+    emit_steps(name, sc)
     for rel, content in dict(sc.get("write", {}) or {}).items():  # type: ignore[union-attr]
         target = Path(os.getcwd()) / rel
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -185,13 +215,27 @@ def main(name: str) -> int:
         return 1
     raw = output(name, str(sc.get("summary", "hecho")), model)
     if "usage" in sc:
-        try:
-            payload = json.loads(raw)
-            if isinstance(payload, dict):
-                payload["usage"] = sc["usage"]
-                raw = json.dumps(payload)
-        except (json.JSONDecodeError, ValueError):
-            pass
+        lines = [line for line in raw.splitlines() if line.strip()]
+        if len(lines) > 1:
+            try:
+                payload = json.loads(lines[-1])
+                if isinstance(payload, dict):
+                    if name == "agy" and STREAM and isinstance(payload.get("result"), dict):
+                        payload["result"]["usage"] = sc["usage"]
+                    else:
+                        payload["usage"] = sc["usage"]
+                    lines[-1] = json.dumps(payload)
+                    raw = "\n".join(lines)
+            except (json.JSONDecodeError, ValueError):
+                pass
+        else:
+            try:
+                payload = json.loads(raw)
+                if isinstance(payload, dict):
+                    payload["usage"] = sc["usage"]
+                    raw = json.dumps(payload)
+            except (json.JSONDecodeError, ValueError):
+                pass
     print(raw)
     return 0
 

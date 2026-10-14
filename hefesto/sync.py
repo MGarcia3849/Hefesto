@@ -13,12 +13,15 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
+import sys
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-from hefesto import config, providers
-from hefesto.util import FRAMEWORK_ROOT, atomic_write_json, atomic_write_text, read_json
+from hefesto import config, providers, skills
+from hefesto.util import FRAMEWORK_ROOT, HefestoError, atomic_write_json, atomic_write_text, hefesto_home, read_json
 
 PROTOCOL_DIR = FRAMEWORK_ROOT / "prompts" / "protocol"
 PROMPTS_DIR = FRAMEWORK_ROOT / "prompts"
@@ -88,9 +91,9 @@ def _hooks_json(pre_event: str, matcher: str) -> dict[str, object]:
     }}
 
 
-def targets(cfg: config.Config) -> dict[str, str]:
+def targets(cfg: config.Config) -> dict[str, str | bytes]:
     """Ruta relativa → contenido de cada fichero generado."""
-    out: dict[str, str] = {}
+    out: dict[str, str | bytes] = {}
     if cfg.settings.get("install_mode") == "local":
         claude_tpl = read_json(FRAMEWORK_ROOT / "templates" / "project" / ".claude" / "settings.json", default={})
         deny = list(claude_tpl.get("permissions", {}).get("deny", [])) if isinstance(claude_tpl, dict) else []
@@ -119,6 +122,7 @@ def targets(cfg: config.Config) -> dict[str, str]:
                 "ask": ask,
                 "deny": deny,
             },
+            "statusLine": {"type": "command", "command": "hefesto statusline"},
             "hooks": {
                 "SessionStart": [{"hooks": [{"type": "command", "command": "hefesto status --protocol"}]}],
                 "PreToolUse": [{
@@ -150,6 +154,43 @@ def targets(cfg: config.Config) -> dict[str, str]:
                 text = source.read_text(encoding="utf-8")
                 for root in (".claude/skills", ".agents/skills"):
                     out[f"{root}/hefesto-skill-{skill_dir.name}/SKILL.md"] = text
+    promoted_root = hefesto_home() / "skills" / "promoted"
+    used_names = {path.split("/")[2].casefold() for path in out if path.startswith(".agents/skills/")}
+    if promoted_root.is_dir():
+        for skill_dir in sorted(p for p in promoted_root.iterdir() if p.is_dir()):
+            try:
+                skills.check_confinement(skill_dir, hefesto_home())
+                skills.validate_skill_name(skill_dir.name)
+                source_file = skill_dir / "SOURCE.json"
+                skills.check_confinement(source_file, hefesto_home())
+                source = read_json(source_file, default={})
+                pack_name = source.get("pack") if isinstance(source, dict) else None
+                if pack_name:
+                    enabled = bool(cfg.settings.get("packs", {}).get(pack_name, {}).get("enabled", False))
+                    if not enabled:
+                        continue
+                skill_name = skills.skill_from_spec(source.get("spec", "") if isinstance(source, dict) else "")
+                skill_file = skill_dir / "SKILL.md"
+                skills.check_confinement(skill_file, hefesto_home())
+                effective_skill, _ = skills.skill_identity(skill_file.read_bytes(), skill_name)
+            except (HefestoError, OSError, ValueError) as exc:
+                print(f"hefesto sync: aviso: skill promovida '{skill_dir.name}' se omite: {exc}", file=sys.stderr)
+                continue
+            if skill_name.casefold() in used_names:
+                print(f"hefesto sync: aviso: skill promovida '{skill_name}' duplicada, se omite.", file=sys.stderr)
+                continue
+            used_names.add(skill_name.casefold())
+            if (skill_dir / "SKILL.md").is_file():
+                for p in sorted(skill_dir.rglob("*")):
+                    skills.check_confinement(p, hefesto_home())
+                    if p.is_file() and p.name.casefold() != "source.json":
+                        rel = p.relative_to(skill_dir).as_posix()
+                        try:
+                            raw = effective_skill if rel == "SKILL.md" else p.read_bytes()
+                        except OSError:
+                            continue
+                        for root in (".claude/skills", ".agents/skills"):
+                            out[f"{root}/{skill_name}/{rel}"] = raw
     out[".codex/hooks.json"] = json.dumps(_hooks_json("PreToolUse", "Bash|apply_patch|shell|exec_command"),
                                           indent=2) + "\n"
     out[".codex/config.toml"] = (f"# {NOTICE}\n# Modo más restrictivo que permite trabajar: escribir solo en el\n"
@@ -162,9 +203,28 @@ def targets(cfg: config.Config) -> dict[str, str]:
     return out
 
 
-def _digest(text: str | bytes) -> str:
-    raw = text.encode("utf-8") if isinstance(text, str) else text
+def _digest(content: str | bytes) -> str:
+    if isinstance(content, bytes):
+        return hashlib.sha256(content).hexdigest()
+    raw = content.encode("utf-8")
     return hashlib.sha256(raw.replace(b"\r\n", b"\n")).hexdigest()
+
+
+def _atomic_write_bytes(path: Path, data: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+    try:
+        with os.fdopen(fd, "wb") as fh:
+            fh.write(data)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp, path)
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
 
 
 def manifest_path(project: Path) -> Path:
@@ -172,17 +232,26 @@ def manifest_path(project: Path) -> Path:
 
 
 def run(project: Path, check: bool = False) -> list[Change]:
+    from hefesto.skills import check_confinement
+
     cfg = config.load(project)
     manifest = read_json(manifest_path(project), default=None) or {"schema_version": 1, "files": {}}
     recorded: dict[str, str] = manifest.setdefault("files", {})
     changes: list[Change] = []
-    for rel, content in sorted(targets(cfg).items()):
+    current_targets = targets(cfg)
+
+    for rel, content in sorted(current_targets.items()):
         path = project / rel
+        check_confinement(path, project)
         wanted = _digest(content)
         if not path.exists():
             changes.append(Change(rel, "create"))
         else:
-            current = _digest(path.read_bytes())
+            raw_current = path.read_bytes()
+            if isinstance(content, bytes):
+                current = hashlib.sha256(raw_current).hexdigest()
+            else:
+                current = hashlib.sha256(raw_current.replace(b"\r\n", b"\n")).hexdigest()
             if current == wanted:
                 changes.append(Change(rel, "unchanged"))
             elif recorded.get(rel) == current:
@@ -193,8 +262,48 @@ def run(project: Path, check: bool = False) -> list[Change]:
         if check:
             continue
         if changes[-1].action in ("create", "update"):
-            atomic_write_text(path, content)
+            if isinstance(content, bytes):
+                _atomic_write_bytes(path, content)
+            else:
+                atomic_write_text(path, content)
         recorded[rel] = wanted
+
+    # Ficheros gestionados que ya no corresponden a ningún destino actual
+    for rel in sorted(list(recorded.keys())):
+        if rel in current_targets:
+            continue
+        path = project / rel
+        check_confinement(path, project)
+        if not path.exists():
+            if not check:
+                del recorded[rel]
+            continue
+        raw_current = path.read_bytes()
+        h_bin = hashlib.sha256(raw_current).hexdigest()
+        h_txt = hashlib.sha256(raw_current.replace(b"\r\n", b"\n")).hexdigest()
+        if recorded.get(rel) in (h_bin, h_txt):
+            changes.append(Change(rel, "delete"))
+            if not check:
+                try:
+                    path.unlink()
+                except OSError:
+                    pass
+                del recorded[rel]
+                cleanable_roots = (
+                    project / ".claude" / "skills",
+                    project / ".agents" / "skills",
+                    project / ".claude" / "agents",
+                )
+                parent = path.parent
+                while any(parent != root and parent.is_relative_to(root) for root in cleanable_roots):
+                    try:
+                        parent.rmdir()
+                    except OSError:
+                        break
+                    parent = parent.parent
+        else:
+            changes.append(Change(rel, "conflict"))
+
     if not check:
         atomic_write_json(manifest_path(project), manifest)
     return changes

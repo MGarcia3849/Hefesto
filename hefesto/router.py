@@ -152,6 +152,7 @@ def run(project: Path, role: str, instruction: str, task_id: str | None = None, 
         packet_path = packet.save(project, pkt, task.id if task else None, role)
         call = Call(role=role, prompt=pkt.text, task_id=task.id if task else None, run_id=run_id,
                     model=model or str(cfg.get("adapters", provider, "model", default="") or ""),
+                    model_id=mid,
                     workdir=workdir, project=project, packet_path=packet_path.resolve(), timeout=timeout)
         result = adapters.get(cfg, provider).run(call)
         quota.record_call(provider)

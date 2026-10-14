@@ -1,0 +1,125 @@
+{
+  "attempts": 3,
+  "base_commit": "556eba5a1de8a16bdeb4b9cbc13f7c1172bafdba",
+  "branch": "hefesto/fase-8-ecosistema-de-skills-y-packs",
+  "commit": "111824c832fb1352f3b588ae0a4c68f5fe33ce84",
+  "contract": [],
+  "created_at": "2026-10-14T18:56:16+00:00",
+  "files": [
+    {
+      "path": "catalog/packs.toml",
+      "sha256": "0a378767913f5418ecf75d0ffb1511e26ce80e1929832c444c5fc9591a02d425"
+    },
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "cdb715ea1a75614ca88925e701403c483e3e99881ca5cedf5ee0c74df190b207"
+    },
+    {
+      "path": "hefesto/doctor.py",
+      "sha256": "57411818fb2da6d5656b56c9fc5e3f088fd99774a5214e5ebd7236cefd72f279"
+    },
+    {
+      "path": "hefesto/guard.py",
+      "sha256": "b9114ef7f8320f9b655cfeb499b09b102bf6ab5b2be4c3aa4e1319109c2fb00f"
+    },
+    {
+      "path": "hefesto/packs.py",
+      "sha256": "8b495498b77bf76d37ff18d980b3417244f8d0d029754aef87da6139d93f616f"
+    },
+    {
+      "path": "hefesto/skills.py",
+      "sha256": "df846ddb52c1ca9512fd1336f4bf97dcc7192438b779a7ef6fcf36162c3917d5"
+    },
+    {
+      "path": "hefesto/sync.py",
+      "sha256": "6a2f7b28aaedc1ab9fc5db0d857513570a5350c6366489cd64c771016377dd3c"
+    },
+    {
+      "path": "tests/test_packs_policy.py",
+      "sha256": "38918587d545b05462292f6fff31729d783e514faa2566767560a2a1b9962378"
+    }
+  ],
+  "phase": "Fase 8 — Ecosistema de skills y packs",
+  "prev_sha256": "b38a2d8a2a555c0b1585e674bc6ebb4cfa10a1e00ea8b921ddab84ca07166691",
+  "prev_task_id": "TASK-804",
+  "providers": [
+    "claude:sonnet",
+    "codex:default",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-14T18:56:07+00:00",
+    "attempt": 2,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "",
+    "reviewer": "claude:sonnet",
+    "run_id": "2139f61eca7f",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "b06b5f4d4b6a",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "36717da59bef",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "fa0509de23ea",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "6762713f5073",
+      "success": false
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "8fff2946f6c6",
+      "success": false
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "8fff2946f6c6",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "forge",
+      "run_id": "167b8506cb7c",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "2139f61eca7f",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 20,
+  "task_id": "TASK-805",
+  "title": "Catálogo de packs y `hefesto pack list|enable|disable|update`",
+  "verify": {
+    "command": "python -m unittest tests.test_packs.CatalogTests tests.test_packs.PackCommandTests tests.test_packs.PolicyTests && python tools/dev.py lint",
+    "duration_seconds": 7.412,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-805-a3-2026-10-14T185615+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (57 ficheros Python)\n............\n----------------------------------------------------------------------\nRan 12 tests in 6.680s\n\nOK",
+    "sha256": "b0cf9ffd8d3ea9fe72a2df947c19c41e3aa820e7c214b838f942230f5954bf9f",
+    "trust": "auto"
+  }
+}

@@ -196,7 +196,16 @@ def done(project: Path, task_id: str) -> tuple[int, str]:
                      "next_action": "hefesto finish" if all_done else "hefesto next"})
         state.save(project, data)
         log.event(project, "done", f"{task_id} completada", commit=commit)
-    return EXIT_OK, f"{task_id} completada: commit {commit[:10]}, evidencia {ev_path.name}."
+
+        graph_msg = ""
+        from hefesto import packs
+        if packs.is_pack_enabled(project, "context"):
+            _, graph_msg = packs.run_graphify(workdir, ["update", "."])
+
+    msg = f"{task_id} completada: commit {commit[:10]}, evidencia {ev_path.name}."
+    if graph_msg:
+        msg = f"{msg} {graph_msg}".strip()
+    return EXIT_OK, msg
 
 
 # ---------------------------------------------------------------------------

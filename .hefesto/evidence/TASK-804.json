@@ -1,0 +1,59 @@
+{
+  "attempts": 1,
+  "base_commit": "e923389062f85d19660061d02ee83f1bdf6987b5",
+  "branch": "hefesto/fase-8-ecosistema-de-skills-y-packs",
+  "commit": "84bff5038411ca892cb68852649d5ce4b49922dc",
+  "contract": [
+    "tests/test_packs.py"
+  ],
+  "created_at": "2026-10-14T18:06:32+00:00",
+  "files": [
+    {
+      "path": "tests/fakes/graphify",
+      "sha256": "70311cc509d9ca02c90a18b23d6cadecf9180ff3d1c594aeacd0de9f16d07e82"
+    },
+    {
+      "path": "tests/test_packs.py",
+      "sha256": "a4080e99dcc63afb2f867eb2758a5dc9c4d0650b69192a13cf3f37a1d849a6f0"
+    }
+  ],
+  "phase": "Fase 8 — Ecosistema de skills y packs",
+  "prev_sha256": "5dcdbf3223a20cd4c86a3f7b79db6591aafba7c5b6b09d97ff7958ccd7be454b",
+  "prev_task_id": "TASK-809",
+  "providers": [
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-14T18:06:31+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "",
+    "reviewer": "gemini:default",
+    "run_id": "731002275a39",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "reviewer",
+      "run_id": "731002275a39",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 19,
+  "task_id": "TASK-804",
+  "title": "Contratos de los packs y del pack context (Graphify)",
+  "verify": {
+    "command": "python -m py_compile tests/test_packs.py && python -m unittest tests.test_packs 2>&1 | grep -q FAILED",
+    "duration_seconds": 0.366,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-804-a1-2026-10-14T180631+0000.log",
+    "output_summary": "",
+    "sha256": "2cec40550ec27ce46f1659675bbf18af1728e0053cf13ba1e5a3b596ae9010c1",
+    "trust": "auto"
+  }
+}

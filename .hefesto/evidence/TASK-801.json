@@ -1,0 +1,65 @@
+{
+  "attempts": 2,
+  "base_commit": "c900279e95daeba7d1089756481081f20727400c",
+  "branch": "hefesto/fase-8-ecosistema-de-skills-y-packs",
+  "commit": "5f49e1274dbf826fd62512ceb7e0811b343594da",
+  "contract": [
+    "tests/test_skills_ecosystem.py"
+  ],
+  "created_at": "2026-10-14T14:44:32+00:00",
+  "files": [
+    {
+      "path": "tests/fakes/npx",
+      "sha256": "75b038212025aa3065018aff0cccf37dbb7e081fcb0079dff8c026a8448777b5"
+    },
+    {
+      "path": "tests/test_skills_ecosystem.py",
+      "sha256": "e63b9461ee0ced92c1b0b87ad27b8620a3d1301bc0a782f0dcb29927c077811f"
+    }
+  ],
+  "phase": "Fase 8 — Ecosistema de skills y packs",
+  "prev_sha256": "fd1f16ad0fd593da998efc978048ed5efc6c227d9d6b0db8d8f46156aadf3c00",
+  "prev_task_id": "TASK-714",
+  "providers": [
+    "codex:default"
+  ],
+  "review": {
+    "at": "2026-10-14T14:44:31+00:00",
+    "attempt": 1,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "",
+    "reviewer": "codex:default",
+    "run_id": "ec8e13642656",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "b777c5fa5d77",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "ec8e13642656",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 15,
+  "task_id": "TASK-801",
+  "title": "Contratos del ecosistema de skills (skill, skill find, skill fetch, promote, skill update)",
+  "verify": {
+    "command": "python -m py_compile tests/test_skills_ecosystem.py && python -m unittest tests.test_skills_ecosystem 2>&1 | grep -q FAILED",
+    "duration_seconds": 0.373,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-801-a2-2026-10-14T144432+0000.log",
+    "output_summary": "",
+    "sha256": "19aa86e1899eddedc7eeeff286c9ce51d98a9fd2f11ed4406315d0fa58db0d0d",
+    "trust": "auto"
+  }
+}
