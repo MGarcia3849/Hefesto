@@ -126,11 +126,7 @@ def roadmap_path(project: Path) -> Path:
     return project / ".hefesto" / "ROADMAP.md"
 
 
-def parse(path: Path) -> Roadmap:
-    try:
-        text = path.read_text(encoding="utf-8")
-    except FileNotFoundError as exc:
-        raise HefestoError(f"No existe {path}.", EXIT_INPUT) from exc
+def parse_text(text: str, path: Path | None = None) -> Roadmap:
     phases: list[str] = []
     tasks: list[Task] = []
     errors: list[str] = []
@@ -167,7 +163,15 @@ def parse(path: Path) -> Roadmap:
             continue
         if stripped.startswith("- [") and current is None and not TASK_RE.match(line):
             errors.append(f"línea {number}: tarea con formato inválido: {stripped[:60]}")
-    return Roadmap(path=path, phases=phases, tasks=tasks, parse_errors=errors)
+    return Roadmap(path=path or Path(".hefesto/ROADMAP.md"), phases=phases, tasks=tasks, parse_errors=errors)
+
+
+def parse(path: Path) -> Roadmap:
+    try:
+        text = path.read_text(encoding="utf-8")
+    except FileNotFoundError as exc:
+        raise HefestoError(f"No existe {path}.", EXIT_INPUT) from exc
+    return parse_text(text, path=path)
 
 
 def validate(rm: Roadmap, project: Path) -> list[str]:

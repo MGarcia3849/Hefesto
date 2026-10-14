@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import datetime as dt
 import http.server
 import json
@@ -39,6 +40,10 @@ class AdapterCase(HefestoTestCase):
         (self.project / ".hefesto" / "ROADMAP.md").write_text(ROADMAP, encoding="utf-8")
         git(self.project, "add", "-A")
         git(self.project, "commit", "-q", "-m", "roadmap")
+
+    def here(self, *args: str, **kw: object) -> tuple[int, str, str]:
+        with contextlib.chdir(self.project):
+            return self.run_cli(*args, **kw)  # type: ignore[arg-type]
 
     def scenario(self, **entries: object) -> None:
         self.scenario_path.write_text(json.dumps(entries), encoding="utf-8")
@@ -166,7 +171,7 @@ class RoutingTests(AdapterCase):
         self.assertEqual(quota.provider_state("gemini")["status"], "auth_error")
         code, out, _ = self.cli("providers", "status")
         self.assertIn("auth_error", out)
-        self.cli("providers", "reset", "gemini")
+        self.here("providers", "reset", "gemini")
         self.assertEqual(quota.provider_state("gemini")["status"], "ok")
 
     def test_call_cap_per_loop(self) -> None:
@@ -282,13 +287,13 @@ class LocalTests(AdapterCase):
         super().tearDown()
 
     def test_local_enable_requires_tty(self) -> None:
-        code, _, _ = self.cli("local", "enable", "--base-url", self.url, "--model", "m")
+        code, _, _ = self.here("local", "enable", "--base-url", self.url, "--model", "m")
         self.assertEqual(code, 2)
         self.assertFalse(config.load(self.project).get("adapters", "local", "enabled"))
 
     def test_local_enable_and_disable(self) -> None:
-        code, out, err = self.cli("local", "enable", "--base-url", self.url, "--model", "qwen", "--role", "runner",
-                                  "--first", tty_value=True, answers=["s"])
+        code, out, err = self.here("local", "enable", "--base-url", self.url, "--model", "qwen", "--role", "runner",
+                                   "--first", tty_value=True, answers=["s"])
         self.assertEqual(code, 0, out + err)
         cfg = config.load(self.project)
         self.assertTrue(cfg.get("adapters", "local", "enabled"))
@@ -296,7 +301,7 @@ class LocalTests(AdapterCase):
         self.assertEqual(cfg.role_chain("runner")[0], "local")
         code, data = self.run_json()
         self.assertEqual((data["provider"], data["summary"]), ("local", "pong"))
-        code, out, err = self.cli("local", "disable", tty_value=True)
+        code, out, err = self.here("local", "disable", tty_value=True)
         self.assertEqual(code, 0, err)
         cfg = config.load(self.project)
         self.assertFalse(cfg.get("adapters", "local", "enabled"))
@@ -305,8 +310,67 @@ class LocalTests(AdapterCase):
         self.assertEqual(config.validate(cfg), [])
 
     def test_unreachable_endpoint_changes_nothing(self) -> None:
-        code, _, err = self.cli("local", "enable", "--base-url", "http://127.0.0.1:9/v1", "--model", "m",
-                                tty_value=True, answers=["s"])
+        code, _, err = self.here("local", "enable", "--base-url", "http://127.0.0.1:9/v1", "--model", "m",
+                                 tty_value=True, answers=["s"])
         self.assertEqual(code, 3)
         self.assertFalse(config.load(self.project).get("adapters", "local", "enabled"))
         self.assertTrue(Path(config.project_settings_path(self.project)).exists())
+
+
+class RealCliLearningsTests(AdapterCase):
+    def test_ineligible_tier_classified_as_auth(self) -> None:
+        self.scenario(gemini={"mode": "ineligible"})
+        result = self.call("gemini")
+        self.assertFalse(result.success)
+        self.assertEqual(result.error_type, "auth")
+
+        cfg = config.load(self.project)
+        adapter = adapters.get(cfg, "gemini")
+        for sample in ("IneligibleTierError: tier not supported", "UNSUPPORTED_CLIENT error", "model is no longer supported"):
+            self.assertEqual(adapter.classify(sample), "auth", sample)
+
+    def test_unavailable_and_503_classified_as_rate_limit(self) -> None:
+        self.scenario(gemini={"mode": "unavailable"})
+        result = self.call("gemini")
+        self.assertFalse(result.success)
+        self.assertEqual(result.error_type, "rate_limit")
+
+        cfg = config.load(self.project)
+        adapter = adapters.get(cfg, "gemini")
+        for sample in ("UNAVAILABLE: service temporary down", "code 503", "HTTP 503 error", "the service is currently unavailable"):
+            self.assertEqual(adapter.classify(sample), "rate_limit", sample)
+
+    def test_agy_success_with_empty_response_and_denied_actions_is_failure(self) -> None:
+        config.set_setting(config.project_settings_path(self.project), ("adapters", "gemini", "binary"), "agy")
+        self.scenario(agy={"mode": "denied"})
+        result = self.call("gemini")
+        self.assertFalse(result.success)
+        self.assertIsNone(result.error_type)
+        self.assertIn("denegad", result.summary.lower())
+
+    def test_agy_usage_tokens_read_when_no_stats(self) -> None:
+        config.set_setting(config.project_settings_path(self.project), ("adapters", "gemini", "binary"), "agy")
+        self.scenario(agy={"mode": "ok", "summary": "tarea completada", "usage": {"input_tokens": 120, "output_tokens": 45}})
+        result = self.call("gemini")
+        self.assertTrue(result.success)
+        self.assertEqual(result.usage, {"input_tokens": 120, "output_tokens": 45})
+
+    def test_agy_instruction_always_specifies_headless_and_file_editing_only(self) -> None:
+        cfg = config.load(self.project)
+        adapter = adapters.get(cfg, "gemini")
+        call_with_packet = Call(role="runner", prompt="haz algo", task_id="TASK-001", run_id="r1",
+                                model="", workdir=self.project, project=self.project,
+                                packet_path=self.project / "packet.md")
+        cmd_pkt = adapter.command("agy", call_with_packet)
+        prompt_arg_pkt = cmd_pkt[cmd_pkt.index("-p") + 1]
+        self.assertIn("headless", prompt_arg_pkt.lower())
+        self.assertIn("shell", prompt_arg_pkt.lower())
+        self.assertIn("editar ficheros", prompt_arg_pkt.lower())
+
+        call_no_packet = Call(role="runner", prompt="haz algo", task_id="TASK-001", run_id="r1",
+                              model="", workdir=self.project, project=self.project)
+        cmd_no_pkt = adapter.command("agy", call_no_packet)
+        prompt_arg_no_pkt = cmd_no_pkt[cmd_no_pkt.index("-p") + 1]
+        self.assertIn("headless", prompt_arg_no_pkt.lower())
+        self.assertIn("shell", prompt_arg_no_pkt.lower())
+        self.assertIn("editar ficheros", prompt_arg_no_pkt.lower())

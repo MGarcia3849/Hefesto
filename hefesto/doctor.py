@@ -119,11 +119,16 @@ def project_checks(project: Path) -> list[Check]:
         checks.append(Check(OK, "config", "válida (" + ", ".join(layer.name for layer in cfg.layers) + ")"))
         approved = cfg.approved_providers()
         checks.append(Check(INFO, "allowlist", ", ".join(approved)))
-        version = cfg.settings.get("hefesto_version")
-        from hefesto import __version__
+        from hefesto import __version__, distribution
 
-        if version and version.split("-")[0] != __version__.split("-")[0]:
-            checks.append(Check(WARN, "versión", f"proyecto creado con {version}; Hefesto es {__version__}: puede requerir `hefesto migrate`"))
+        if distribution.needs_migration(cfg.settings):
+            version = cfg.settings.get("hefesto_version")
+            detail = (
+                f"proyecto creado con {version}; Hefesto es {__version__}: puede requerir `hefesto migrate`"
+                if version
+                else f"proyecto sin versión registrada; Hefesto es {__version__}: puede requerir `hefesto migrate`"
+            )
+            checks.append(Check(WARN, "versión", detail))
     except HefestoError as exc:
         checks.append(Check(WARN, "config", str(exc), True))
     try:

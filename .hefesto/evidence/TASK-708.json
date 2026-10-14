@@ -1,0 +1,63 @@
+{
+  "attempts": 1,
+  "base_commit": "780ac87eecce70b741724d8ac542b6e8f18bce1d",
+  "branch": "hefesto/fase-7-distribucion",
+  "commit": "bbde7cb43b7c9c2b7734ef971417149b249bb615",
+  "created_at": "2026-10-14T11:29:00+00:00",
+  "files": [
+    {
+      "path": "hefesto/project.py",
+      "sha256": "ce9bd3fe7314ee545db7ef2f37f6de25382ae2f340137d81eeeb3085d344c02e"
+    },
+    {
+      "path": "tests/test_git.py",
+      "sha256": "ab4e555738ca8f14393ef99550e154e41f300ee3c02e79a5b80ec7a4ae7e645f"
+    }
+  ],
+  "phase": "Fase 7 — Distribución",
+  "prev_sha256": "b8ae64705ca7c700bf3c7e5dea0c1a0f6e2ef700928b2e5e451cc3bf88fcfbd2",
+  "prev_task_id": "TASK-707",
+  "providers": [
+    "claude:sonnet",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-14T11:28:21+00:00",
+    "attempt": 0,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "",
+    "reviewer": "claude:sonnet",
+    "run_id": "0dbdae54ab61",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "eecf5d8fb8a0",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "0dbdae54ab61",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 9,
+  "task_id": "TASK-708",
+  "title": "`hefesto` ejecutado dentro del worktree de Hefesto usa el proyecto principal",
+  "verify": {
+    "command": "python -m unittest tests.test_git && python tools/dev.py lint",
+    "duration_seconds": 38.351,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-708-a1-2026-10-14T112900+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (48 ficheros Python)\n..............................\n----------------------------------------------------------------------\nRan 30 tests in 37.672s\n\nOK",
+    "sha256": "79431fee54b9001d383c2d123d8ca64b7903c83ee5dc7bc52574ab7929ffe189",
+    "trust": "human"
+  }
+}

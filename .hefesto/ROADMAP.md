@@ -6,16 +6,16 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
 -->
 
 ## Fase 7 — Distribución
-- [ ] TASK-701: Contratos de distribución y de enrutado del revisor
-  - verify: `python -m py_compile tests/test_distribution.py tests/test_reviewer_routing.py && python -m unittest tests.test_distribution tests.test_reviewer_routing 2>&1 | grep -q "FAILED"`
-  - files: tests/test_distribution.py, tests/test_reviewer_routing.py
+- [x] TASK-701: Contratos de distribución y de enrutado del revisor
+  - verify: `python -m py_compile tests/test_distribution.py tests/test_reviewer_routing.py tests/test_local_install.py && python -m unittest tests.test_distribution tests.test_reviewer_routing tests.test_local_install 2>&1 | grep -q "FAILED"`
+  - files: tests/test_distribution.py, tests/test_reviewer_routing.py, tests/test_local_install.py
   - role: core
   - depends_on: none
   - size: S
   - parallel: false
-  - contract: tests/test_distribution.py, tests/test_reviewer_routing.py
+  - contract: tests/test_distribution.py, tests/test_reviewer_routing.py, tests/test_local_install.py
   - accept: los tests compilan y fallan porque aún no existen hefesto/distribution.py ni los comandos bootstrap, adopt, self-update y migrate
-- [ ] TASK-702: El revisor nunca se enruta a un proveedor que escribió el cambio
+- [x] TASK-702: El revisor nunca se enruta a un proveedor que escribió el cambio
   - verify: `python -m unittest tests.test_reviewer_routing && python tools/dev.py lint`
   - files: hefesto/router.py
   - role: runner
@@ -23,7 +23,7 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - size: S
   - parallel: false
   - accept: `hefesto run reviewer` salta los proveedores autores de la tarea en curso salvo que no quede otro; el salto aparece en los hops
-- [ ] TASK-703: Detección de modo y de stack, comandos bootstrap y adopt
+- [x] TASK-703: Detección de modo y de stack, comandos bootstrap y adopt
   - verify: `python -m unittest tests.test_distribution.ModeTests tests.test_distribution.StackTests tests.test_distribution.BootstrapTests tests.test_distribution.AdoptTests && python tools/dev.py lint`
   - files: hefesto/distribution.py, hefesto/cli.py
   - role: runner
@@ -31,7 +31,7 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - size: M
   - parallel: false
   - accept: crear/continuar/mejorar se detectan de forma determinista; adopt no modifica ningún fichero de código del proyecto
-- [ ] TASK-704: self-update, migrate e instalación desde un repositorio git
+- [x] TASK-704: self-update, migrate e instalación desde un repositorio git
   - verify: `python -m unittest tests.test_distribution && python tools/dev.py lint`
   - files: hefesto/distribution.py, hefesto/cli.py, hefesto/doctor.py
   - role: runner
@@ -39,11 +39,84 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - size: M
   - parallel: false
   - accept: self-update sin confirmación no cambia de versión; migrate hace copia de seguridad; install.sh repetido no rompe nada
-- [ ] TASK-705: BOOTSTRAP.md, CHANGELOG.md e instrucciones de publicación
+- [x] TASK-706: Modo local de instalación: init y sync sin ensuciar el proyecto
+  - verify: `python -m unittest tests.test_local_install.LocalInstallTests.test_init_leaves_git_status_clean tests.test_local_install.LocalInstallTests.test_entry_points_exist_and_are_excluded tests.test_local_install.LocalInstallTests.test_repeated_init_does_not_duplicate_excludes tests.test_local_install.LocalInstallTests.test_status_protocol_prints_protocol tests.test_local_install.LocalInstallTests.test_shared_mode_keeps_previous_behaviour && python tools/dev.py lint`
+  - files: hefesto/project.py, hefesto/sync.py, hefesto/cli.py, hefesto/status.py, templates/project/, tests/helpers.py, tests/test_sync.py
+  - role: runner
+  - depends_on: TASK-701
+  - size: M
+  - parallel: false
+  - accept: tras `hefesto init` en un repositorio, `git status` está vacío, no hay ficheros de Hefesto en la raíz y las CLIs encuentran sus puntos de entrada
+- [x] TASK-707: Modo local en el ciclo git: commits solo con ficheros de la tarea
+  - verify: `python -m unittest tests.test_local_install && python -m unittest tests.test_git && python tools/dev.py lint`
+  - files: hefesto/gitops.py, hefesto/acceptance.py
+  - role: runner
+  - depends_on: TASK-706
+  - size: M
+  - parallel: false
+  - accept: en modo local los commits de done y la integración de finish no contienen ficheros de `.hefesto/`; en modo shared todo sigue como antes
+- [x] TASK-708: `hefesto` ejecutado dentro del worktree de Hefesto usa el proyecto principal
+  - verify: `python -m unittest tests.test_git && python tools/dev.py lint`
+  - files: hefesto/project.py, tests/test_git.py
+  - role: runner
+  - depends_on: TASK-707
+  - size: S
+  - parallel: false
+  - accept: `find_project` desde `.hefesto/worktree` (o cualquier subcarpeta suya) devuelve el proyecto principal, con un test nuevo que lo cubra
+- [x] TASK-709: Contratos de instalación sin interrupciones (una sola autorización)
+  - verify: `python -m py_compile tests/test_autonomy_install.py && python -m unittest tests.test_autonomy_install 2>&1 | grep -q "FAILED"`
+  - files: tests/test_autonomy_install.py
+  - role: core
+  - depends_on: none
+  - size: S
+  - parallel: false
+  - contract: tests/test_autonomy_install.py
+  - accept: los tests fijan el clasificador de verify seguros, `trust --yes` fuera de procesos headless, las reglas allow/ask de Claude y `bootstrap --yes`, y fallan por falta de implementación
+- [x] TASK-710: Aprobación automática de verify seguros y `trust --yes` con aprobación del usuario en la CLI
+  - verify: `python -m unittest tests.test_autonomy_install.SafeVerifyTests tests.test_autonomy_install.TrustYesTests && python tools/dev.py lint`
+  - files: hefesto/trust.py, hefesto/cli.py, hefesto/acceptance.py, hefesto/workflow.py, hefesto.toml, hefesto/config.py, tests/test_git.py
+  - role: runner
+  - depends_on: TASK-709
+  - size: M
+  - parallel: false
+  - accept: un verify de la lista segura se aprueba solo y queda marcado como automático; uno con red, borrados, redirecciones o tuberías a un intérprete sigue exigiendo aprobación humana; `trust --yes` falla si HEFESTO_ROLE está definido
+- [x] TASK-711: Permisos preconfigurados para Claude y `bootstrap --yes` de una sola vez
+  - verify: `python -m unittest tests.test_autonomy_install && python tools/dev.py lint`
+  - files: hefesto/sync.py, hefesto/distribution.py, hefesto/cli.py, tests/test_adapters.py
+  - role: runner
+  - depends_on: TASK-710, TASK-706, TASK-703
+  - size: M
+  - parallel: false
+  - accept: tras `bootstrap --yes` el proyecto queda listo sin más preguntas; Claude no pide permiso para comandos `hefesto` rutinarios y sí para trust, unblock y finish
+- [x] TASK-712: `review --run-id` atribuye la revisión al registro con éxito del run
+  - verify: `python -m unittest tests.test_review_attribution && python -m unittest tests.test_git && python -m unittest tests.test_adapters`
+  - files: hefesto/acceptance.py, tests/test_review_attribution.py
+  - role: runner
+  - depends_on: TASK-710
+  - size: S
+  - parallel: false
+  - accept: con un run que tuvo fallback (proveedor en cuota y luego otro con éxito), review registra al proveedor que respondió con éxito; un run sin ningún registro con éxito se rechaza; test nuevo que lo cubre
+- [x] TASK-713: Adaptadores y guard según lo aprendido con las CLIs reales
+  - verify: `python -m unittest tests.test_adapters && python -m unittest tests.test_foundation && python -m unittest tests.test_sync`
+  - files: hefesto/adapters/gemini.py, hefesto/adapters/base.py, hefesto/guard.py, tests/test_adapters.py, tests/test_foundation.py, tests/fakes/fake_agent.py
+  - role: runner
+  - depends_on: TASK-712
+  - size: M
+  - parallel: false
+  - accept: IneligibleTierError se clasifica como auth y 503 UNAVAILABLE como rate_limit; agy con respuesta vacía y denied_actions es un fallo; se leen los tokens de usage de agy; a agy se le indica siempre que en headless solo edite ficheros; el hook no bloquea `2>&1` ni texto dentro de comillas o argumentos de `hefesto run`/`note`; tests nuevos para cada caso
+- [x] TASK-705: BOOTSTRAP.md, CHANGELOG.md e instrucciones de publicación
   - verify: `test -f BOOTSTRAP.md && grep -q "hefesto bootstrap" BOOTSTRAP.md && grep -q "v2.1.0" CHANGELOG.md && grep -q "BOOTSTRAP.md" AGENTS.md && grep -q "gh repo create" README.md`
   - files: BOOTSTRAP.md, CHANGELOG.md, README.md, AGENTS.md
   - role: runner
-  - depends_on: TASK-704
+  - depends_on: TASK-704, TASK-708, TASK-711
   - size: S
   - parallel: false
-  - accept: un agente que solo recibe la URL del repositorio sabe instalar Hefesto y decidir entre crear, continuar o mejorar
+  - accept: un agente que solo recibe la URL del repositorio sabe instalar Hefesto (modo local por defecto, sin ensuciar el proyecto) y decidir entre crear, continuar o mejorar
+- [x] TASK-714: `finish` no reejecuta el verify de las tareas de contrato
+  - verify: `python -m unittest tests.test_git && python -m unittest tests.test_local_install`
+  - files: hefesto/acceptance.py, hefesto/roadmap.py, tests/test_git.py
+  - role: runner
+  - depends_on: none
+  - size: S
+  - parallel: false
+  - accept: el verify de una tarea con `contract:` comprueba que sus tests fallan y deja de tener sentido tras implementar; finish lo omite (indicándolo en el resumen) y sigue ejecutando la suite completa y el verify del resto; test nuevo con una fase que tiene tarea de contrato e implementación

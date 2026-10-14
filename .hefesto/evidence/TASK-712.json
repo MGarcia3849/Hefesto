@@ -1,0 +1,63 @@
+{
+  "attempts": 1,
+  "base_commit": "3db15be74d05a739ace12b4fce5b0f9b9147908a",
+  "branch": "hefesto/fase-7-distribucion",
+  "commit": "574227a6d68d9ebf094cfe66405244db9253059b",
+  "created_at": "2026-10-14T12:40:31+00:00",
+  "files": [
+    {
+      "path": "hefesto/acceptance.py",
+      "sha256": "8fb33f99f1add2733c5cad2957a181d1a725ace200387aa6a3fa84b7b5dd0954"
+    },
+    {
+      "path": "tests/test_review_attribution.py",
+      "sha256": "3a0eca57f45a2a38c8b5cc09e14843fba8b934507a69a5ca42d0de5645f1be8a"
+    }
+  ],
+  "phase": "Fase 7 — Distribución",
+  "prev_sha256": "a3780953972455e011f784a0b3d94bf483c14cf5984991b82b30f9e2ad35b693",
+  "prev_task_id": "TASK-711",
+  "providers": [
+    "claude:sonnet",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-14T12:39:06+00:00",
+    "attempt": 0,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "",
+    "reviewer": "claude:sonnet",
+    "run_id": "e944de7181b4",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "169083e5167a",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "e944de7181b4",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 11,
+  "task_id": "TASK-712",
+  "title": "`review --run-id` atribuye la revisión al registro con éxito del run",
+  "verify": {
+    "command": "python -m unittest tests.test_review_attribution && python -m unittest tests.test_git && python -m unittest tests.test_adapters",
+    "duration_seconds": 84.42,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-712-a1-2026-10-14T124030+0000.log",
+    "output_summary": "..\n----------------------------------------------------------------------\nRan 2 tests in 4.146s\n\nOK\n..............................\n----------------------------------------------------------------------\nRan 30 tests in 37.482s\n\nOK\n........................\n----------------------------------------------------------------------\nRan 24 tests in 41.988s\n\nOK",
+    "sha256": "a444b9e7daa7cf88314cf292d781b86045aafefeca554122fccadc0c3c886599",
+    "trust": "auto"
+  }
+}

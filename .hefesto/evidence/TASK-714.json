@@ -1,0 +1,79 @@
+{
+  "attempts": 2,
+  "base_commit": "37b956129562f3e0c2656e82947fcb97e1856efd",
+  "branch": "hefesto/fase-7-distribucion",
+  "commit": "260455d555575c46b21517c1c2b31f7699938fd7",
+  "created_at": "2026-10-14T14:27:20+00:00",
+  "files": [
+    {
+      "path": "hefesto/acceptance.py",
+      "sha256": "171d6531b1873eae46c52dcbb5851e313310932478845ec68295b7f9f8ae6f70"
+    },
+    {
+      "path": "hefesto/roadmap.py",
+      "sha256": "bfcda2c848e72bbb86b194a6cecfbd3c5e83cbff975b971973152e528efc4cf3"
+    },
+    {
+      "path": "tests/test_git.py",
+      "sha256": "49de4c7f77f83e98adbdf9c35f629232e5e0f5f7c69cf93ccc9b43c61121c51b"
+    }
+  ],
+  "phase": "Fase 7 — Distribución",
+  "prev_sha256": "1d517c8ca07e28337155642e4f6fbf220e8b8c7b70a99b2581e6d9de968cc1c2",
+  "prev_task_id": "TASK-705",
+  "providers": [
+    "codex:default",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-14T14:26:27+00:00",
+    "attempt": 1,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "",
+    "reviewer": "codex:default",
+    "run_id": "7a93a8bd9474",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "4d2c3e2b3f76",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "1e9cdf0583e5",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "126bea2a791b",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "7a93a8bd9474",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 14,
+  "task_id": "TASK-714",
+  "title": "`finish` no reejecuta el verify de las tareas de contrato",
+  "verify": {
+    "command": "python -m unittest tests.test_git && python -m unittest tests.test_local_install",
+    "duration_seconds": 51.466,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-714-a2-2026-10-14T142719+0000.log",
+    "output_summary": "..................................\n----------------------------------------------------------------------\nRan 34 tests in 46.741s\n\nOK\n......\n----------------------------------------------------------------------\nRan 6 tests in 4.199s\n\nOK",
+    "sha256": "f8448a86d0e4eb97979f55e0bd75f73b01b547a434f66cfde99f1809f3547fae",
+    "trust": "auto"
+  }
+}

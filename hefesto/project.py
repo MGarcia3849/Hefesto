@@ -23,6 +23,25 @@ GITIGNORE_ENTRIES = (
     "graphify-out/",
 )
 
+LOCAL_EXCLUDES = (
+    ".hefesto/",
+    ".claude/settings.local.json",
+    ".claude/skills/hefesto-*/",
+    ".claude/agents/hefesto-*.md",
+    ".agents/skills/hefesto-*/",
+    ".codex/hooks.json",
+    ".codex/config.toml",
+    ".gemini/settings.json",
+    ".gemini/commands/hefesto/",
+)
+
+LOCAL_ROOT_SKIPPED = {
+    "AGENTS.md",
+    "CLAUDE.md",
+    "GEMINI.md",
+    ".claude/settings.json",
+}
+
 BANNER = r"""
   _   _       __           _
  | | | | ___ / _| ___  ___| |_ ___
@@ -35,6 +54,11 @@ BANNER = r"""
 def find_project(start: Path | None = None) -> Path:
     """Sube desde `start` hasta encontrar un directorio con `.hefesto/`."""
     here = (start or Path.cwd()).resolve()
+    for candidate in (here, *here.parents):
+        if candidate.name in ("worktree", "worktrees") and candidate.parent.name == ".hefesto":
+            dot_hefesto = candidate.parent
+            if (dot_hefesto / "state.json").exists() or (dot_hefesto / "settings.json").exists():
+                return dot_hefesto.parent
     for candidate in (here, *here.parents):
         if (candidate / ".hefesto").is_dir():
             return candidate
@@ -49,19 +73,39 @@ def _git(project: Path, *args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(["git", *args], cwd=project, capture_output=True, text=True, encoding="utf-8", errors="replace")
 
 
-def copy_templates(project: Path) -> list[str]:
+def copy_templates(project: Path, shared: bool = False) -> list[str]:
     """Copia las plantillas sin sobrescribir nunca un fichero existente."""
     created: list[str] = []
-    for src in sorted(TEMPLATES.rglob("*")):
-        if src.is_dir():
-            continue
-        rel = src.relative_to(TEMPLATES)
-        dest = project / rel
-        if dest.exists():
-            continue
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(src, dest)
-        created.append(rel.as_posix())
+    if shared:
+        for src in sorted(TEMPLATES.rglob("*")):
+            if src.is_dir():
+                continue
+            rel = src.relative_to(TEMPLATES)
+            dest = project / rel
+            if dest.exists():
+                continue
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(src, dest)
+            created.append(rel.as_posix())
+    else:
+        for src in sorted(TEMPLATES.rglob("*")):
+            if src.is_dir():
+                continue
+            rel = src.relative_to(TEMPLATES).as_posix()
+            if rel in LOCAL_ROOT_SKIPPED:
+                continue
+            dest = project / rel
+            if dest.exists():
+                continue
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(src, dest)
+            created.append(rel)
+        proto_src = TEMPLATES / "AGENTS.md"
+        proto_dest = project / ".hefesto" / "AGENTS.md"
+        if proto_src.exists() and not proto_dest.exists():
+            proto_dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(proto_src, proto_dest)
+            created.append(".hefesto/AGENTS.md")
     return created
 
 
@@ -78,6 +122,26 @@ def update_gitignore(project: Path) -> list[str]:
             lines.append("# Hefesto")
         lines.extend(missing)
         path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
+    return missing
+
+
+def git_exclude_path(project: Path) -> Path:
+    result = _git(project, "rev-parse", "--git-path", "info/exclude")
+    if result.returncode == 0 and result.stdout.strip():
+        raw = Path(result.stdout.strip())
+        return raw if raw.is_absolute() else (project / raw).resolve()
+    return project / ".git" / "info" / "exclude"
+
+
+def update_git_exclude(project: Path) -> list[str]:
+    path = git_exclude_path(project)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    existing = path.read_text(encoding="utf-8").splitlines() if path.exists() else []
+    present = {line.strip() for line in existing}
+    missing = [entry for entry in LOCAL_EXCLUDES if entry not in present]
+    if missing or not path.exists():
+        new_lines = list(existing) + missing
+        path.write_text("\n".join(new_lines) + "\n", encoding="utf-8", newline="\n")
     return missing
 
 
@@ -128,7 +192,7 @@ def warn_rejected(cfg: config.Config, rejected: list[str]) -> list[str]:
     return msgs
 
 
-def init(target: Path, providers: str | None) -> list[str]:
+def init(target: Path, providers: str | None = None, shared: bool = False) -> list[str]:
     """Inicializa (o completa) un proyecto. Idempotente: nunca sobrescribe."""
     from hefesto import state as state_mod
 
@@ -140,21 +204,35 @@ def init(target: Path, providers: str | None) -> list[str]:
         if result.returncode != 0:
             raise HefestoError(f"git init falló: {result.stderr.strip()}", EXIT_INPUT)
         report.append("git init")
-    created = copy_templates(project)
+    settings_path = config.project_settings_path(project)
+    existing_settings = config.read_settings(settings_path) if settings_path.exists() else {}
+    if shared:
+        mode = "shared"
+    elif "install_mode" in existing_settings:
+        mode = existing_settings["install_mode"]
+    else:
+        mode = "local"
+    created = copy_templates(project, shared=(mode == "shared"))
     report += [f"creado {c}" for c in created]
     for sub in ("logs", "evidence"):
         (hefesto_dir(project) / sub).mkdir(parents=True, exist_ok=True)
     settings = config.init_project_settings(project)
+    settings["install_mode"] = mode
     if "main_branch" not in settings:
         settings["main_branch"] = detect_main_branch(project)
-        atomic_write_json(config.project_settings_path(project), settings)
+    config.write_settings(settings_path, settings)
     state_path = hefesto_dir(project) / "state.json"
     if not state_path.exists():
         state_mod.write_initial(project)
         report.append("creado .hefesto/state.json")
-    added = update_gitignore(project)
-    if added:
-        report.append(".gitignore: " + ", ".join(added))
+    if mode == "shared":
+        added = update_gitignore(project)
+        if added:
+            report.append(".gitignore: " + ", ".join(added))
+    else:
+        added = update_git_exclude(project)
+        if added:
+            report.append(".git/info/exclude: " + ", ".join(added))
     already = settings.get("approved_external_providers", [])
     if providers is not None or not already:
         approved, rejected = ask_providers(providers)

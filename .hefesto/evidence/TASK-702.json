@@ -1,0 +1,88 @@
+{
+  "attempts": 2,
+  "base_commit": "696d204f764ffcf38a20c3f75e405f4371116e88",
+  "branch": "hefesto/fase-7-distribucion",
+  "commit": "6be931aab412b40d6ef3ba72334dcb87bb402466",
+  "created_at": "2026-10-14T09:31:13+00:00",
+  "files": [
+    {
+      "path": "hefesto/router.py",
+      "sha256": "95c5c983474823958ae9cd85345ea4623b3eb24ce2778df9f37c7375288abb3f"
+    }
+  ],
+  "phase": "Fase 7 — Distribución",
+  "prev_sha256": "d78f3d3b626562e021a2c1fb22e9b44c239adb9a9950ab10993d768a6277b906",
+  "prev_task_id": "TASK-701",
+  "providers": [
+    "codex:default",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-14T09:31:07+00:00",
+    "attempt": 1,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "",
+    "reviewer": "codex:default",
+    "run_id": "e3c059884163",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "5221f8c2536e",
+      "success": false
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "8a0fecac745f",
+      "success": false
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "20886dcfe672",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "a5a5e53eaeef",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "fbe6908c764d",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "709bbe6cb391",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "e3c059884163",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 2,
+  "task_id": "TASK-702",
+  "title": "El revisor nunca se enruta a un proveedor que escribió el cambio",
+  "verify": {
+    "command": "python -m unittest tests.test_reviewer_routing && python tools/dev.py lint",
+    "duration_seconds": 4.167,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-702-a2-2026-10-14T093112+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (46 ficheros Python)\n...\n----------------------------------------------------------------------\nRan 3 tests in 3.532s\n\nOK",
+    "sha256": "36701f6ed57dbbfa184ec130c3938485b6d61012e188ebfdd2301f686035a3c6"
+  }
+}

@@ -17,10 +17,20 @@ STDIN_INSTRUCTION = "Sigue exactamente las instrucciones del paquete recibido po
 class GeminiAdapter(Adapter):
     provider = "gemini"
     patterns = {
-        "auth": re.compile(r"unauthenticated|auth method|not signed in|login required|sign in|\b401\b|"
-                           r"permission_denied", re.I),
-        "quota": re.compile(r"quota|resource_exhausted.*(?:day|daily)|exhausted your|daily limit", re.I),
-        "rate_limit": re.compile(r"\b429\b|too many requests|ratelimitexceeded|rate[_ ]?limit|resource_exhausted", re.I),
+        "auth": re.compile(
+            r"unauthenticated|auth method|not signed in|login required|sign in|\b401\b|"
+            r"permission_denied|ineligibletiererror|unsupported_client|no longer supported",
+            re.I,
+        ),
+        "quota": re.compile(
+            r"quota|resource_exhausted.*(?:day|daily)|exhausted your|daily limit",
+            re.I,
+        ),
+        "rate_limit": re.compile(
+            r"\b429\b|too many requests|ratelimitexceeded|rate[_ ]?limit|resource_exhausted|"
+            r"\b503\b|unavailable|service is currently unavailable",
+            re.I,
+        ),
     }
 
     def is_agy(self, binary: str) -> bool:
@@ -32,6 +42,7 @@ class GeminiAdapter(Adapter):
             packet = call.packet_path
             instruction = (f"Lee el paquete de la tarea en {packet} y sigue exactamente sus instrucciones."
                            if packet else STDIN_INSTRUCTION)
+            instruction += " Estás en modo headless: no puedes ejecutar comandos de shell; solo debes leer y editar ficheros."
             argv = [binary, "-p", instruction, "--output-format", "json",
                     "--mode", "plan" if call.read_only else "accept-edits"]
             if packet:
@@ -56,24 +67,42 @@ class GeminiAdapter(Adapter):
         error = data.get("error")
         if error:
             message = error.get("message") if isinstance(error, dict) else str(error)
-            return self.failure_from_text(call, f"{message}\n{stderr}", returncode or 1)
+            details = f"{error}\n{message}" if isinstance(error, dict) else message
+            return self.failure_from_text(call, f"{details}\n{stderr}", returncode or 1)
+        denied = data.get("denied_actions")
+        response_val = data.get("response")
+        response_empty = response_val is None or (isinstance(response_val, str) and not response_val.strip())
+        if str(data.get("status") or "").upper() == "SUCCESS" and response_empty and denied:
+            count = len(denied) if isinstance(denied, (list, dict)) else 1
+            summary = f"acciones denegadas ({count}): {denied}"
+            return self.result(call, False, summary, None, _usage(data), call.extra.get("log_path", ""))
         summary = next((data[k] for k in ("response", "result", "text", "content") if isinstance(data.get(k), str)), None)
         if summary is None:
             return self.failure_from_text(call, stdout + "\n" + stderr, 0 if returncode == 0 else returncode)
-        return self.result(call, returncode == 0, summary, None, _usage(data), call.extra.get("log_path", ""))
+        if returncode != 0:
+            failure = self.failure_from_text(call, f"{summary}\n{stderr}", returncode)
+            return failure if failure.error_type else self.result(call, False, summary, None, _usage(data), call.extra.get("log_path", ""))
+        return self.result(call, True, summary, None, _usage(data), call.extra.get("log_path", ""))
 
 
 def _usage(data: dict[str, Any]) -> dict[str, Any] | str:
     stats = data.get("stats")
     models = stats.get("models") if isinstance(stats, dict) else None
-    if not isinstance(models, dict) or not models:
-        return "unknown"
-    prompt = candidates = 0
-    found = False
-    for entry in models.values():
-        tokens = entry.get("tokens") if isinstance(entry, dict) else None
-        if isinstance(tokens, dict):
-            found = True
-            prompt += int(tokens.get("prompt") or 0)
-            candidates += int(tokens.get("candidates") or 0)
-    return {"input_tokens": prompt, "output_tokens": candidates} if found else "unknown"
+    if isinstance(models, dict) and models:
+        prompt = candidates = 0
+        found = False
+        for entry in models.values():
+            tokens = entry.get("tokens") if isinstance(entry, dict) else None
+            if isinstance(tokens, dict):
+                found = True
+                prompt += int(tokens.get("prompt") or 0)
+                candidates += int(tokens.get("candidates") or 0)
+        if found:
+            return {"input_tokens": prompt, "output_tokens": candidates}
+    usage = data.get("usage")
+    if isinstance(usage, dict):
+        inp = usage.get("input_tokens") if usage.get("input_tokens") is not None else usage.get("prompt_tokens")
+        out = usage.get("output_tokens") if usage.get("output_tokens") is not None else usage.get("completion_tokens")
+        if inp is not None or out is not None:
+            return {"input_tokens": int(inp or 0), "output_tokens": int(out or 0)}
+    return "unknown"

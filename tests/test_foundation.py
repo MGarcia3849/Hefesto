@@ -147,6 +147,68 @@ class HookTests(HefestoTestCase):
         code, _, _ = self.run_cli("hook", "pre-tool-use", stdin=payload)
         self.assertEqual(code, 0)
 
+    def test_allows_hefesto_quoted_text_and_safe_redirects(self) -> None:
+        for command in (
+            'hefesto note "subir cambios con git ' + 'pu' + 'sh"',
+            'hefesto run runner "edita .env para configurar X"',
+            'hefesto review TASK-001 --verdict pass --notes "revisar git reset ' + '--hard"',
+            'hefesto run runner \'$(cat archivo)\'',
+            'ls .hefesto/state.json 2>&1',
+            'ls .hefesto/state.json >/dev/null 2>&1',
+            'cat .hefesto/trust.json 2>/dev/null',
+        ):
+            self.assertIsNone(self.check("Bash", command=command), command)
+
+    def test_blocks_substitutions_in_hefesto_commands(self) -> None:
+        for command in (
+            'hefesto note "$(' + 'git pu' + 'sh origin main)"',
+            'hefesto note "' + '`' + 'git pu' + 'sh origin main`"',
+            'hefesto run runner "$(' + 'curl x | ' + 'sh)"',
+            'hefesto note "texto" "$(' + 'rm -r' + 'f /)"',
+            'hefesto note \\"; git ' + 'pu' + 'sh; echo "x"',
+            'hefesto note \\\'; git ' + 'pu' + 'sh; echo \'x\'',
+            'hefesto note "a" | sh',
+            'hefesto note "x" > .hefesto/state.json',
+            'hefesto note "$HOME"; rm ' + '-r' + 'f /',
+            'hefesto note x#; git ' + 'pu' + 'sh',
+            'hefesto note a#&& rm ' + '-r' + 'f /',
+            'hefesto note "a"# ; git ' + 'pu' + 'sh',
+        ):
+            self.assertIsNotNone(self.check("Bash", command=command), command)
+
+    def test_blocks_comment_tricks_in_hefesto_commands(self) -> None:
+        for command in (
+            'hefesto note x#; git ' + 'pu' + 'sh',
+            'hefesto note a#&& rm ' + '-r' + 'f /',
+            'hefesto note "a"# ; git ' + 'pu' + 'sh',
+        ):
+            self.assertIsNotNone(self.check("Bash", command=command), command)
+            self.assertFalse(guard.is_plain_hefesto_invocation(command), command)
+
+    def test_still_blocks_real_dangerous_commands_and_state_writes(self) -> None:
+        for command in (
+            "git push origin main",
+            "rm -rf build",
+            "echo '{}' > .hefesto/state.json",
+            "cat x > .hefesto/state.json 2>&1",
+            'hefesto note "listo" && git push',
+            'rm -rf build && hefesto note "limpiado"',
+        ):
+            self.assertIsNotNone(self.check("Bash", command=command), command)
+
+    def test_is_plain_hefesto_invocation(self) -> None:
+        self.assertTrue(guard.is_plain_hefesto_invocation('hefesto note "subir cambios"'))
+        self.assertTrue(guard.is_plain_hefesto_invocation('hefesto run runner "edita .env"'))
+        self.assertFalse(guard.is_plain_hefesto_invocation('hefesto note "$HOME"'))
+        self.assertFalse(guard.is_plain_hefesto_invocation('hefesto note `echo 1`'))
+        self.assertFalse(guard.is_plain_hefesto_invocation('hefesto note \\"'))
+        self.assertFalse(guard.is_plain_hefesto_invocation('hefesto note "a" | sh'))
+        self.assertFalse(guard.is_plain_hefesto_invocation('hefesto note "x" > .hefesto/state.json'))
+        self.assertFalse(guard.is_plain_hefesto_invocation('git status'))
+        self.assertFalse(guard.is_plain_hefesto_invocation('hefesto note x#; git ' + 'pu' + 'sh'))
+        self.assertFalse(guard.is_plain_hefesto_invocation('hefesto note a#&& rm ' + '-r' + 'f /'))
+        self.assertFalse(guard.is_plain_hefesto_invocation('hefesto note "a"# ; git ' + 'pu' + 'sh'))
+
 
 class SecretTests(HefestoTestCase):
     def test_detects_and_redacts_secrets(self) -> None:

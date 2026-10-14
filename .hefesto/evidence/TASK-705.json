@@ -1,0 +1,83 @@
+{
+  "attempts": 2,
+  "base_commit": "ed43c6756a8efa883207292e9515ef5b992b1867",
+  "branch": "hefesto/fase-7-distribucion",
+  "commit": "fdd73527c98cc407f46f3517e2976463a8bfec26",
+  "created_at": "2026-10-14T13:44:18+00:00",
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "0f1fb58170b3514e6a186de95ef35d4d4fd34699ab945f134ad62475fcc830fc"
+    },
+    {
+      "path": "BOOTSTRAP.md",
+      "sha256": "64c76a0bb9241b7c20b8c313fac0f75529059a789e61dd7ff214d11eae3359fa"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "4e65b03aa551c1f42617300569ae59746d84bc7bb63955f3c684b65bdeb2d223"
+    },
+    {
+      "path": "README.md",
+      "sha256": "de573f14d25ac54e3f55254fa689de2c77013fbdc6262963021ab03c140ed180"
+    }
+  ],
+  "phase": "Fase 7 — Distribución",
+  "prev_sha256": "bc86dcbff6b06c845ea17e61cb1d1e8895e5026cd312b29f885bc499f18d9d26",
+  "prev_task_id": "TASK-713",
+  "providers": [
+    "claude:sonnet",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-14T13:44:17+00:00",
+    "attempt": 1,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "",
+    "reviewer": "claude:sonnet",
+    "run_id": "f96caafa822e",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "e93a0f4f6ce7",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "febacfa0883c",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "7120abac8b4a",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "f96caafa822e",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 13,
+  "task_id": "TASK-705",
+  "title": "BOOTSTRAP.md, CHANGELOG.md e instrucciones de publicación",
+  "verify": {
+    "command": "test -f BOOTSTRAP.md && grep -q \"hefesto bootstrap\" BOOTSTRAP.md && grep -q \"v2.1.0\" CHANGELOG.md && grep -q \"BOOTSTRAP.md\" AGENTS.md && grep -q \"gh repo create\" README.md",
+    "duration_seconds": 0.082,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-705-a2-2026-10-14T134418+0000.log",
+    "output_summary": "",
+    "sha256": "6c303e7b66405212896195922c58fc8ef0a7cdcda61673493009a3426cbe1b4d",
+    "trust": "human"
+  }
+}

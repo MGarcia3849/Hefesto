@@ -1,0 +1,85 @@
+{
+  "attempts": 1,
+  "base_commit": "01ea77c01e42b99f0e63cadd145d9e23ef577b4d",
+  "branch": "hefesto/fase-7-distribucion",
+  "commit": "8ec264853631ff9b25a9e96fdcd96fa56f82519d",
+  "created_at": "2026-10-14T11:13:04+00:00",
+  "files": [
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "d2a51617ab8c2d1f927a217fe910ad98415572c34546d6336f944461954f788b"
+    },
+    {
+      "path": "hefesto/project.py",
+      "sha256": "5143d63190af6d39640b9ccc42139a1f71ce9351f1eab94a9c4498c2ef95b8d9"
+    },
+    {
+      "path": "hefesto/status.py",
+      "sha256": "f08e287ffa9f61942f5fd01549b854cb7f7c18cbc8254cbf3b69874cf100854c"
+    },
+    {
+      "path": "hefesto/sync.py",
+      "sha256": "900875f0aa2cd2d6e7a4a0eb77b11fcda4a993e08b8fdc280a7163ccd6fea1cb"
+    },
+    {
+      "path": "tests/helpers.py",
+      "sha256": "95cb250b2e2f2c9e0476c1df6335bbeda706e584298a1f53803f15799e671fb1"
+    },
+    {
+      "path": "tests/test_sync.py",
+      "sha256": "dd0e16a4aaeb4b189762d8b2e1865658a091598eb0c100890e8de4f2e4eb5374"
+    }
+  ],
+  "phase": "Fase 7 — Distribución",
+  "prev_sha256": "65b690bd91c8f2531cf2fd115723f9c3d5d6d66ad03ea202ac5b9f09af0bdace",
+  "prev_task_id": "TASK-704",
+  "providers": [
+    "claude:sonnet",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-14T11:13:01+00:00",
+    "attempt": 0,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "",
+    "reviewer": "claude:sonnet",
+    "run_id": "c5edb30490dd",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "63c84d59cc05",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "064da257ac3d",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "c5edb30490dd",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 7,
+  "task_id": "TASK-706",
+  "title": "Modo local de instalación: init y sync sin ensuciar el proyecto",
+  "verify": {
+    "command": "python -m unittest tests.test_local_install.LocalInstallTests.test_init_leaves_git_status_clean tests.test_local_install.LocalInstallTests.test_entry_points_exist_and_are_excluded tests.test_local_install.LocalInstallTests.test_repeated_init_does_not_duplicate_excludes tests.test_local_install.LocalInstallTests.test_status_protocol_prints_protocol tests.test_local_install.LocalInstallTests.test_shared_mode_keeps_previous_behaviour && python tools/dev.py lint",
+    "duration_seconds": 2.186,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-706-a1-2026-10-14T111304+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (48 ficheros Python)\n.....\n----------------------------------------------------------------------\nRan 5 tests in 1.494s\n\nOK",
+    "sha256": "017a5aa6edc6a0540585cf695e976e53e86fd10b5ec7db7b1324d13ff163f5b9",
+    "trust": "human"
+  }
+}

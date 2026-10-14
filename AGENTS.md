@@ -1,5 +1,7 @@
 # Protocolo Hefesto
 
+> Si te han pedido instalar Hefesto en otro proyecto, sigue [BOOTSTRAP.md](BOOTSTRAP.md).
+
 Este proyecto está orquestado con **Hefesto**. La CLI `hefesto` es la única fuente de verdad del estado: este fichero describe cómo trabajar con ella, sea cual sea la herramienta que lo lea (Claude Code, Codex CLI o Gemini CLI).
 
 ## Primera acción de cada sesión

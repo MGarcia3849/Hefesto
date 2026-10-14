@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import uuid
 from pathlib import Path
 from typing import Any
@@ -139,8 +140,12 @@ def fail(project: Path, task_id: str, reason: str) -> tuple[int, str]:
         return register_failure(project, task_id, reason)
 
 
-def unblock(project: Path, task_id: str, note: str) -> str:
-    util.require_tty("hefesto unblock")
+def unblock(project: Path, task_id: str, note: str, yes: bool = False) -> str:
+    if yes:
+        if "HEFESTO_ROLE" in os.environ:
+            raise HefestoError("`--yes` no está permitido cuando `HEFESTO_ROLE` está definido.", EXIT_BLOCKED)
+    else:
+        util.require_tty("hefesto unblock")
     with project_lock(project):
         data = state.load(project)
         if data["status"] != "BLOCKED_NEED_ARCHITECT_REVIEW" or data["current_task_id"] != task_id:

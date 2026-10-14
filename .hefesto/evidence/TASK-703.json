@@ -1,0 +1,82 @@
+{
+  "attempts": 2,
+  "base_commit": "1ddce9982be4b1bd67c2139fd6f1f7e20a7068ce",
+  "branch": "hefesto/fase-7-distribucion",
+  "commit": "09b12c2b1cd8a9554088493b9c0854fa2d24a275",
+  "created_at": "2026-10-14T10:41:21+00:00",
+  "files": [
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "9be3336fc1f54833bd05e182ef587931be74d8dcfca9297fcb3fb2ffee946a65"
+    },
+    {
+      "path": "hefesto/distribution.py",
+      "sha256": "02ebd45accbb3b610e024fd4357a40b924e52961c0153ff45862fba9c8230f9c"
+    }
+  ],
+  "phase": "Fase 7 — Distribución",
+  "prev_sha256": "aaddcf0fb516597192d0145e93165005bc868d3cce42de7c3ee8baf3c809a0b0",
+  "prev_task_id": "TASK-710",
+  "providers": [
+    "claude:sonnet",
+    "codex:default",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-14T10:41:18+00:00",
+    "attempt": 1,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "",
+    "reviewer": "codex:default",
+    "run_id": "80777a8f0f7b",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "81cd2379b7e7",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "65102b20ebd1",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "2647c5f2ff87",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "80777a8f0f7b",
+      "success": false
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "80777a8f0f7b",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 5,
+  "task_id": "TASK-703",
+  "title": "Detección de modo y de stack, comandos bootstrap y adopt",
+  "verify": {
+    "command": "python -m unittest tests.test_distribution.ModeTests tests.test_distribution.StackTests tests.test_distribution.BootstrapTests tests.test_distribution.AdoptTests && python tools/dev.py lint",
+    "duration_seconds": 2.344,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-703-a2-2026-10-14T104120+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (48 ficheros Python)\n.............\n----------------------------------------------------------------------\nRan 13 tests in 1.662s\n\nOK",
+    "sha256": "ddf349209268b212ca5fdcdddc1829155f47751109d13b521e3c5769742717ef",
+    "trust": "human"
+  }
+}

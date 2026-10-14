@@ -86,3 +86,7 @@ pr = false                          # habilita `hefesto finish --pr`
 
 [privacy]
 redact_secrets = true
+
+[trust]
+auto_safe = true
+extra_safe_prefixes = []

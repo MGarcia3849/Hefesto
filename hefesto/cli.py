@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -15,13 +16,22 @@ def _project(args: argparse.Namespace) -> Path:
     return project.find_project(Path(args.project) if getattr(args, "project", None) else None)
 
 
+def _reject_project_option(args: argparse.Namespace, command: str) -> None:
+    if getattr(args, "project", None) is not None:
+        raise HefestoError(f"`hefesto {command}` no permite la opción global `-C`/`--project`.", EXIT_INPUT)
+
+
 # ---------------------------------------------------------------------------
 # Fase 1: init, doctor, config
 
 
 def cmd_init(args: argparse.Namespace) -> int:
+    from hefesto import distribution
+
+    _reject_project_option(args, "init")
     target = Path(args.dir or ".")
-    for line in project.init(target, providers=args.providers):
+    distribution.validate_safe_project_paths(target)
+    for line in project.init(target, providers=args.providers, shared=getattr(args, "shared", False)):
         print(line)
     print("\n== doctor ==")
     checks = doctor.run_checks(target.resolve())
@@ -72,7 +82,7 @@ def cmd_config_show(args: argparse.Namespace) -> int:
 def cmd_status(args: argparse.Namespace) -> int:
     from hefesto import status
 
-    print(status.render(_project(args)))
+    print(status.render(_project(args), protocol=getattr(args, "protocol", False)))
     return EXIT_OK
 
 
@@ -133,18 +143,29 @@ def cmd_fail(args: argparse.Namespace) -> int:
     return code
 
 
+def _check_yes_barriers(args: argparse.Namespace) -> None:
+    if "HEFESTO_ROLE" in os.environ:
+        raise HefestoError("`--yes` no está permitido cuando `HEFESTO_ROLE` está definido.", EXIT_BLOCKED)
+    if getattr(args, "project", None) is not None:
+        raise HefestoError("`--yes` no está permitido con la opción global `-C`/`--project`.", EXIT_INPUT)
+
+
 def cmd_unblock(args: argparse.Namespace) -> int:
     from hefesto import workflow
 
-    print(workflow.unblock(_project(args), args.task, args.note))
+    if getattr(args, "yes", False):
+        _check_yes_barriers(args)
+    print(workflow.unblock(_project(args), args.task, args.note, yes=getattr(args, "yes", False)))
     return EXIT_OK
 
 
 def cmd_trust(args: argparse.Namespace) -> int:
     from hefesto import roadmap, trust
 
+    if getattr(args, "yes", False):
+        _check_yes_barriers(args)
     proj = _project(args)
-    _count, messages = trust.approve_interactive(proj, roadmap.load_valid(proj))
+    _count, messages = trust.approve_interactive(proj, roadmap.load_valid(proj), yes=getattr(args, "yes", False))
     print("\n".join(messages))
     return EXIT_OK
 
@@ -174,7 +195,9 @@ def cmd_done(args: argparse.Namespace) -> int:
 def cmd_finish(args: argparse.Namespace) -> int:
     from hefesto import acceptance
 
-    return _print_result(*acceptance.finish(_project(args), args.phase, args.pr))
+    if getattr(args, "yes", False):
+        _check_yes_barriers(args)
+    return _print_result(*acceptance.finish(_project(args), args.phase, args.pr, yes=getattr(args, "yes", False)))
 
 
 def cmd_evidence(args: argparse.Namespace) -> int:
@@ -256,6 +279,8 @@ def cmd_route(args: argparse.Namespace) -> int:
 def cmd_providers(args: argparse.Namespace) -> int:
     from hefesto import admin, preflight, quota
 
+    if args.action in ("add", "remove", "reset"):
+        _reject_project_option(args, f"providers {args.action}")
     proj = _project(args)
     if args.action == "check":
         print(preflight.render(preflight.check_all(proj, args.probe)))
@@ -276,6 +301,7 @@ def cmd_providers(args: argparse.Namespace) -> int:
 def cmd_local(args: argparse.Namespace) -> int:
     from hefesto import admin
 
+    _reject_project_option(args, f"local {args.action}")
     proj = _project(args)
     if args.action == "enable":
         if not args.base_url or not args.model:
@@ -352,6 +378,52 @@ def cmd_stop(args: argparse.Namespace) -> int:
 
 
 # ---------------------------------------------------------------------------
+# Fase 7: distribución
+
+
+def cmd_bootstrap(args: argparse.Namespace) -> int:
+    from hefesto import distribution
+
+    target = Path(args.dir or getattr(args, "project", None) or ".").resolve()
+    return distribution.bootstrap(target, providers=args.providers, yes=getattr(args, "yes", False))
+
+
+def cmd_adopt(args: argparse.Namespace) -> int:
+    from hefesto import distribution
+
+    _reject_project_option(args, "adopt")
+    target = Path(args.dir or ".").resolve()
+    distribution.validate_safe_project_paths(target)
+    for line in distribution.adopt(target, providers=args.providers):
+        print(line)
+    return EXIT_OK
+
+
+def cmd_self_update(args: argparse.Namespace) -> int:
+    from hefesto import distribution
+    from hefesto.util import FRAMEWORK_ROOT
+
+    try:
+        proj: Path | None = _project(args)
+    except HefestoError:
+        proj = None
+    msg = distribution.self_update(FRAMEWORK_ROOT, to=args.to, project=proj)
+    if msg:
+        print(msg)
+    return EXIT_OK
+
+
+def cmd_migrate(args: argparse.Namespace) -> int:
+    from hefesto import distribution
+
+    proj = _project(args)
+    msg = distribution.migrate(proj)
+    if msg:
+        print(msg)
+    return EXIT_OK
+
+
+# ---------------------------------------------------------------------------
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -363,7 +435,26 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("init", help="inicializa Hefesto en un proyecto (idempotente)")
     p.add_argument("dir", nargs="?", help="directorio del proyecto")
     p.add_argument("--providers", help="proveedores externos autorizados, p. ej. gemini,codex ('' = ninguno)")
+    p.add_argument("--shared", action="store_true", help="modo compartido: versiona ficheros en la raíz y .gitignore")
     p.set_defaults(func=cmd_init)
+
+    p = sub.add_parser("bootstrap", help="detecta el modo de trabajo (crear, continuar, mejorar) y arranca")
+    p.add_argument("dir", nargs="?", help="directorio del proyecto")
+    p.add_argument("--providers", help="proveedores externos autorizados, p. ej. gemini,codex ('' = ninguno)")
+    p.add_argument("--yes", action="store_true", help="arranca sin confirmación interactiva ni TTY")
+    p.set_defaults(func=cmd_bootstrap)
+
+    p = sub.add_parser("adopt", help="adopta un proyecto existente sin modificar su código")
+    p.add_argument("dir", nargs="?", help="directorio del proyecto")
+    p.add_argument("--providers", help="proveedores externos autorizados, p. ej. gemini,codex ('' = ninguno)")
+    p.set_defaults(func=cmd_adopt)
+
+    p = sub.add_parser("self-update", help="actualiza la copia instalada de Hefesto al último tag o al indicado")
+    p.add_argument("--to", help="tag de la versión destino (por defecto, la más reciente)")
+    p.set_defaults(func=cmd_self_update)
+
+    p = sub.add_parser("migrate", help="aplica migraciones de configuración y plantillas si la versión cambió")
+    p.set_defaults(func=cmd_migrate)
 
     p = sub.add_parser("doctor", help="comprueba dependencias, adaptadores, allowlist, lock y estado")
     p.set_defaults(func=cmd_doctor)
@@ -377,6 +468,7 @@ def build_parser() -> argparse.ArgumentParser:
     c.set_defaults(func=cmd_config_show)
 
     p = sub.add_parser("status", help="estado, tarea, intentos, rama, rol activo y siguiente acción")
+    p.add_argument("--protocol", action="store_true", help="imprime también el contenido del protocolo (AGENTS.md)")
     p.set_defaults(func=cmd_status)
 
     p = sub.add_parser("hook", help="puente para los hooks de Claude Code (lee JSON por stdin)")
@@ -398,9 +490,11 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("unblock", help="desbloquea una tarea tras el circuit breaker (solo humanos, TTY)")
     p.add_argument("task")
     p.add_argument("note")
+    p.add_argument("--yes", action="store_true", help="desbloquea sin TTY si no es headless ni se usa -C")
     p.set_defaults(func=cmd_unblock)
 
     p = sub.add_parser("trust", help="aprueba los comandos verify del ROADMAP (solo humanos, TTY)")
+    p.add_argument("--yes", action="store_true", help="aprueba sin TTY si no es headless ni se usa -C")
     p.set_defaults(func=cmd_trust)
 
     p = sub.add_parser("review", help="registra el veredicto del Reviewer (regla de independencia)")
@@ -419,6 +513,7 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("finish", help="integra la rama de la fase en la principal (rebase, tests, confirmación)")
     p.add_argument("phase", nargs="?", help="fase (por defecto, la primera abierta)")
     p.add_argument("--pr", action="store_true", help="sube la rama y abre un PR en borrador (github.pr = true)")
+    p.add_argument("--yes", action="store_true", help="integra sin confirmación interactiva ni TTY")
     p.set_defaults(func=cmd_finish)
 
     p = sub.add_parser("evidence", help="muestra la evidencia de una tarea o comprueba la cadena (`verify`)")

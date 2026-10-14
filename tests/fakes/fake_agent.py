@@ -31,11 +31,15 @@ ERRORS = {
         "quota": "Quota exceeded for quota metric 'Gemini requests per day': RESOURCE_EXHAUSTED",
         "rate_limit": "[API Error: 429 Too Many Requests] rateLimitExceeded",
         "auth": "Please set an Auth method in your settings.json or run gemini to login (UNAUTHENTICATED)",
+        "ineligible": "IneligibleTierError: model is no longer supported (UNSUPPORTED_CLIENT)",
+        "unavailable": "The service is currently unavailable (UNAVAILABLE, code 503)",
     },
     "agy": {
         "quota": "Error: quota exhausted for this account (RESOURCE_EXHAUSTED)",
         "rate_limit": "Error: 429 rate limit exceeded",
         "auth": "Error: not signed in. Run agy to sign in.",
+        "ineligible": "IneligibleTierError: client is no longer supported (UNSUPPORTED_CLIENT)",
+        "unavailable": "The service is currently unavailable (UNAVAILABLE, code 503)",
     },
 }
 
@@ -148,12 +152,22 @@ def main(name: str) -> int:
         model = argv[argv.index("--model") + 1]
     elif "-m" in argv:
         model = argv[argv.index("-m") + 1]
-    if mode in ("quota", "rate_limit", "auth"):
+    if mode in ("quota", "rate_limit", "auth", "ineligible", "unavailable"):
         out, err = error_output(name, mode)
         if out:
             print(out)
         print(err, file=sys.stderr)
         return 1
+    if mode == "denied":
+        denied_payload: dict[str, object] = {
+            "status": "SUCCESS",
+            "response": "",
+            "denied_actions": [{"tool": "run_shell_command", "command": "python -m unittest"}],
+        }
+        if "usage" in sc:
+            denied_payload["usage"] = sc["usage"]
+        print(json.dumps(denied_payload))
+        return 0
     if mode == "orchestrate":
         return orchestrate(name, sc)
     if mode == "timeout":
@@ -169,7 +183,16 @@ def main(name: str) -> int:
     if mode == "fail":
         print(output(name, str(sc.get("summary", "no he podido completar la tarea")), model))
         return 1
-    print(output(name, str(sc.get("summary", "hecho")), model))
+    raw = output(name, str(sc.get("summary", "hecho")), model)
+    if "usage" in sc:
+        try:
+            payload = json.loads(raw)
+            if isinstance(payload, dict):
+                payload["usage"] = sc["usage"]
+                raw = json.dumps(payload)
+        except (json.JSONDecodeError, ValueError):
+            pass
+    print(raw)
     return 0
 
 

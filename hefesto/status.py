@@ -14,7 +14,17 @@ def current_branch(path: Path) -> str:
     return result.stdout.strip() or "(detached)"
 
 
-def render(project: Path) -> str:
+def protocol_text(project: Path) -> str:
+    local_proto = project / ".hefesto" / "AGENTS.md"
+    if local_proto.exists():
+        return local_proto.read_text(encoding="utf-8")
+    root_proto = project / "AGENTS.md"
+    if root_proto.exists():
+        return root_proto.read_text(encoding="utf-8")
+    return ""
+
+
+def render(project: Path, protocol: bool = False) -> str:
     data = state.load(project)
     workdir = Path(data.get("workdir") or project)
     lines = [
@@ -37,4 +47,9 @@ def render(project: Path) -> str:
             task, reason = roadmap.next_task(rm)
             lines.append(f"  próxima:   {task.id + ': ' + task.title if task else reason}")
     lines.append(f"  siguiente: {data['next_action']}")
-    return "\n".join(lines)
+    text = "\n".join(lines)
+    if protocol:
+        proto = protocol_text(project)
+        if proto:
+            return f"{text}\n\n{proto.rstrip()}\n"
+    return text

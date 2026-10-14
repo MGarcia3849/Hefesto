@@ -81,7 +81,7 @@ class HefestoTestCase(unittest.TestCase):
         return code, out.getvalue(), err.getvalue()
 
     def init_project(self, providers: str = "gemini,codex") -> Path:
-        code, out, err = self.run_cli("init", str(self.project), "--providers", providers)
+        code, out, err = self.run_cli("init", str(self.project), "--shared", "--providers", providers)
         self.assertEqual(code, 0, out + err)
         git(self.project, "add", "-A")
         git(self.project, "commit", "-q", "-m", "inicial")

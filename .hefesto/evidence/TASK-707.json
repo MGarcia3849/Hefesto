@@ -1,0 +1,63 @@
+{
+  "attempts": 1,
+  "base_commit": "113c9050608b2c7c3b926f335fce88bda0d09bbc",
+  "branch": "hefesto/fase-7-distribucion",
+  "commit": "1a6bf1302e78880dfcc2f9f509c271df6774bb59",
+  "created_at": "2026-10-14T11:22:04+00:00",
+  "files": [
+    {
+      "path": "hefesto/acceptance.py",
+      "sha256": "717cc12da7580e5764011e7121394f1c3d396b50ea03061b4323ca7947b0a9bd"
+    },
+    {
+      "path": "hefesto/gitops.py",
+      "sha256": "6b349fd7208b4f9659beae4a9aeaca9895c23a0f1df58fc5ea2472379f069e75"
+    }
+  ],
+  "phase": "Fase 7 — Distribución",
+  "prev_sha256": "f7cc2f66ced025085e373654ce4ea3f6173c0b4d38ff9494333715d5946daf4a",
+  "prev_task_id": "TASK-706",
+  "providers": [
+    "claude:sonnet",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-14T11:21:23+00:00",
+    "attempt": 0,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "",
+    "reviewer": "claude:sonnet",
+    "run_id": "c7f300561008",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "5fe39c4df3c7",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "c7f300561008",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 8,
+  "task_id": "TASK-707",
+  "title": "Modo local en el ciclo git: commits solo con ficheros de la tarea",
+  "verify": {
+    "command": "python -m unittest tests.test_local_install && python -m unittest tests.test_git && python tools/dev.py lint",
+    "duration_seconds": 39.976,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-707-a1-2026-10-14T112204+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (48 ficheros Python)\n......\n----------------------------------------------------------------------\nRan 6 tests in 3.774s\n\nOK\n..........................\n----------------------------------------------------------------------\nRan 26 tests in 35.257s\n\nOK",
+    "sha256": "d675f8ebfe9cc2dd7f2cdb5e19e138586621e6196dd05698f855b25b9d1248bd",
+    "trust": "human"
+  }
+}

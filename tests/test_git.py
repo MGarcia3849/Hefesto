@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from hefesto import config, evidence, gitops, roadmap, state
+from hefesto import config, evidence, gitops, project, roadmap, state
 from hefesto.util import HefestoError
 from tests.helpers import HefestoTestCase, git
 
@@ -40,6 +40,23 @@ CONTRACT = """# ROADMAP
   - role: runner
   - depends_on: TASK-001
   - size: M
+"""
+
+CONTRACT_FINISH = """# ROADMAP
+
+## Fase 1 — Contrato
+- [ ] TASK-001: Contrato de suma
+  - verify: `python -m unittest tests.test_suma 2>&1 | grep -q "FAILED"`
+  - files: tests/
+  - role: core
+  - size: S
+  - contract: tests/test_suma.py
+- [ ] TASK-002: Implementar suma
+  - verify: `python -m unittest tests.test_suma`
+  - files: src/
+  - role: runner
+  - depends_on: TASK-001
+  - size: S
 """
 
 BRANCH = "hefesto/fase-1-nucleo"
@@ -106,6 +123,7 @@ class DoneTests(GitFlowCase):
     def test_done_requires_trusted_verify(self) -> None:
         self.set_roadmap(ROADMAP.replace("test -f src/suma.py", "test -f src/suma.py && true"), trust_it=False)
         self.cli("start", "TASK-001")
+        config.set_setting(config.project_settings_path(self.project), ("trust", "auto_safe"), False)
         code, _, err = self.cli("done", "TASK-001")
         self.assertEqual(code, 2)
         self.assertIn("hefesto trust", err)
@@ -333,3 +351,195 @@ class FinishTests(GitFlowCase):
         code, _, err = self.cli("finish", "--pr", tty_value=True, answers=["s"])
         self.assertEqual(code, 2)
         self.assertIn("github.pr", err)
+
+
+class FinishContractTests(GitFlowCase):
+    roadmap_text = CONTRACT_FINISH
+
+    def test_finish_skips_contract_verify_and_integrates(self) -> None:
+        main = gitops.current_branch(self.project)
+        self.assertEqual(self.cli("start", "TASK-001")[0], 0)
+        self.write("tests/__init__.py", "")
+        self.write(
+            "tests/test_suma.py",
+            "import unittest\n\n"
+            "class SumaContractTest(unittest.TestCase):\n"
+            "    def test_suma(self):\n"
+            "        from src.suma import suma\n"
+            "        self.assertEqual(suma(1, 2), 3)\n",
+        )
+        code, out, err = self.cli(
+            "review", "TASK-001", "--verdict", "pass", "--author", "claude:opus", "--reviewer", "codex"
+        )
+        self.assertEqual(code, 0, out + err)
+        code, out, err = self.cli("done", "TASK-001")
+        self.assertEqual(code, 0, out + err)
+
+        self.assertEqual(self.cli("start", "TASK-002")[0], 0)
+        self.write("src/__init__.py", "")
+        self.write("src/suma.py", "def suma(a, b):\n    return a + b\n")
+        code, out, err = self.cli(
+            "review", "TASK-002", "--verdict", "pass", "--author", "gemini", "--reviewer", "claude:sonnet"
+        )
+        self.assertEqual(code, 0, out + err)
+        code, out, err = self.cli("done", "TASK-002")
+        self.assertEqual(code, 0, out + err)
+
+        failed = evidence.run_verify(
+            self.project, self.workdir(), "TASK-001",
+            'python -m unittest tests.test_suma 2>&1 | grep -q "FAILED"', 10
+        )
+        self.assertNotEqual(failed.exit_code, 0)
+
+        code, out, err = self.cli("finish", tty_value=True, answers=["s"])
+        self.assertEqual(code, 0, out + err)
+        self.assertIn("Verify de contrato omitidos: TASK-001", out)
+        self.assertEqual(gitops.current_branch(self.project), main)
+        self.assertFalse(gitops.branch_exists(self.project, "hefesto/fase-1-contrato"))
+        self.assertTrue((self.project / "src" / "suma.py").exists())
+        self.assertTrue((self.project / "tests" / "test_suma.py").exists())
+
+    def test_evidence_includes_contract_field(self) -> None:
+        self.assertEqual(self.cli("start", "TASK-001")[0], 0)
+        self.write("tests/__init__.py", "")
+        self.write(
+            "tests/test_suma.py",
+            "import unittest\n\n"
+            "class SumaContractTest(unittest.TestCase):\n"
+            "    def test_suma(self):\n"
+            "        from src.suma import suma\n"
+            "        self.assertEqual(suma(1, 2), 3)\n",
+        )
+        code, out, err = self.cli(
+            "review", "TASK-001", "--verdict", "pass", "--author", "claude:opus", "--reviewer", "codex"
+        )
+        self.assertEqual(code, 0, out + err)
+        code, out, err = self.cli("done", "TASK-001")
+        self.assertEqual(code, 0, out + err)
+
+        ev1 = evidence.show(self.project, "TASK-001")
+        self.assertIn("contract", ev1)
+        self.assertEqual(ev1["contract"], ["tests/test_suma.py"])
+
+        self.assertEqual(self.cli("start", "TASK-002")[0], 0)
+        self.write("src/__init__.py", "")
+        self.write("src/suma.py", "def suma(a, b):\n    return a + b\n")
+        code, out, err = self.cli(
+            "review", "TASK-002", "--verdict", "pass", "--author", "gemini", "--reviewer", "claude:sonnet"
+        )
+        self.assertEqual(code, 0, out + err)
+        code, out, err = self.cli("done", "TASK-002")
+        self.assertEqual(code, 0, out + err)
+
+        ev2 = evidence.show(self.project, "TASK-002")
+        self.assertIn("contract", ev2)
+        self.assertEqual(ev2["contract"], [])
+
+    def test_finish_does_not_skip_verify_when_contract_added_posteriori(self) -> None:
+        self.assertEqual(self.cli("start", "TASK-001")[0], 0)
+        self.write("tests/__init__.py", "")
+        self.write(
+            "tests/test_suma.py",
+            "import unittest\n\n"
+            "class SumaContractTest(unittest.TestCase):\n"
+            "    def test_suma(self):\n"
+            "        from src.suma import suma\n"
+            "        self.assertEqual(suma(1, 2), 3)\n",
+        )
+        self.cli("review", "TASK-001", "--verdict", "pass", "--author", "claude:opus", "--reviewer", "codex")
+        self.assertEqual(self.cli("done", "TASK-001")[0], 0)
+
+        self.assertEqual(self.cli("start", "TASK-002")[0], 0)
+        self.write("src/__init__.py", "")
+        self.write("src/suma.py", "def suma(a, b):\n    return a + b\n")
+        self.cli("review", "TASK-002", "--verdict", "pass", "--author", "gemini", "--reviewer", "claude:sonnet")
+        self.assertEqual(self.cli("done", "TASK-002")[0], 0)
+
+        # Modifica la implementación para que el verify de TASK-002 falle
+        self.write("src/suma.py", "def suma(a, b):\n    return 0\n")
+        # Añade 'contract:' a posteriori en el ROADMAP para intentar que finish se salte su verify
+        rm_path = self.workdir() / ".hefesto" / "ROADMAP.md"
+        rm_text = rm_path.read_text(encoding="utf-8")
+        self.assertNotIn("contract: src/suma.py", rm_text)
+        rm_text = rm_text.replace("  - role: runner", "  - role: runner\n  - contract: src/suma.py")
+        rm_path.write_text(rm_text, encoding="utf-8")
+        git(self.workdir(), "add", "src/suma.py", ".hefesto/ROADMAP.md")
+        git(self.workdir(), "commit", "-q", "-m", "intento de evasion")
+
+        code, out, err = self.cli("finish", tty_value=True, answers=["s"])
+        self.assertNotEqual(code, 0)
+        self.assertIn("TASK-002", err)
+        self.assertTrue(gitops.branch_exists(self.project, "hefesto/fase-1-contrato"))
+
+    def test_is_contract_task_legacy_evidence(self) -> None:
+        from hefesto.acceptance import _is_contract_task
+
+        self.assertEqual(self.cli("start", "TASK-001")[0], 0)
+        self.write("tests/__init__.py", "")
+        self.write(
+            "tests/test_suma.py",
+            "import unittest\n\n"
+            "class SumaContractTest(unittest.TestCase):\n"
+            "    def test_suma(self):\n"
+            "        from src.suma import suma\n"
+            "        self.assertEqual(suma(1, 2), 3)\n",
+        )
+        self.cli("review", "TASK-001", "--verdict", "pass", "--author", "claude:opus", "--reviewer", "codex")
+        self.assertEqual(self.cli("done", "TASK-001")[0], 0)
+
+        self.assertEqual(self.cli("start", "TASK-002")[0], 0)
+        self.write("src/__init__.py", "")
+        self.write("src/suma.py", "def suma(a, b):\n    return a + b\n")
+        self.cli("review", "TASK-002", "--verdict", "pass", "--author", "gemini", "--reviewer", "claude:sonnet")
+        self.assertEqual(self.cli("done", "TASK-002")[0], 0)
+
+        # Simula evidencias antiguas sin el campo contract
+        for tid in ("TASK-001", "TASK-002"):
+            p = self.project / ".hefesto" / "evidence" / f"{tid}.json"
+            data = json.loads(p.read_text(encoding="utf-8"))
+            data.pop("contract", None)
+            p.write_text(json.dumps(data), encoding="utf-8")
+
+        # Para TASK-001, el commit histórico sí tenía contract
+        self.assertTrue(_is_contract_task(self.project, self.workdir(), "TASK-001"))
+        # Para TASK-002, el commit histórico no tenía contract
+        self.assertFalse(_is_contract_task(self.project, self.workdir(), "TASK-002"))
+
+
+class FindProjectTests(HefestoTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.init_project()
+        self.worktree = self.project / ".hefesto" / "worktree"
+        self.worktree.mkdir(parents=True, exist_ok=True)
+
+    def test_find_project_normal_without_worktree(self) -> None:
+        expected = self.project.resolve()
+        self.assertEqual(project.find_project(self.project), expected)
+        sub = self.project / "src" / "pkg"
+        sub.mkdir(parents=True, exist_ok=True)
+        self.assertEqual(project.find_project(sub), expected)
+
+    def test_find_project_from_worktree_root(self) -> None:
+        (self.worktree / ".hefesto").mkdir(parents=True, exist_ok=True)
+        (self.worktree / ".hefesto" / "state.json").write_text("{}", encoding="utf-8")
+        expected = self.project.resolve()
+        self.assertEqual(project.find_project(self.worktree), expected)
+
+    def test_find_project_from_worktree_subfolder(self) -> None:
+        sub = self.worktree / "src" / "pkg"
+        sub.mkdir(parents=True, exist_ok=True)
+        (self.worktree / ".hefesto").mkdir(parents=True, exist_ok=True)
+        (self.worktree / ".hefesto" / "settings.json").write_text("{}", encoding="utf-8")
+        expected = self.project.resolve()
+        self.assertEqual(project.find_project(sub), expected)
+
+    def test_find_project_from_worktrees_plural_subfolder(self) -> None:
+        task_wt = self.project / ".hefesto" / "worktrees" / "task-001"
+        sub = task_wt / "src" / "pkg"
+        sub.mkdir(parents=True, exist_ok=True)
+        (task_wt / ".hefesto").mkdir(parents=True, exist_ok=True)
+        expected = self.project.resolve()
+        self.assertEqual(project.find_project(task_wt), expected)
+        self.assertEqual(project.find_project(sub), expected)
+

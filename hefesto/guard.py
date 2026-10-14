@@ -41,6 +41,8 @@ DANGEROUS_COMMANDS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("git restore .", re.compile(r"\bgit\b[^;&|\n]*\brestore\b[^;&|\n]*(?:\s)\.(?:\s|$)")),
     ("git clean", re.compile(r"\bgit\b[^;&|\n]*\bclean\b[^;&|\n]*-[a-zA-Z]*f")),
     ("rm -rf", re.compile(r"\brm\s+(?:-[a-zA-Z]*r[a-zA-Z]*f|-[a-zA-Z]*f[a-zA-Z]*r|-r\s+-f|-f\s+-r|--recursive\s+--force|--force\s+--recursive)\b")),
+    ("curl | sh", re.compile(r"\b(?:curl|wget)\b[^;&|\n]*\|\s*(?:(?:/usr)?/bin/)?(?:ba)?sh\b")),
+    ("| sh", re.compile(r"\|\s*(?:(?:/usr)?/bin/)?(?:ba)?sh\b")),
     ("Remove-Item -Recurse -Force", re.compile(r"(?i)\bRemove-Item\b[^;\n]*-Recurse[^;\n]*-Force|\bRemove-Item\b[^;\n]*-Force[^;\n]*-Recurse")),
     ("--dangerously-skip-permissions", re.compile(r"--dangerously-skip-permissions|--yolo\b|danger-full-access")),
 )
@@ -137,7 +139,35 @@ WRITE_TOOLS = ("Edit", "Write", "MultiEdit", "NotebookEdit", "ApplyPatch")
 PATCH_FILE = re.compile(r"^\*\*\* (?:Add|Update|Delete) File: (.+)$|^\*\*\* Move to: (.+)$", re.M)
 
 
+REDIRECTION_STRIP = re.compile(
+    r"2>&1|2>& 1|1>&2|>&2|(?:&>>?|[0-2]?>>?)\s*(?:/dev/null|NUL\b)",
+    re.I,
+)
+
+CONTROL_PUNCTUATION = set(";&|<>()")
+
+
+def is_plain_hefesto_invocation(command: str) -> bool:
+    """Devuelve True si `command` es una invocación simple de `hefesto` sin operadores ni sustituciones."""
+    if "#" in command or any(ch in command for ch in ("$", "`", "\\", "\n", "\r")):
+        return False
+    try:
+        lexer = shlex.shlex(command, posix=True, punctuation_chars=True)
+        lexer.commenters = ""
+        lexer.whitespace_split = True
+        tokens = list(lexer)
+    except Exception:
+        return False
+    if not tokens or tokens[0] != "hefesto":
+        return False
+    if any(tok and all(c in CONTROL_PUNCTUATION for c in tok) for tok in tokens):
+        return False
+    return True
+
+
 def _check_bash(command: str, patterns: tuple[str, ...]) -> str | None:
+    if is_plain_hefesto_invocation(command):
+        return None
     label = dangerous_command(command)
     if label:
         return f"Hefesto bloquea `{label}`: usa la CLI `hefesto` (finish/discard) o pide al usuario que lo haga."
@@ -147,9 +177,11 @@ def _check_bash(command: str, patterns: tuple[str, ...]) -> str | None:
     for word in re.split(r"[\s'\"=<>|;&()]+", command):
         if word and not word.startswith("-") and is_protected(word, patterns):
             return f"Hefesto bloquea el acceso a una ruta protegida (`{word}`)."
+    command_for_control = REDIRECTION_STRIP.sub(" ", command)
     for control in CONTROL_FILES:
-        if control in command.replace("\\", "/") and re.search(r">|\btee\b|\bsed\s+-i|\bmv\b|\bcp\b|\brm\b", command):
-            return f"`{control}` solo lo modifica la CLI `hefesto`."
+        for seg in re.split(r"&&|\|\||;|\|", command_for_control):
+            if control in seg.replace("\\", "/") and re.search(r">|\btee\b|\bsed\s+-i|\bmv\b|\bcp\b|\brm\b", seg):
+                return f"`{control}` solo lo modifica la CLI `hefesto`."
     return None
 
 

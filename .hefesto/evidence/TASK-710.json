@@ -1,0 +1,114 @@
+{
+  "attempts": 3,
+  "base_commit": "3e2a4a4b1845de653578b3fd8a6a371583ee522b",
+  "branch": "hefesto/fase-7-distribucion",
+  "commit": "e2ebd327219fbec4cc3c3e23334360daf9dd48db",
+  "created_at": "2026-10-14T10:20:40+00:00",
+  "files": [
+    {
+      "path": "hefesto.toml",
+      "sha256": "2a4f350ff2ae364370c92164b8ccd7d0dab4d3d5802cec9877dc364e8aef0fbe"
+    },
+    {
+      "path": "hefesto/acceptance.py",
+      "sha256": "c5db0e575c42b0cc0115ac49052ba554bf37b429642e36202da0179869b0eced"
+    },
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "ab19a75fdcd5b76be8c13df8343e260bb92dc6a1a374caffe26b0ca4acc5813d"
+    },
+    {
+      "path": "hefesto/config.py",
+      "sha256": "1a5936cc130745e1bcf1db7401023c62347163cf2028a937da9a74f58bbf8c66"
+    },
+    {
+      "path": "hefesto/trust.py",
+      "sha256": "092a2e7a47fee5b22f61a7aca95a5d5ca40e62a6d6c2d1acaeff9e4228f6374c"
+    },
+    {
+      "path": "hefesto/workflow.py",
+      "sha256": "7ee273a85cf1fdae3c85e9d7034ac5a0b4eff05351b92d6eabedcec00239a2de"
+    },
+    {
+      "path": "tests/test_git.py",
+      "sha256": "d37e82dfd819313caa57a311e663533f0d9b625289cad78324ce279f15c9cafe"
+    }
+  ],
+  "phase": "Fase 7 — Distribución",
+  "prev_sha256": "651f81319ff3446efc13b0058861f67abb35afe43ca36a3a48e11b1caa1dd09d",
+  "prev_task_id": "TASK-709",
+  "providers": [
+    "claude:sonnet",
+    "codex:default",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-14T10:20:32+00:00",
+    "attempt": 2,
+    "authors": [
+      "codex:default",
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "",
+    "reviewer": "claude:sonnet",
+    "run_id": "cede4d72e6e8",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "2476d6f5ca68",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "ef4d038f4746",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "98d02b28e099",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "1a98b120040d",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "4541d54f0cfe",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "forge",
+      "run_id": "30c64aad4468",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "cede4d72e6e8",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 4,
+  "task_id": "TASK-710",
+  "title": "Aprobación automática de verify seguros y `trust --yes` con aprobación del usuario en la CLI",
+  "verify": {
+    "command": "python -m unittest tests.test_autonomy_install.SafeVerifyTests tests.test_autonomy_install.TrustYesTests && python tools/dev.py lint",
+    "duration_seconds": 7.324,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-710-a3-2026-10-14T102040+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (47 ficheros Python)\n..........\n----------------------------------------------------------------------\nRan 10 tests in 6.597s\n\nOK",
+    "sha256": "65b648c3c40f6813a83ee7bdc437a3d3278df2420973bef4fdd4bf7f38ff7fc7"
+  }
+}

@@ -75,7 +75,7 @@ class SyncTests(HefestoTestCase):
     def test_hooks_for_codex_and_gemini(self) -> None:
         codex = json.loads(self.read(".codex/hooks.json"))["hooks"]
         gemini = json.loads(self.read(".gemini/settings.json"))["hooks"]
-        self.assertEqual(codex["SessionStart"][0]["hooks"][0]["command"], "hefesto status")
+        self.assertEqual(codex["SessionStart"][0]["hooks"][0]["command"], "hefesto status --protocol")
         self.assertEqual(codex["PreToolUse"][0]["hooks"][0]["command"], "hefesto hook pre-tool-use")
         self.assertEqual(gemini["BeforeTool"][0]["hooks"][0]["command"], "hefesto hook pre-tool-use")
         codex_cfg = tomllib.loads(self.read(".codex/config.toml"))

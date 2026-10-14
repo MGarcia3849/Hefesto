@@ -83,7 +83,7 @@ def _claude_model(cfg: config.Config, role: str) -> str:
 
 def _hooks_json(pre_event: str, matcher: str) -> dict[str, object]:
     return {"hooks": {
-        "SessionStart": [{"hooks": [{"type": "command", "command": "hefesto status"}]}],
+        "SessionStart": [{"hooks": [{"type": "command", "command": "hefesto status --protocol"}]}],
         pre_event: [{"matcher": matcher, "hooks": [{"type": "command", "command": "hefesto hook pre-tool-use"}]}],
     }}
 
@@ -91,6 +91,43 @@ def _hooks_json(pre_event: str, matcher: str) -> dict[str, object]:
 def targets(cfg: config.Config) -> dict[str, str]:
     """Ruta relativa → contenido de cada fichero generado."""
     out: dict[str, str] = {}
+    if cfg.settings.get("install_mode") == "local":
+        claude_tpl = read_json(FRAMEWORK_ROOT / "templates" / "project" / ".claude" / "settings.json", default={})
+        deny = list(claude_tpl.get("permissions", {}).get("deny", [])) if isinstance(claude_tpl, dict) else []
+        allow = [
+            "Bash(hefesto:*)",
+            "Bash(git status:*)",
+            "Bash(git diff:*)",
+            "Bash(git log:*)",
+        ]
+        ask = [
+            "Bash(hefesto -C:*)",
+            "Bash(hefesto --project:*)",
+            "Bash(hefesto trust:*)",
+            "Bash(hefesto unblock:*)",
+            "Bash(hefesto finish:*)",
+            "Bash(hefesto local:*)",
+            "Bash(hefesto providers add:*)",
+            "Bash(hefesto providers remove:*)",
+            "Bash(hefesto providers reset:*)",
+            "Bash(hefesto init:*)",
+            "Bash(hefesto adopt:*)",
+        ]
+        local_settings = {
+            "permissions": {
+                "allow": allow,
+                "ask": ask,
+                "deny": deny,
+            },
+            "hooks": {
+                "SessionStart": [{"hooks": [{"type": "command", "command": "hefesto status --protocol"}]}],
+                "PreToolUse": [{
+                    "matcher": "Bash|Read|Edit|Write|MultiEdit|Grep|Glob|NotebookEdit",
+                    "hooks": [{"type": "command", "command": "hefesto hook pre-tool-use"}],
+                }],
+            },
+        }
+        out[".claude/settings.local.json"] = json.dumps(local_settings, indent=2) + "\n"
     for step in STEPS:
         meta, body = protocol_step(step)
         skill = _skill(meta, body)

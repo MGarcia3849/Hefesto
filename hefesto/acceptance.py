@@ -2,13 +2,23 @@
 
 from __future__ import annotations
 
+import os
 import subprocess
 from pathlib import Path
 from typing import Any
 
 from hefesto import config, evidence, gitops, log, providers, roadmap, state, trust, util, workflow
 from hefesto.lock import project_lock
-from hefesto.util import EXIT_BLOCKED, EXIT_CONFLICT, EXIT_INPUT, EXIT_OK, HefestoError, now_iso, read_jsonl
+from hefesto.util import (
+    EXIT_BLOCKED,
+    EXIT_CONFLICT,
+    EXIT_INPUT,
+    EXIT_OK,
+    HefestoError,
+    atomic_write_json,
+    now_iso,
+    read_jsonl,
+)
 
 AUTHOR_ROLES = ("runner", "forge", "visual", "core")
 
@@ -65,10 +75,13 @@ def review(project: Path, task_id: str, verdict: str, notes: str, run_id: str | 
                          | {providers.model_id(cfg, a) for a in author_flags})
         reviewer = None
         if run_id:
-            match = [r for r in runs if r.get("run_id") == run_id]
-            if not match or match[0].get("role") != "reviewer":
+            match = [r for r in runs if r.get("run_id") == run_id and r.get("role") == "reviewer"]
+            if not match:
                 raise HefestoError(f"run_id {run_id} no es una revisión registrada de esta tarea.", EXIT_INPUT)
-            reviewer = match[0]["model_id"]
+            successful = [r for r in match if r.get("success")]
+            if not successful:
+                raise HefestoError(f"run_id {run_id} no tiene ningún registro con éxito.", EXIT_INPUT)
+            reviewer = successful[0]["model_id"]
         elif reviewer_flag:
             reviewer = providers.model_id(cfg, reviewer_flag)
         if not reviewer:
@@ -110,8 +123,20 @@ def done(project: Path, task_id: str) -> tuple[int, str]:
         task = rm.get(task_id)
         trusted = trust.status(project, task)
         if trusted != "trusted":
-            return EXIT_BLOCKED, (f"El verify de {task_id} es {'nuevo' if trusted == 'new' else 'distinto del aprobado'}"
-                                  f": un humano debe ejecutar `hefesto trust`.")
+            auto_safe = bool(cfg.get("trust", "auto_safe", default=True))
+            extra = cfg.get("trust", "extra_safe_prefixes", default=[])
+            if auto_safe and trust.is_safe_verify(task.verify, extra_prefixes=extra):
+                tdata = trust.load(project)
+                tdata["verify"][task_id] = {
+                    "sha256": trust.verify_hash(task.verify),
+                    "approved_at": now_iso(),
+                    "auto": True,
+                }
+                atomic_write_json(trust.trust_path(project), tdata)
+                trusted = "trusted"
+            else:
+                return EXIT_BLOCKED, (f"El verify de {task_id} es {'nuevo' if trusted == 'new' else 'distinto del aprobado'}"
+                                      f": un humano debe ejecutar `hefesto trust`.")
         workdir = Path(data.get("workdir") or project)
         timeout = int(cfg.get("limits", "verify_timeout_seconds"))
         result = evidence.run_verify(project, workdir, task_id, task.verify, timeout, label=f"a{data['attempts'] + 1}")
@@ -134,13 +159,16 @@ def done(project: Path, task_id: str) -> tuple[int, str]:
             roadmap.set_marker(path, task_id, "~")
             raise
         runs = runs_for_task(project, data.get("run_id"))
+        tentry = trust.load(project)["verify"].get(task_id) or {}
+        trust_mode = "auto" if tentry.get("auto") else "human"
         record = {
             "task_id": task_id,
             "title": task.title,
             "phase": task.phase,
+            "contract": list(task.contract),
             "verify": {"command": task.verify, "sha256": trust.verify_hash(task.verify), "exit_code": result.exit_code,
                        "duration_seconds": result.duration, "output_summary": result.summary,
-                       "log_path": result.log_path},
+                       "log_path": result.log_path, "trust": trust_mode},
             "commit": commit,
             "base_commit": data.get("task_base"),
             "branch": data.get("branch"),
@@ -153,12 +181,14 @@ def done(project: Path, task_id: str) -> tuple[int, str]:
                       "success": r.get("success")} for r in runs],
         }
         ev_path, head = evidence.write(project, record)
-        try:
-            gitops.checkpoint(project, workdir, cfg, task, f"hefesto({task_id}): evidence",
-                              extra_paths=(ev_path.relative_to(project).as_posix(),))
-        except HefestoError as exc:
-            log.event(project, "evidence", f"evidencia de {task_id} escrita pero sin commit: {exc}")
-            raise
+        is_local = bool(getattr(cfg, "settings", None) and cfg.settings.get("install_mode") == "local")
+        if not is_local:
+            try:
+                gitops.checkpoint(project, workdir, cfg, task, f"hefesto({task_id}): evidence",
+                                  extra_paths=(ev_path.relative_to(project).as_posix(),))
+            except HefestoError as exc:
+                log.event(project, "evidence", f"evidencia de {task_id} escrita pero sin commit: {exc}")
+                raise
         all_done = all(t.marker == "x" or t.id == task_id for t in rm.tasks)
         data = state.transition(data, "COMPLETED" if all_done else "IDLE")
         data.update({"current_task_id": None, "active_role": None, "attempts": 0, "last_error": None,
@@ -207,7 +237,28 @@ def _yield_control_files(project: Path, branch: str) -> None:
             (project / rel).unlink()
 
 
-def finish(project: Path, phase: str | None, pr: bool) -> tuple[int, str]:
+def _is_contract_task(project: Path, workdir: Path, task_id: str) -> bool:
+    try:
+        ev = evidence.show(project, task_id)
+    except Exception:
+        return False
+    if "contract" in ev:
+        return bool(ev["contract"])
+    commit = ev.get("commit")
+    if not commit:
+        return False
+    proc = gitops.git(workdir, "show", f"{commit}:.hefesto/ROADMAP.md", check=False)
+    if proc.returncode != 0:
+        return False
+    try:
+        old_rm = roadmap.parse_text(proc.stdout)
+        old_task = old_rm.get(task_id)
+        return bool(old_task.contract)
+    except Exception:
+        return False
+
+
+def finish(project: Path, phase: str | None, pr: bool, yes: bool = False) -> tuple[int, str]:
     cfg = config.load(project)
     data = state.load(project)
     rm = roadmap.load_valid(project)
@@ -225,7 +276,11 @@ def finish(project: Path, phase: str | None, pr: bool) -> tuple[int, str]:
         return EXIT_BLOCKED, "Evidencias inválidas: " + "; ".join([f"falta {m}" for m in missing] + chain_errors)
     if pr and not cfg.get("github", "pr"):
         return EXIT_BLOCKED, "`finish --pr` requiere `github.pr = true` en la configuración."
-    util.require_tty("hefesto finish")
+    if yes:
+        if "HEFESTO_ROLE" in os.environ:
+            raise HefestoError("`--yes` no está permitido cuando `HEFESTO_ROLE` está definido.", EXIT_BLOCKED)
+    else:
+        util.require_tty("hefesto finish")
     main = gitops.main_branch(project, cfg)
     base = info.get("base") or gitops.out(project, "merge-base", main, branch)
     rebase = gitops.git(workdir, "rebase", "--onto", main, base, branch, check=False)
@@ -244,9 +299,13 @@ def finish(project: Path, phase: str | None, pr: bool) -> tuple[int, str]:
     timeout = int(cfg.get("limits", "verify_timeout_seconds"))
     test_command = str(cfg.get("execution", "test_command") or "")
     checks: list[tuple[str, str]] = ([("suite", test_command)] if test_command else [])
+    skipped_contract: list[str] = []
     for task in tasks:
         if trust.status(project, task) != "trusted":
             return EXIT_BLOCKED, f"El verify de {task.id} ya no coincide con el aprobado: `hefesto trust`."
+        if _is_contract_task(project, workdir, task.id):
+            skipped_contract.append(task.id)
+            continue
         checks.append((task.id, task.verify))
     for label, command in checks:
         result = evidence.run_verify(project, workdir, label, command, timeout, label="finish")
@@ -255,11 +314,13 @@ def finish(project: Path, phase: str | None, pr: bool) -> tuple[int, str]:
     commits = gitops.out(workdir, "log", "--oneline", f"{main}..{branch}")
     stat = gitops.out(workdir, "diff", "--stat", f"{main}...{branch}")
     used = sorted({p for t in tasks for p in evidence.show(project, t.id).get("providers", [])})
+    omitted = f"\n\nVerify de contrato omitidos: {', '.join(skipped_contract)}" if skipped_contract else ""
     summary = (f"hefesto: integra {branch}\n\nTareas:\n" + "\n".join(f"- {t.id}: {t.title}" for t in tasks)
+               + omitted
                + f"\n\nProveedores: {', '.join(used) or 'ninguno registrado'}\n\nCommits:\n{commits}\n\n{stat}\n")
     print(summary)
     if pr:
-        if not util.confirm(f"¿Subir {branch} a origin y abrir un PR en borrador?", default=False):
+        if not yes and not util.confirm(f"¿Subir {branch} a origin y abrir un PR en borrador?", default=False):
             return EXIT_OK, "Cancelado: no se ha subido nada."
         push = gitops.git(workdir, "push", "-u", "origin", branch, check=False)
         if push.returncode != 0:
@@ -269,15 +330,17 @@ def finish(project: Path, phase: str | None, pr: bool) -> tuple[int, str]:
                             encoding="utf-8", errors="replace")
         return (EXIT_OK if gh.returncode == 0 else EXIT_CONFLICT), (gh.stdout or gh.stderr).strip()
     strategy = cfg.get("execution", "finish_strategy")
-    if not util.confirm(f"¿Integrar {branch} en {main} con {strategy}?", default=False):
+    if not yes and not util.confirm(f"¿Integrar {branch} en {main} con {strategy}?", default=False):
         return EXIT_OK, "Cancelado: la rama sigue intacta."
     with project_lock(project):
+        is_local = bool(getattr(cfg, "settings", None) and cfg.settings.get("install_mode") == "local")
         if info["isolation"] == "worktree":
             if gitops.current_branch(project) != main:
                 return EXIT_CONFLICT, f"La copia principal no está en {main}; no se integra."
-            _yield_control_files(project, branch)
+            if not is_local:
+                _yield_control_files(project, branch)
         else:
-            if gitops.dirty_paths(project, include_control=True):
+            if gitops.dirty_paths(project, include_control=not is_local):
                 return EXIT_CONFLICT, "La copia de trabajo tiene cambios sin commitear; no se integra."
             gitops.git(project, "checkout", "-q", main)
         if strategy == "squash":

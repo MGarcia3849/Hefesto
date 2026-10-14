@@ -1,0 +1,79 @@
+{
+  "attempts": 1,
+  "base_commit": "7e2905de1e7eb6173cc028f293e1c448767b5d13",
+  "branch": "hefesto/fase-7-distribucion",
+  "commit": "245d5880ca77da0837540ff534e93e40adb6d82d",
+  "created_at": "2026-10-14T13:32:50+00:00",
+  "files": [
+    {
+      "path": "hefesto/adapters/base.py",
+      "sha256": "80f92d4c72d6b620301caa13a3822515183d7a2109e1495edc7652623f683fdc"
+    },
+    {
+      "path": "hefesto/adapters/gemini.py",
+      "sha256": "1c2b4e3b34d93a6a90337731581a99314fea5e99da481c1989a74ad4824b229a"
+    },
+    {
+      "path": "hefesto/guard.py",
+      "sha256": "6ec329fc2f7e3119b798b0feaba41c1afb17bd333a23e1f3e2c266ac27c0485e"
+    },
+    {
+      "path": "tests/fakes/fake_agent.py",
+      "sha256": "844f176694107134c72a4189921e736fd55d20b80d09697ecbe60e5fe2eaebb8"
+    },
+    {
+      "path": "tests/test_adapters.py",
+      "sha256": "aebf42598e3c13e6d8d9683a3a9afe16c33c00fd06c9d90e54912a3c208b7fde"
+    },
+    {
+      "path": "tests/test_foundation.py",
+      "sha256": "b525eff169b8918710dc7a36abe45df71e6145eef29aa2d1ad230198b52729b0"
+    }
+  ],
+  "phase": "Fase 7 — Distribución",
+  "prev_sha256": "9ed7b49fd493aa4ac77628cfa2cf01b7c078b60468a93e335ab7484597348272",
+  "prev_task_id": "TASK-712",
+  "providers": [
+    "claude:sonnet",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-14T13:31:54+00:00",
+    "attempt": 0,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "",
+    "reviewer": "claude:sonnet",
+    "run_id": "a62349910095",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "9656f0ae22be",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "a62349910095",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 12,
+  "task_id": "TASK-713",
+  "title": "Adaptadores y guard según lo aprendido con las CLIs reales",
+  "verify": {
+    "command": "python -m unittest tests.test_adapters && python -m unittest tests.test_foundation && python -m unittest tests.test_sync",
+    "duration_seconds": 54.876,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-713-a1-2026-10-14T133249+0000.log",
+    "output_summary": ".............................\n----------------------------------------------------------------------\nRan 29 tests in 47.698s\n\nOK\n......................\n----------------------------------------------------------------------\nRan 22 tests in 3.258s\n\nOK\n..........\n----------------------------------------------------------------------\nRan 10 tests in 3.151s\n\nOK",
+    "sha256": "aa18b88d537d21fc3ee3a0ee6769e35dd3a6c377589786a48b9750951a734159",
+    "trust": "auto"
+  }
+}

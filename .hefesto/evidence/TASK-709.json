@@ -1,0 +1,63 @@
+{
+  "attempts": 3,
+  "base_commit": "2eefd9001f83b904d1fbcb9047a5efdcdc2d498f",
+  "branch": "hefesto/fase-7-distribucion",
+  "commit": "a23ff1553cf1fec9873492efff4d98d261ccbe2b",
+  "created_at": "2026-10-14T09:38:10+00:00",
+  "files": [
+    {
+      "path": "tests/test_autonomy_install.py",
+      "sha256": "96f22ab8b5f9b9edeb7eeeef3aaa2fad22e2506fe40d3e897bbd8fc6c422608b"
+    }
+  ],
+  "phase": "Fase 7 — Distribución",
+  "prev_sha256": "5eec17a7b6ea77d595628f2b545e6c34cd509e02d5b6495b035f6c650e888a05",
+  "prev_task_id": "TASK-702",
+  "providers": [
+    "codex:default"
+  ],
+  "review": {
+    "at": "2026-10-14T09:38:04+00:00",
+    "attempt": 2,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "",
+    "reviewer": "codex:default",
+    "run_id": "b52e3ef7cf5c",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "dc5d3fc82c45",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "561eb4b248ea",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "b52e3ef7cf5c",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 3,
+  "task_id": "TASK-709",
+  "title": "Contratos de instalación sin interrupciones (una sola autorización)",
+  "verify": {
+    "command": "python -m py_compile tests/test_autonomy_install.py && python -m unittest tests.test_autonomy_install 2>&1 | grep -q \"FAILED\"",
+    "duration_seconds": 5.426,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-709-a3-2026-10-14T093810+0000.log",
+    "output_summary": "",
+    "sha256": "0023fc7484f1c68bf72fb910b2ba8f5a64fe636d9047c16c3eba372486057d17"
+  }
+}

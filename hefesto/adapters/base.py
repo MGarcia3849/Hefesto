@@ -24,6 +24,11 @@ ERROR_TYPES = ("missing_binary", "auth", "quota", "rate_limit", "timeout", "inva
 READ_ONLY_ROLES = ("reviewer",)
 SUMMARY_CHARS = 1500
 
+BASE_PATTERNS = {
+    "auth": re.compile(r"ineligibletiererror|unsupported_client|no longer supported", re.I),
+    "rate_limit": re.compile(r"\b503\b|unavailable|service is currently unavailable", re.I),
+}
+
 
 @dataclass
 class AdapterResult:
@@ -111,12 +116,15 @@ class Adapter:
 
     def parse(self, stdout: str, stderr: str, returncode: int, call: Call) -> AdapterResult:
         raise NotImplementedError
-
     # -- comunes -----------------------------------------------------------------------
     def classify(self, text: str) -> str | None:
         for error_type in ("auth", "quota", "rate_limit"):
             pattern = self.patterns.get(error_type)
             if pattern is not None and pattern.search(text):
+                return error_type
+        for error_type in ("auth", "quota", "rate_limit"):
+            base_pattern = BASE_PATTERNS.get(error_type)
+            if base_pattern is not None and base_pattern.search(text):
                 return error_type
         return None
 

@@ -1,0 +1,114 @@
+{
+  "attempts": 3,
+  "base_commit": "79d2df194468b3995d3cc7a9c92d17df6c8b675e",
+  "branch": "hefesto/fase-7-distribucion",
+  "commit": "c1f93d6fd3b885809a33a22c5f923e1dc1d1b03f",
+  "created_at": "2026-10-14T12:29:28+00:00",
+  "files": [
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "7f7487242f2ec402ae0d0e0bf1e859193e7a44a416315d572e15dfa0298b8859"
+    },
+    {
+      "path": "hefesto/distribution.py",
+      "sha256": "39821953d6afe0ce427d1122fa56ba4c03472983f2b6b8f652d8f1061f59652d"
+    },
+    {
+      "path": "hefesto/sync.py",
+      "sha256": "b2983faee6146480319d70cb731d51d3264188c26aece8cb9eacb305395a5355"
+    },
+    {
+      "path": "tests/test_adapters.py",
+      "sha256": "e1051c3558be6ad2c14cf5f395740d8131912892a62b0b0d07441fcb62ca3784"
+    }
+  ],
+  "phase": "Fase 7 — Distribución",
+  "prev_sha256": "aa4e7238214092725568fc27c994987419dc1ce23b1259d152c076fab63b50a0",
+  "prev_task_id": "TASK-708",
+  "providers": [
+    "claude:sonnet",
+    "codex:default",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-14T12:29:19+00:00",
+    "attempt": 2,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "",
+    "reviewer": "claude:sonnet",
+    "run_id": "458d0161b57e",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "5e970fe34dab",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "ad1d39e6db9f",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "528907b2ed27",
+      "success": false
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "528907b2ed27",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "5b598a5c940d",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "40f925379323",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "forge",
+      "run_id": "f0c84e664aed",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "forge",
+      "run_id": "90213a2b7aa7",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "458d0161b57e",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 10,
+  "task_id": "TASK-711",
+  "title": "Permisos preconfigurados para Claude y `bootstrap --yes` de una sola vez",
+  "verify": {
+    "command": "python -m unittest tests.test_autonomy_install && python tools/dev.py lint",
+    "duration_seconds": 7.78,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-711-a3-2026-10-14T122928+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (48 ficheros Python)\n..............\n----------------------------------------------------------------------\nRan 14 tests in 7.063s\n\nOK",
+    "sha256": "4ea8ef6571b6c121c111f8fd3be7015b65e85e09666be8ecf5e869d1990a014e",
+    "trust": "human"
+  }
+}

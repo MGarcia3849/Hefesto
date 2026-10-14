@@ -160,8 +160,17 @@ def prepare_workdir(project: Path, cfg: config.Config, rm: roadmap.Roadmap, task
     return info
 
 
-def sync_control_files(project: Path, workdir: Path) -> None:
+def sync_control_files(project: Path, workdir: Path, cfg: config.Config | None = None) -> None:
     """En modo worktree, copia los ficheros de control del proyecto al worktree antes del commit."""
+    if cfg is not None and getattr(cfg, "settings", None) and cfg.settings.get("install_mode") == "local":
+        return
+    if cfg is None:
+        try:
+            settings = config.read_settings(config.project_settings_path(project))
+            if settings.get("install_mode") == "local":
+                return
+        except Exception:
+            pass
     if workdir.resolve() == project.resolve():
         return
     for rel in CONTROL_PATHS:
@@ -201,8 +210,12 @@ def checkpoint(project: Path, workdir: Path, cfg: config.Config, task: roadmap.T
     branch = current_branch(workdir)
     if not guard.branch_allowed(branch):
         raise HefestoError(f"Commit bloqueado: la rama `{branch or '(detached)'}` no es `hefesto/*`.", EXIT_BLOCKED)
-    sync_control_files(project, workdir)
-    scopes = task.files + list(CONTROL_PATHS) + list(extra_paths)
+    is_local = bool(getattr(cfg, "settings", None) and cfg.settings.get("install_mode") == "local")
+    if not is_local:
+        sync_control_files(project, workdir, cfg)
+        scopes = task.files + list(CONTROL_PATHS) + list(extra_paths)
+    else:
+        scopes = task.files + list(extra_paths)
     to_add = [p for p in scopes if (workdir / p).exists() or out(workdir, "ls-files", "--", p)]
     if to_add:
         git(workdir, "add", "--", *to_add)

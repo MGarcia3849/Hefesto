@@ -274,6 +274,11 @@ def validate(cfg: Config) -> list[str]:
     approved = cfg.settings.get("approved_external_providers", [])
     if not isinstance(approved, list) or any(p not in EXTERNAL_PROVIDERS for p in approved):
         errors.append(f"settings.approved_external_providers solo admite {', '.join(EXTERNAL_PROVIDERS)}")
+    if not isinstance(cfg.get("trust", "auto_safe", default=True), bool):
+        errors.append("trust.auto_safe debe ser booleano")
+    extra = cfg.get("trust", "extra_safe_prefixes", default=[])
+    if not isinstance(extra, list) or not all(isinstance(x, str) for x in extra):
+        errors.append("trust.extra_safe_prefixes debe ser una lista de textos")
     return errors
 
 

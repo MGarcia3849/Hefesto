@@ -2,7 +2,7 @@
 
 Framework de orquestación multiagente para trabajar con tus suscripciones de **Claude**, **ChatGPT (Codex)** y **Google (Gemini)**, sin usar la API de pago. El estado, los intentos, la verificación y los commits los gestiona la CLI `hefesto`, con lógica determinista y cubierta por tests. Ningún prompt es fuente de verdad.
 
-> Estado: **Hito 2 — multi-orquestador y autonomía** (`v2.1.0-m2`). La especificación completa está en [`HEFESTO_V2_1.md`](HEFESTO_V2_1.md) y las desviaciones, en [`DECISIONS.md`](DECISIONS.md).
+> Estado: **Hito 3 — distribución y arranque en cualquier proyecto** (`v2.1.0`). La especificación completa está en [`HEFESTO_V2_1.md`](HEFESTO_V2_1.md) y las desviaciones, en [`DECISIONS.md`](DECISIONS.md).
 
 ## Requisitos
 
@@ -21,12 +21,27 @@ hefesto doctor
 
 `install.sh` es idempotente: crea `~/.local/bin/hefesto` y, en Windows, también `hefesto.cmd` para PowerShell y cmd. Añade `~/.local/bin` al PATH si el instalador lo indica.
 
+## Instalar en cualquier proyecto
+
+Para usar Hefesto en cualquier proyecto (nuevo o existente), abre tu orquestador (Claude Code, Codex CLI o Gemini CLI/agy) en la carpeta del proyecto y dile:
+
+> *"Instala Hefesto desde https://github.com/MGarcia3849/Hefesto y úsalo en este proyecto"*
+
+El agente seguirá automáticamente las instrucciones de [`BOOTSTRAP.md`](BOOTSTRAP.md):
+1. Te pedirá una única autorización inicial para confirmar la URL, la versión fijada (`v2.1.0`, nunca `main` sin fijar), los proveedores autorizados (`gemini,codex`) y la autorización para configurar el PATH si hace falta.
+2. Clonará e instalará Hefesto en `~/hefesto` con `install.sh` (o actualizará el clon existente con `git fetch`/`checkout` e `install.sh`).
+3. Ejecutará `hefesto doctor` para comprobar el entorno.
+4. Ejecutará `hefesto bootstrap --yes --providers <lista>`, que detecta de forma determinista si debe **crear** (`init` + `/hefesto-plan`), **continuar** (`hefesto resume`) o **mejorar** (`hefesto adopt` sin tocar tu código).
+5. Instala por defecto en **modo local** (dentro de `.hefesto/` y excluido en `.git/info/exclude`), dejando `git status` limpio sin ensuciar tu repositorio de GitHub.
+6. Te mostrará el plan o el estado y esperará tu aprobación antes de tocar código.
+
 ## Uso en un proyecto
+
+Por defecto, `hefesto init` instala en **modo local**: todo vive en `.hefesto/` y queda excluido en `.git/info/exclude`. No toca `.gitignore` ni deja nada que commitear, manteniendo `git status` limpio. Si prefieres versionar la configuración, el ROADMAP y las evidencias en el repositorio compartido de tu equipo, usa `hefesto init --shared`.
 
 ```bash
 cd mi-proyecto
-hefesto init                     # plantillas, .gitignore, state.json; pregunta si autorizas Gemini y Codex
-git add -A && git commit -m "hefesto init"
+hefesto init                     # modo local por defecto; no toca .gitignore ni deja nada que commitear
 # Escribe .hefesto/ROADMAP.md (o pídeselo a tu orquestador; formato en el propio fichero)
 hefesto trust                    # TÚ apruebas los comandos verify (exige terminal)
 hefesto next
@@ -77,7 +92,11 @@ Antes de delegar, `hefesto providers check [--probe]` muestra el preflight de ca
 
 | Comando | Qué hace |
 |---|---|
-| `init [dir] [--copy] [--providers gemini,codex]` | Inicializa sin sobrescribir nada; ejecuta `doctor`. |
+| `init [dir] [--copy] [--shared] [--providers …]` | Inicializa sin sobrescribir nada; modo local por defecto; ejecuta `doctor`. |
+| `bootstrap [dir] [--yes] [--providers LISTA]` | Detecta modo (crear, continuar o mejorar) y arranca en modo local. |
+| `adopt [dir] [--providers LISTA]` | Adopta un proyecto existente sin modificar código; propone ROADMAP. |
+| `self-update [--to TAG]` | Actualiza a un tag oficial mostrando el changelog con confirmación. |
+| `migrate` | Migra proyectos antiguos aplicando copias de seguridad automáticas. |
 | `doctor` | Dependencias, CLIs, autenticación (sin gastar llamadas), API keys en el entorno, allowlist, lock y estado. |
 | `config validate` / `config show` | Valida las capas y muestra la configuración efectiva con el origen de cada valor. |
 | `status` / `next` | Estado compacto y siguiente tarea disponible. |
@@ -126,3 +145,21 @@ make smoke-live                  # opcional: llamadas reales mínimas; gasta cuo
 ```
 
 Los tests usan CLIs falsas (`tests/fakes/`) y repositorios temporales: no llaman a ningún proveedor real.
+
+## Publicar Hefesto
+
+La publicación de Hefesto y la creación de releases es una acción **humana** (el framework nunca ejecuta `git push` de forma autónoma). Comandos exactos para publicar la versión:
+
+```bash
+git checkout main
+hefesto finish
+git push origin main
+git tag -a v2.1.0 -m "Hefesto v2.1.0"
+git push origin v2.1.0
+gh release create v2.1.0 --notes-file CHANGELOG.md
+```
+
+Y, para quien parta de cero y cree el repositorio remoto en GitHub por primera vez:
+```bash
+gh repo create <usuario>/Hefesto --private --source . --push
+```
