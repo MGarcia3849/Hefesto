@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import shutil
 import subprocess
 from pathlib import Path
@@ -55,6 +56,23 @@ BANNER = r"""
 def find_project(start: Path | None = None) -> Path:
     """Sube desde `start` hasta encontrar un directorio con `.hefesto/`."""
     here = (start or Path.cwd()).resolve()
+    try:
+        wt_base = (util.state_home() / "worktrees").resolve()
+        check_here = here
+        if check_here.drive and wt_base.drive and check_here.drive.lower() == wt_base.drive.lower():
+            if check_here.drive != wt_base.drive:
+                check_here = Path(wt_base.drive + str(check_here)[len(check_here.drive):])
+        rel = check_here.relative_to(wt_base)
+        if rel.parts:
+            clave_dir = wt_base / rel.parts[0]
+            project_json = clave_dir / "project.json"
+            if project_json.is_file():
+                data = json.loads(project_json.read_text(encoding="utf-8"))
+                target = Path(data.get("project", "")).resolve()
+                if (target / ".hefesto").is_dir():
+                    return target
+    except (ValueError, Exception):
+        pass
     for candidate in (here, *here.parents):
         if candidate.name in ("worktree", "worktrees") and candidate.parent.name == ".hefesto":
             dot_hefesto = candidate.parent

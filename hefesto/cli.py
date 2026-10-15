@@ -8,7 +8,7 @@ import os
 import sys
 from pathlib import Path
 
-from hefesto import __version__, config, doctor, project
+from hefesto import __version__, config, doctor, project, util
 from hefesto.util import EXIT_BLOCKED, EXIT_INPUT, EXIT_OK, HefestoError
 
 
@@ -236,6 +236,42 @@ def cmd_evidence(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def cmd_clean(args: argparse.Namespace) -> int:
+    from hefesto import maintenance, util
+
+    if getattr(args, "yes", False):
+        _check_yes_barriers(args)
+    else:
+        util.require_tty("hefesto clean")
+    proj = _project(args)
+    if not getattr(args, "yes", False):
+        plan = maintenance.plan_clean(proj, include_unmerged=getattr(args, "include_unmerged", False))
+        print(plan)
+        if not util.confirm("¿Proceder con la limpieza?", default=False):
+            return EXIT_OK
+    report = maintenance.clean(proj, include_unmerged=getattr(args, "include_unmerged", False))
+    print(report)
+    return EXIT_OK
+
+
+def cmd_discard(args: argparse.Namespace) -> int:
+    from hefesto import maintenance, util
+
+    if getattr(args, "yes", False):
+        _check_yes_barriers(args)
+    else:
+        util.require_tty("hefesto discard")
+    proj = _project(args)
+    if not getattr(args, "yes", False):
+        preview = maintenance.preview_discard(proj, args.target)
+        print(preview)
+        if not util.confirm(f"¿Descartar {args.target}?", default=False):
+            return EXIT_OK
+    msg = maintenance.discard(proj, args.target)
+    print(msg)
+    return EXIT_OK
+
+
 # ---------------------------------------------------------------------------
 # Fase 4: adaptadores y enrutado
 
@@ -275,25 +311,43 @@ def cmd_packet(args: argparse.Namespace) -> int:
 
 
 def cmd_route(args: argparse.Namespace) -> int:
-    from hefesto import roadmap, router
+    from hefesto import config, providers, roadmap, router, scheduler
 
     proj = _project(args)
     cfg = config.load(proj)
-    task = roadmap.load_valid(proj).get(args.task)
-    if task.size == "L":
-        print(f"{task.id} es L: el Core debe dividirla en tareas M/S antes de ejecutar nada.")
-        steps = [("core", "dividir la tarea")]
-    elif task.size == "S":
-        steps = [(task.role, "un solo intento de implementación"), ("reviewer", "revisión ligera")]
-    else:
-        steps = [(task.role, "implementación"), ("reviewer", "revisión"), ("forge", "si fallan dos intentos")]
-    print(f"Ruta de {task.id} (size {task.size}) — sin llamadas a proveedores:")
-    for role, why in steps:
-        hops = router.plan_route(cfg, role)
-        chosen = next((h for h in hops if h.outcome == "elegido"), None)
-        skipped = [f"{h.entry} ({h.outcome})" for h in hops if h.outcome != "elegido"]
-        print(f"  {role:<9} {why:<34} → {chosen.model_id if chosen else 'NINGUNO disponible'}"
-              + (f"   saltados: {'; '.join(skipped)}" if skipped else ""))
+    task_id = getattr(args, "task", None)
+    if task_id:
+        task = roadmap.load_valid(proj).get(task_id)
+        if task.size == "L":
+            print(f"{task.id} es L: el Core debe dividirla en tareas M/S antes de ejecutar nada.")
+            steps = [("core", "dividir la tarea")]
+        elif task.size == "S":
+            steps = [(task.role, "un solo intento de implementación"), ("reviewer", "revisión ligera")]
+        else:
+            steps = [(task.role, "implementación"), ("reviewer", "revisión"), ("forge", "si fallan dos intentos")]
+        print(f"Ruta de {task.id} (size {task.size}) — sin llamadas a proveedores:")
+        for role, why in steps:
+            hops = router.plan_route(cfg, role)
+            chosen = next((h for h in hops if h.outcome == "elegido"), None)
+            skipped = [f"{h.entry} ({h.outcome})" for h in hops if h.outcome != "elegido"]
+            print(f"  {role:<9} {why:<34} → {chosen.model_id if chosen else 'NINGUNO disponible'}"
+                  + (f"   saltados: {'; '.join(skipped)}" if skipped else ""))
+        return EXIT_OK
+
+    rm = roadmap.load_valid(proj)
+    capacity = int(cfg.get("limits", "max_parallel_tasks", default=4))
+    batch = scheduler.select_batch(rm, running=[], capacity=capacity)
+    conc = scheduler.Concurrency.from_config(cfg)
+    busy: dict[str, int] = {}
+    print(f"Lote paralelo previsto (capacidad {capacity}):")
+    for task in batch:
+        entry = scheduler.pick_entry(cfg, task.role, busy, conc)
+        if entry:
+            mid = providers.model_id(cfg, entry)
+            busy[mid] = busy.get(mid, 0) + 1
+            print(f"  {task.id:<10} ({task.role}) → {entry} ({mid})")
+        else:
+            print(f"  {task.id:<10} ({task.role}) → NINGUNO disponible")
     return EXIT_OK
 
 
@@ -396,6 +450,23 @@ def cmd_stop(args: argparse.Namespace) -> int:
     path = loop.request_stop(_project(args))
     print(f"Creado {path}. El loop se detendrá antes de la siguiente iteración; borrarlo es una acción humana.")
     return EXIT_OK
+
+
+def cmd_parallel(args: argparse.Namespace) -> int:
+    from hefesto import scheduler
+
+    if "HEFESTO_ROLE" in os.environ:
+        print("`hefesto parallel` no puede ejecutarse dentro de un agente (`HEFESTO_ROLE`).", file=sys.stderr)
+        return EXIT_BLOCKED
+    proj = _project(args)
+    results = scheduler.run_parallel(proj, max_parallel=getattr(args, "max_parallel", None))
+    failed = False
+    for r in results:
+        detail_str = f" - {r.detail}" if r.detail else ""
+        print(f"{r.task_id}: {r.status} (intentos: {r.attempts}){detail_str}")
+        if r.status in ("failed", "conflict"):
+            failed = True
+    return EXIT_INPUT if failed else EXIT_OK
 
 
 # ---------------------------------------------------------------------------
@@ -915,6 +986,82 @@ def cmd_watch(args: argparse.Namespace) -> int:
 
 
 # ---------------------------------------------------------------------------
+# Pack memory: memoria global entre proyectos
+
+
+def cmd_remember(args: argparse.Namespace) -> int:
+    from hefesto import memory
+
+    proj: Path | None = None
+    if getattr(args, "project", None) or args.scope == "project":
+        try:
+            proj = _project(args)
+        except HefestoError:
+            if args.scope == "project":
+                raise
+            proj = None
+    else:
+        try:
+            proj = _project(args)
+        except HefestoError:
+            proj = None
+
+    path = memory.remember(
+        proj,
+        args.text,
+        scope=args.scope,
+        kind=args.kind,
+        stack=getattr(args, "stack", None),
+    )
+    if args.scope == "global":
+        print(f"Candidata global registrada en {path}.")
+    else:
+        print(f"Nota registrada en {path}.")
+    return EXIT_OK
+
+
+def cmd_memory_review(args: argparse.Namespace) -> int:
+    from hefesto import memory
+
+    if getattr(args, "yes", False):
+        _check_yes_barriers(args)
+    try:
+        proj: Path | None = _project(args)
+    except HefestoError:
+        proj = None
+    msg = memory.review(proj, yes=getattr(args, "yes", False))
+    print(msg)
+    return EXIT_OK
+
+
+def cmd_memory_prune(args: argparse.Namespace) -> int:
+    from hefesto import memory
+
+    if getattr(args, "yes", False):
+        _check_yes_barriers(args)
+    try:
+        proj: Path | None = _project(args)
+    except HefestoError:
+        proj = None
+    msg = memory.prune(proj, yes=getattr(args, "yes", False))
+    print(msg)
+    return EXIT_OK
+
+
+def cmd_memory_search(args: argparse.Namespace) -> int:
+    from hefesto import memory
+
+    results = memory.search(args.term, limit=getattr(args, "limit", 10))
+    if not results:
+        print(f"No se encontraron resultados para '{args.term}'.")
+        return EXIT_OK
+    for r in results:
+        print(f"== {r['path']} ==")
+        print(r["snippet"])
+    return EXIT_OK
+
+
+# ---------------------------------------------------------------------------
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -1011,6 +1158,16 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("target", help="TASK-NNN o `verify`")
     p.set_defaults(func=cmd_evidence)
 
+    p = sub.add_parser("clean", help="elimina worktrees y ramas hefesto huérfanos sin cambios")
+    p.add_argument("--yes", action="store_true", help="limpia sin confirmación interactiva ni TTY")
+    p.add_argument("--include-unmerged", action="store_true", help="elimina también ramas huérfanas no integradas")
+    p.set_defaults(func=cmd_clean)
+
+    p = sub.add_parser("discard", help="revierte una tarea o descarta una fase dejando constancia en DECISIONS")
+    p.add_argument("target", help="ID de tarea (TASK-NNN) o slug/nombre de fase")
+    p.add_argument("--yes", action="store_true", help="descarta sin confirmación interactiva ni TTY")
+    p.set_defaults(func=cmd_discard)
+
     p = sub.add_parser("run", help="delega en el proveedor que toque según rol, allowlist y cuota")
     p.add_argument("role", choices=list(config.ROLES))
     p.add_argument("prompt", help="instrucción del orquestador (viaja dentro del paquete de la tarea)")
@@ -1026,9 +1183,13 @@ def build_parser() -> argparse.ArgumentParser:
     p.set_defaults(func=cmd_packet)
 
     p = sub.add_parser("route", help="ruta, roles y proveedores previstos para una tarea, sin llamadas")
-    p.add_argument("task")
+    p.add_argument("task", nargs="?", default=None, help="ID de la tarea (opcional; si se omite, muestra el lote paralelo)")
     p.add_argument("--dry-run", action="store_true", required=True, help="obligatorio: route nunca llama a nada")
     p.set_defaults(func=cmd_route)
+
+    p = sub.add_parser("parallel", help="ejecuta tareas en paralelo respetando concurrencia y límites")
+    p.add_argument("--max-parallel", type=int, help="máximo de tareas en paralelo")
+    p.set_defaults(func=cmd_parallel)
 
     p = sub.add_parser("providers", help="estado de proveedores, allowlist del proyecto y cooldowns")
     p.add_argument("action", choices=["status", "check", "add", "remove", "reset"])
@@ -1123,6 +1284,31 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--once", action="store_true", help="imprime una vez y sale")
     p.add_argument("--interval", type=float, default=2.0, help="intervalo de refresco en segundos (por defecto 2)")
     p.set_defaults(func=cmd_watch)
+
+    p = sub.add_parser("remember", help="guarda una nota en la memoria local o global")
+    p.add_argument("text", help="texto de la lección, preferencia o error resuelto")
+    p.add_argument("--scope", choices=["project", "global"], default="project",
+                   help="ámbito de la nota (project: .hefesto/LEARNINGS.md; global: _pendientes/)")
+    p.add_argument("--kind", choices=["preferencias", "stacks", "errores-resueltos", "decisiones"],
+                   default="errores-resueltos", help="categoría para la memoria global")
+    p.add_argument("--stack", help="tecnología asociada si kind=stacks")
+    p.set_defaults(func=cmd_remember)
+
+    p = sub.add_parser("memory", help="gestión de la memoria global entre proyectos")
+    msub = p.add_subparsers(dest="memory_cmd", metavar="ACCIÓN", required=True)
+
+    c = msub.add_parser("review", help="revisa notas pendientes de la memoria global")
+    c.add_argument("--yes", action="store_true", help="aprueba todas sin confirmación interactiva ni TTY")
+    c.set_defaults(func=cmd_memory_review)
+
+    c = msub.add_parser("prune", help="limpia duplicados y notas obsoletas de la memoria")
+    c.add_argument("--yes", action="store_true", help="elimina todas las propuestas sin confirmación")
+    c.set_defaults(func=cmd_memory_prune)
+
+    c = msub.add_parser("search", help="busca en la memoria global")
+    c.add_argument("term", help="término a buscar")
+    c.add_argument("--limit", type=int, default=10, help="máximo de resultados")
+    c.set_defaults(func=cmd_memory_search)
 
     return parser
 

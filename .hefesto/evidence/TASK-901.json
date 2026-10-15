@@ -1,0 +1,68 @@
+{
+  "attempts": 3,
+  "base_commit": "7f867e9bee8a9d1180423349445c29ee08258776",
+  "branch": "hefesto/fase-9-aislamiento-paralelismo-y-memoria",
+  "commit": "1d507f27d023493eb7b00700caeab12f476da3ac",
+  "contract": [
+    "tests/test_isolation.py"
+  ],
+  "created_at": "2026-10-14T22:06:23+00:00",
+  "files": [
+    {
+      "path": "tests/test_isolation.py",
+      "sha256": "61539ffd13dce2afe65e490053b3568c280f0f044fdc5505b436541e71e81248"
+    }
+  ],
+  "phase": "Fase 9 — Aislamiento, paralelismo y memoria",
+  "prev_sha256": "1e852445ce226ffb7fa6ba00f9d593ec3fe51f6de1fdd02792fc8f909ee73145",
+  "prev_task_id": "TASK-806",
+  "providers": [
+    "codex:default",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-14T22:05:58+00:00",
+    "attempt": 2,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "",
+    "reviewer": "gemini:default",
+    "run_id": "8f0b93c453b8",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "51bbdd2916d2",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "892195fdb728",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "reviewer",
+      "run_id": "8f0b93c453b8",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 25,
+  "task_id": "TASK-901",
+  "title": "Contratos de worktrees fuera del proyecto, finish atómico, clean y discard",
+  "verify": {
+    "command": "python -m py_compile tests/test_isolation.py && python -m unittest tests.test_isolation 2>&1 | grep -q FAILED",
+    "duration_seconds": 24.169,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-901-a3-2026-10-14T220623+0000.log",
+    "output_summary": "",
+    "sha256": "29d635ba8df3ebce9803ca69c420d557b4652efa6a5fcca54c24793408b6e3b2",
+    "trust": "auto"
+  }
+}

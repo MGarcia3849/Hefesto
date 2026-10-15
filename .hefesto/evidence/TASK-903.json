@@ -1,0 +1,96 @@
+{
+  "attempts": 3,
+  "base_commit": "63632593a5056b697f0d91d72d0c2c5131b2a906",
+  "branch": "hefesto/fase-9-aislamiento-paralelismo-y-memoria",
+  "commit": "7d94d5a88517d173173027e7d6cb1f26f894372f",
+  "contract": [],
+  "created_at": "2026-10-14T23:35:20+00:00",
+  "files": [
+    {
+      "path": "hefesto/acceptance.py",
+      "sha256": "c38a93ff17548a583c523123315c812ebccd7533e261e4c8c7964f6bf5baa25f"
+    },
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "6a436ff71992b192b32d041641d1e7c21c58815f8d0f2088f74f182b3137d1b3"
+    },
+    {
+      "path": "hefesto/evidence.py",
+      "sha256": "bd82573a29c1793c730cb42bdb7c4e2ed53484d315b8239a61ad9b902adee8da"
+    },
+    {
+      "path": "hefesto/maintenance.py",
+      "sha256": "35a59aa5d7b1900902cc81e021373ef618543046fd39acfd85beee989987f59c"
+    }
+  ],
+  "phase": "Fase 9 — Aislamiento, paralelismo y memoria",
+  "prev_sha256": "ee1006ad23d1dd38a301e17c2dcf614fc1ac72df464b3a181a56f016169478f2",
+  "prev_task_id": "TASK-902",
+  "providers": [
+    "claude:sonnet",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-14T23:34:48+00:00",
+    "attempt": 2,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "5 fallos corregidos; sin operaciones prohibidas",
+    "reviewer": "claude:sonnet",
+    "run_id": "3b72d1967d06",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "82bbc5ce56ca",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "569967c7d84e",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "9bb4dcbe46b4",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "4a6d54c6ab6f",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "forge",
+      "run_id": "0ae7d643e5d3",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "3b72d1967d06",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 27,
+  "task_id": "TASK-903",
+  "title": "`hefesto clean` y `hefesto discard`",
+  "verify": {
+    "command": "python -m unittest tests.test_isolation && python tools/dev.py lint",
+    "duration_seconds": 30.828,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-903-a3-2026-10-14T233519+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (65 ficheros Python)\n.................\n----------------------------------------------------------------------\nRan 17 tests in 29.966s\n\nOK",
+    "sha256": "6eedc90a7b72a0850c89bef7b847f3bf61e2f158ba30e76bf89bad55f5bec013",
+    "trust": "auto"
+  }
+}

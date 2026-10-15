@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -228,22 +229,53 @@ def _phase_info(project: Path, data: dict[str, Any], rm: roadmap.Roadmap, phase:
     return slug, phases[slug]
 
 
-def _yield_control_files(project: Path, branch: str) -> None:
-    """Modo worktree: los ficheros de control modificados en la principal deben coincidir con la rama; se
-    devuelven a su versión de HEAD para que la integración los traiga (su contenido vive en la rama)."""
+def _check_control_files(project: Path, branch: str) -> None:
     for rel in gitops.dirty_paths(project, include_control=True):
-        if not rel.startswith(".hefesto/"):
+        if not gitops.is_control_path(rel):
             continue
         local = (project / rel).read_bytes().replace(b"\r\n", b"\n") if (project / rel).is_file() else None
         theirs = gitops.git(project, "show", f"{branch}:{rel}", check=False, binary=True)
         if local is None or theirs.returncode != 0 or theirs.stdout.replace(b"\r\n", b"\n") != local:
             raise HefestoError(f"{rel} tiene cambios en la copia principal que no están en {branch}; revísalo.",
                                EXIT_CONFLICT)
+
+
+def _yield_control_files(project: Path, branch: str) -> list[str]:
+    """Modo worktree: los ficheros de control modificados en la principal deben coincidir con la rama; se
+    devuelven a su versión de HEAD para que la integración los traiga (su contenido vive en la rama)."""
+    _check_control_files(project, branch)
+    yielded: list[str] = []
+    for rel in gitops.dirty_paths(project, include_control=True):
+        if not gitops.is_control_path(rel):
+            continue
         tracked = gitops.git(project, "ls-files", "--error-unmatch", "--", rel, check=False).returncode == 0
         if tracked:
             gitops.git(project, "restore", "--staged", "--worktree", "--source=HEAD", "--", rel)
         else:
-            (project / rel).unlink()
+            (project / rel).unlink(missing_ok=True)
+        yielded.append(rel)
+    return yielded
+
+
+def _restore_control_files(project: Path, branch_or_ref: str, files: list[str]) -> None:
+    for rel in files:
+        theirs = gitops.git(project, "show", f"{branch_or_ref}:{rel}", check=False, binary=True)
+        if theirs.returncode == 0:
+            target = project / rel
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(theirs.stdout)
+
+
+def _cleanup_temp_finish(project: Path, temp_worktree: Path, temp_branch: str) -> None:
+    listed = gitops.git(project, "worktree", "list", "--porcelain", check=False).stdout
+    if any(str(Path(line[len("worktree "):]).resolve()).lower() == str(temp_worktree.resolve()).lower()
+           for line in listed.splitlines() if line.startswith("worktree ")):
+        gitops.git(project, "worktree", "remove", "--force", str(temp_worktree), check=False)
+    if temp_worktree.exists():
+        shutil.rmtree(temp_worktree, ignore_errors=True)
+    gitops.git(project, "worktree", "prune", check=False)
+    if gitops.branch_exists(project, temp_branch):
+        gitops.git(project, "branch", "-D", temp_branch, check=False)
 
 
 def _is_contract_task(project: Path, workdir: Path, task_id: str) -> bool:
@@ -279,7 +311,7 @@ def finish(project: Path, phase: str | None, pr: bool, yes: bool = False) -> tup
     pending = [t.id for t in tasks if t.marker != "x"]
     if pending:
         return EXIT_BLOCKED, f"Tareas sin completar en la fase: {', '.join(pending)}."
-    missing = [t.id for t in tasks if not (evidence.evidence_dir(project) / f"{t.id}.json").exists()]
+    missing = [t.id for t in tasks if evidence.latest_evidence(project, t.id) is None]
     chain_errors = evidence.verify_chain(project, data.get("evidence_head"))
     if missing or chain_errors:
         return EXIT_BLOCKED, "Evidencias inválidas: " + "; ".join([f"falta {m}" for m in missing] + chain_errors)
@@ -290,84 +322,131 @@ def finish(project: Path, phase: str | None, pr: bool, yes: bool = False) -> tup
             raise HefestoError("`--yes` no está permitido cuando `HEFESTO_ROLE` está definido.", EXIT_BLOCKED)
     else:
         util.require_tty("hefesto finish")
+
     main = gitops.main_branch(project, cfg)
-    base = info.get("base") or gitops.out(project, "merge-base", main, branch)
-    rebase = gitops.git(workdir, "rebase", "--onto", main, base, branch, check=False)
-    if rebase.returncode != 0:
-        conflicts = gitops.out(workdir, "diff", "--name-only", "--diff-filter=U")
-        gitops.git(workdir, "rebase", "--abort", check=False)
-        return EXIT_BLOCKED, ("Conflictos al rebasar sobre " + main + "; no se resuelven automáticamente:\n  "
-                              + "\n  ".join(conflicts.splitlines() or [rebase.stderr.strip()]))
-    info["base"] = gitops.out(project, "rev-parse", main)
-    with project_lock(project):
-        fresh = state.load(project)
-        fresh_phases = dict(fresh.get("phases") or {})
-        fresh_phases[slug] = info
-        fresh["phases"] = fresh_phases
-        state.save(project, fresh)
-    timeout = int(cfg.get("limits", "verify_timeout_seconds"))
-    test_command = str(cfg.get("execution", "test_command") or "")
-    checks: list[tuple[str, str]] = ([("suite", test_command)] if test_command else [])
-    skipped_contract: list[str] = []
-    for task in tasks:
-        if trust.status(project, task) != "trusted":
-            return EXIT_BLOCKED, f"El verify de {task.id} ya no coincide con el aprobado: `hefesto trust`."
-        if _is_contract_task(project, workdir, task.id):
-            skipped_contract.append(task.id)
-            continue
-        checks.append((task.id, task.verify))
-    for label, command in checks:
-        result = evidence.run_verify(project, workdir, label, command, timeout, label="finish")
-        if result.exit_code != 0:
-            return EXIT_INPUT, f"`{label}` falla tras el rebase (exit {result.exit_code}); no se integra.\n{result.summary}"
-    commits = gitops.out(workdir, "log", "--oneline", f"{main}..{branch}")
-    stat = gitops.out(workdir, "diff", "--stat", f"{main}...{branch}")
-    used = sorted({p for t in tasks for p in evidence.show(project, t.id).get("providers", [])})
-    omitted = f"\n\nVerify de contrato omitidos: {', '.join(skipped_contract)}" if skipped_contract else ""
-    summary = (f"hefesto: integra {branch}\n\nTareas:\n" + "\n".join(f"- {t.id}: {t.title}" for t in tasks)
-               + omitted
-               + f"\n\nProveedores: {', '.join(used) or 'ninguno registrado'}\n\nCommits:\n{commits}\n\n{stat}\n")
-    print(summary)
-    if pr:
-        if not yes and not util.confirm(f"¿Subir {branch} a origin y abrir un PR en borrador?", default=False):
-            return EXIT_OK, "Cancelado: no se ha subido nada."
-        push = gitops.git(workdir, "push", "-u", "origin", branch, check=False)
-        if push.returncode != 0:
-            return EXIT_CONFLICT, f"git push falló: {push.stderr.strip()}"
-        gh = subprocess.run(["gh", "pr", "create", "--draft", "--base", main, "--head", branch, "--title",
-                             f"hefesto: {slug}", "--body", summary], cwd=workdir, capture_output=True, text=True,
-                            encoding="utf-8", errors="replace")
-        return (EXIT_OK if gh.returncode == 0 else EXIT_CONFLICT), (gh.stdout or gh.stderr).strip()
-    strategy = cfg.get("execution", "finish_strategy")
-    if not yes and not util.confirm(f"¿Integrar {branch} en {main} con {strategy}?", default=False):
-        return EXIT_OK, "Cancelado: la rama sigue intacta."
-    with project_lock(project):
-        is_local = bool(getattr(cfg, "settings", None) and cfg.settings.get("install_mode") == "local")
-        if info["isolation"] == "worktree":
+    is_local = bool(getattr(cfg, "settings", None) and cfg.settings.get("install_mode") == "local")
+
+    diff_proc = gitops.git(project, "diff", "--name-only", f"{main}...{branch}", check=False)
+    branch_diff = [p.strip() for p in diff_proc.stdout.splitlines() if p.strip()]
+    untracked_proc = gitops.git(project, "ls-files", "--others", "--exclude-standard", check=False)
+    untracked_main = [p.strip() for p in untracked_proc.stdout.splitlines() if p.strip()]
+    collisions = sorted(p for p in set(branch_diff) & set(untracked_main) if not (p == ".hefesto" or p.startswith(".hefesto/")))
+    if collisions:
+        return EXIT_CONFLICT, ("Ficheros sin versionar en la copia principal que el merge sobrescribiría:\n  - "
+                               + "\n  - ".join(collisions))
+
+    try:
+        if info.get("isolation") == "worktree":
             if gitops.current_branch(project) != main:
                 return EXIT_CONFLICT, f"La copia principal no está en {main}; no se integra."
             if not is_local:
-                _yield_control_files(project, branch)
-        else:
-            if gitops.dirty_paths(project, include_control=not is_local):
-                return EXIT_CONFLICT, "La copia de trabajo tiene cambios sin commitear; no se integra."
-            gitops.git(project, "checkout", "-q", main)
-        if strategy == "squash":
-            gitops.git(project, "merge", "--squash", branch)
-            gitops.git(project, "commit", "-q", "-m", summary)
-        else:
-            gitops.git(project, "merge", "--no-ff", "-m", summary, branch)
-        merged = gitops.out(project, "rev-parse", "HEAD")
-        if info["isolation"] == "worktree":
-            gitops.git(project, "worktree", "remove", str(workdir))
-        gitops.git(project, "branch", "-D" if strategy == "squash" else "-d", branch)
-        data = state.load(project)
-        phases = dict(data.get("phases") or {})
-        phases.pop(slug, None)
-        data["phases"] = phases
-        if data.get("branch") == branch:
-            data.update({"branch": None, "workdir": None, "isolation": None})
-        data["next_action"] = "hefesto next"
-        state.save(project, data)
-        log.event(project, "finish", f"{branch} integrada en {main}", commit=merged)
-    return EXIT_OK, f"{branch} integrada en {main} ({strategy}): {merged[:10]}."
+                _check_control_files(project, branch)
+    except HefestoError as exc:
+        return exc.code, str(exc)
+
+    temp_branch = f"hefesto/_finish/{slug}"
+    temp_worktree = gitops.worktree_root(project) / "_finish"
+    _cleanup_temp_finish(project, temp_worktree, temp_branch)
+
+    try:
+        gitops.git(project, "branch", temp_branch, branch)
+        gitops.worktree_root(project).mkdir(parents=True, exist_ok=True)
+        gitops.git(project, "worktree", "add", "-q", str(temp_worktree), temp_branch)
+
+        base = info.get("base") or gitops.out(project, "merge-base", main, branch)
+        rebase = gitops.git(temp_worktree, "rebase", "--onto", main, base, temp_branch, check=False)
+        if rebase.returncode != 0:
+            conflicts = gitops.out(temp_worktree, "diff", "--name-only", "--diff-filter=U")
+            gitops.git(temp_worktree, "rebase", "--abort", check=False)
+            return EXIT_BLOCKED, ("Conflictos al rebasar sobre " + main + "; no se resuelven automáticamente:\n  "
+                                  + "\n  ".join(conflicts.splitlines() or [rebase.stderr.strip()]))
+
+        timeout = int(cfg.get("limits", "verify_timeout_seconds"))
+        test_command = str(cfg.get("execution", "test_command") or "")
+        checks: list[tuple[str, str]] = ([("suite", test_command)] if test_command else [])
+        skipped_contract: list[str] = []
+        for task in tasks:
+            if trust.status(project, task) != "trusted":
+                return EXIT_BLOCKED, f"El verify de {task.id} ya no coincide con el aprobado: `hefesto trust`."
+            if _is_contract_task(project, temp_worktree, task.id):
+                skipped_contract.append(task.id)
+                continue
+            checks.append((task.id, task.verify))
+        for label, command in checks:
+            result = evidence.run_verify(project, temp_worktree, label, command, timeout, label="finish")
+            if result.exit_code != 0:
+                return EXIT_INPUT, f"`{label}` falla tras el rebase (exit {result.exit_code}); no se integra.\n{result.summary}"
+
+        commits = gitops.out(temp_worktree, "log", "--oneline", f"{main}..{temp_branch}")
+        stat = gitops.out(temp_worktree, "diff", "--stat", f"{main}...{temp_branch}")
+        used = sorted({p for t in tasks for p in evidence.show(project, t.id).get("providers", [])})
+        omitted = f"\n\nVerify de contrato omitidos: {', '.join(skipped_contract)}" if skipped_contract else ""
+        summary = (f"hefesto: integra {branch}\n\nTareas:\n" + "\n".join(f"- {t.id}: {t.title}" for t in tasks)
+                   + omitted
+                   + f"\n\nProveedores: {', '.join(used) or 'ninguno registrado'}\n\nCommits:\n{commits}\n\n{stat}\n")
+        print(summary)
+        if pr:
+            if not yes and not util.confirm(f"¿Subir {branch} a origin y abrir un PR en borrador?", default=False):
+                return EXIT_OK, "Cancelado: no se ha subido nada."
+            push = gitops.git(workdir if workdir.exists() else project, "push", "-u", "origin", branch, check=False)
+            if push.returncode != 0:
+                return EXIT_CONFLICT, f"git push falló: {push.stderr.strip()}"
+            gh = subprocess.run(["gh", "pr", "create", "--draft", "--base", main, "--head", branch, "--title",
+                                 f"hefesto: {slug}", "--body", summary], cwd=workdir if workdir.exists() else project,
+                                capture_output=True, text=True, encoding="utf-8", errors="replace")
+            return (EXIT_OK if gh.returncode == 0 else EXIT_CONFLICT), (gh.stdout or gh.stderr).strip()
+
+        strategy = cfg.get("execution", "finish_strategy")
+        if not yes and not util.confirm(f"¿Integrar {branch} en {main} con {strategy}?", default=False):
+            return EXIT_OK, "Cancelado: la rama sigue intacta."
+
+        with project_lock(project):
+            yielded_control_files: list[str] = []
+            if info.get("isolation") == "worktree":
+                if not is_local:
+                    yielded_control_files = _yield_control_files(project, branch)
+            else:
+                gitops.git(project, "checkout", "-q", main)
+
+            merge_err: str | None = None
+            if strategy == "squash":
+                proc = gitops.git(project, "merge", "--squash", temp_branch, check=False)
+                if proc.returncode != 0:
+                    merge_err = proc.stderr.strip() or proc.stdout.strip() or "merge --squash falló"
+                else:
+                    proc = gitops.git(project, "commit", "-q", "-m", summary, check=False)
+                    if proc.returncode != 0:
+                        merge_err = proc.stderr.strip() or proc.stdout.strip() or "commit falló"
+            else:
+                proc = gitops.git(project, "merge", "--no-ff", "-m", summary, temp_branch, check=False)
+                if proc.returncode != 0:
+                    merge_err = proc.stderr.strip() or proc.stdout.strip() or "merge --no-ff falló"
+
+            if merge_err is not None:
+                gitops.git(project, "merge", "--abort", check=False)
+                _restore_control_files(project, temp_branch, yielded_control_files)
+                if info.get("isolation") != "worktree":
+                    gitops.git(project, "checkout", "-q", branch, check=False)
+                return EXIT_CONFLICT, f"Error al integrar {branch} en {main}: {merge_err}"
+
+            merged = gitops.out(project, "rev-parse", "HEAD")
+            if info.get("isolation") == "worktree":
+                gitops.git(project, "worktree", "remove", "--force", str(workdir), check=False)
+                if workdir.exists():
+                    shutil.rmtree(workdir, ignore_errors=True)
+                gitops.git(project, "worktree", "prune", check=False)
+            gitops.git(project, "branch", "-D", branch, check=False)
+
+            data = state.load(project)
+            phases = dict(data.get("phases") or {})
+            phases.pop(slug, None)
+            data["phases"] = phases
+            if data.get("branch") == branch:
+                data.update({"branch": None, "workdir": None, "isolation": None})
+            data["next_action"] = "hefesto next"
+            state.save(project, data)
+            log.event(project, "finish", f"{branch} integrada en {main}", commit=merged)
+
+        return EXIT_OK, f"{branch} integrada en {main} ({strategy}): {merged[:10]}."
+    finally:
+        _cleanup_temp_finish(project, temp_worktree, temp_branch)

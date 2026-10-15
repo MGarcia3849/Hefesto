@@ -94,8 +94,10 @@ class Call:
 
     def child_env(self) -> dict[str, str]:
         """Entorno del proceso hijo: sin claves de API y con el rol de Hefesto identificado."""
-        return filtered_env({"HEFESTO_ROLE": "orchestrator" if self.orchestrator else self.role, **self.env},
-                            strip_credentials=False)
+        extra: dict[str, str] = {"HEFESTO_ROLE": "orchestrator" if self.orchestrator else self.role}
+        if self.task_id:
+            extra["HEFESTO_TASK_ID"] = self.task_id
+        return filtered_env({**extra, **self.env}, strip_credentials=False)
 
 
 class Adapter:

@@ -1,0 +1,106 @@
+{
+  "attempts": 3,
+  "base_commit": "e5e2372144a7e6914d782b2f0c9ab632979eaed3",
+  "branch": "hefesto/fase-9-aislamiento-paralelismo-y-memoria",
+  "commit": "7bf89431ab1903857ca393098442ab981fb75e2d",
+  "contract": [],
+  "created_at": "2026-10-15T08:01:00+00:00",
+  "files": [
+    {
+      "path": "hefesto.toml",
+      "sha256": "f47ef11586ad2e36d9089b5c21b047bba98b05f66294e6d9ac1a7a51ed456b8e"
+    },
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "63282d869f249487873fe49b0400ed3707477087120ead1c77d444fd011786d5"
+    },
+    {
+      "path": "hefesto/memory.py",
+      "sha256": "6b7dca5e748bc8ab6c3beba5b06f41d5ac25cec0b19b0c601d9380f42619b27a"
+    },
+    {
+      "path": "hefesto/packet.py",
+      "sha256": "5f6ca5f00fbcceb70eabe1b5d76990374496a7c3cb165b6460960a2da263d377"
+    },
+    {
+      "path": "hefesto/progress.py",
+      "sha256": "74311614139d70005c5788fad6cf83d0ae1bfb60eb7d141866c6fd951c8d9373"
+    },
+    {
+      "path": "tests/test_memory.py",
+      "sha256": "a5062f3664c5b1400aaccdd8c66328f2dcb401e85f5ab0c344f8ec5fb767bbdd"
+    }
+  ],
+  "phase": "Fase 9 — Aislamiento, paralelismo y memoria",
+  "prev_sha256": "c719d18e8184fa42ab07faf3bb92f0a357ae2ff5b37cfd9339a0d49ab30d74fd",
+  "prev_task_id": "TASK-905",
+  "providers": [
+    "claude:sonnet",
+    "codex:default",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-15T08:00:51+00:00",
+    "attempt": 2,
+    "authors": [
+      "codex:default",
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "UTF-8 estricto en escrituras/borrados; seguridad completa. Nota de autoría: claude:opus cambió una línea de tests/test_memory.py (mock.patch.object new= en lugar de side_effect) en el intento 2; ese cambio lo revisó codex (independiente) en el run e8031b1c65d2.",
+    "reviewer": "claude:sonnet",
+    "run_id": "640ebe3f9ef2",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "64c47a65cbf6",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "e8269acbacd9",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "4897f5bd3547",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "e8031b1c65d2",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "forge",
+      "run_id": "c44b65b893cd",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "640ebe3f9ef2",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 31,
+  "task_id": "TASK-906",
+  "title": "Contratos e implementación del pack memory (memoria global)",
+  "verify": {
+    "command": "python -m unittest tests.test_memory && python tools/dev.py lint",
+    "duration_seconds": 8.078,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-906-a3-2026-10-15T080059+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (70 ficheros Python)\n....s....................................\n----------------------------------------------------------------------\nRan 41 tests in 7.109s\n\nOK (skipped=1)",
+    "sha256": "aee71b839c5703222b9248cf96f1a0c2865b2b8f8aa2326114b867749ea04d03",
+    "trust": "auto"
+  }
+}

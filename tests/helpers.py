@@ -53,6 +53,7 @@ class HefestoTestCase(unittest.TestCase):
         self.env_patch = mock.patch.dict(os.environ, {
             "HEFESTO_HOME": str(self.tmp / "home"),
             "HEFESTO_STATE_DIR": str(self.tmp / "state"),
+            "CODEX_HOME": str(self.tmp / "codex-home"),
             "PYTHONPATH": str(ROOT),
             **GIT_ENV,
         })
@@ -61,7 +62,7 @@ class HefestoTestCase(unittest.TestCase):
             os.environ.pop(key, None)
         # Aislamiento: los tests no heredan el contexto de un agente de Hefesto que los esté ejecutando.
         for key in ("HEFESTO_ROLE", "HEFESTO_ORCHESTRATOR", "HEFESTO_LOOP_ID", "CLAUDECODE", "GEMINI_CLI",
-                    "HEFESTO_FAKE_SCENARIO", "HEFESTO_FAKE_LOG", "CODEX_HOME"):
+                    "HEFESTO_FAKE_SCENARIO", "HEFESTO_FAKE_LOG"):
             os.environ.pop(key, None)
         self.project = self.tmp / "proyecto"
         self.use_fakes()

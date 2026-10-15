@@ -98,3 +98,8 @@ git_base = "https://github.com"
 
 [packs_context]
 query_budget = 1500
+
+[memory]
+max_notes = 5                           # máximo de notas relevantes a incluir en el contexto
+max_chars = 2000                        # tope de caracteres en total de las notas de memoria
+prune_days = 365                        # días tras los cuales una nota se propone para borrado

@@ -149,6 +149,9 @@ def build(project: Path, cfg: config.Config, role: str, instruction: str, task: 
         if files:
             sections.append(Section("Ficheros de la tarea", P_FILES, [(f"### {n}", f"```\n{t}\n```") for n, t in files]))
         memory = _memory_entries(project, task)
+        from hefesto import memory as mem_mod
+        for note in mem_mod.relevant(project, task=task):
+            memory.append(("(memoria global)", guard.redact(note)))
         if memory:
             sections.append(Section("Decisiones y lecciones relevantes", P_MEMORY, memory))
         if packs.is_pack_enabled(project, "context"):

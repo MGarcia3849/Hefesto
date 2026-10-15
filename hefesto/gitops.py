@@ -9,15 +9,35 @@ from __future__ import annotations
 import hashlib
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
-from hefesto import config, guard, roadmap
-from hefesto.util import EXIT_BLOCKED, EXIT_CONFLICT, EXIT_UNAVAILABLE, HefestoError
+from hefesto import config, guard, roadmap, util
+from hefesto.util import EXIT_BLOCKED, EXIT_CONFLICT, EXIT_UNAVAILABLE, HefestoError, atomic_write_json
 
 # Ficheros de control de Hefesto que viajan en los commits de la tarea.
 CONTROL_PATHS = (".hefesto/ROADMAP.md", ".hefesto/DECISIONS.md", ".hefesto/LEARNINGS.md", ".hefesto/evidence")
 WORKTREE_REL = ".hefesto/worktree"
+
+
+def is_control_path(path: str | Path) -> bool:
+    norm = str(path).replace("\\", "/")
+    for cp in CONTROL_PATHS:
+        scope = cp.replace("\\", "/").rstrip("/")
+        if norm == scope or norm.startswith(scope + "/"):
+            return True
+    return False
+
+
+def project_key(project: Path) -> str:
+    resolved = str(project.resolve()).lower().encode("utf-8")
+    digest = hashlib.sha256(resolved).hexdigest()[:12]
+    return f"{project.name}-{digest}"
+
+
+def worktree_root(project: Path) -> Path:
+    return (util.state_home() / "worktrees" / project_key(project)).resolve()
 
 
 def git(cwd: Path, *args: str, check: bool = True, binary: bool = False) -> subprocess.CompletedProcess[Any]:
@@ -143,18 +163,55 @@ def prepare_workdir(project: Path, cfg: config.Config, rm: roadmap.Roadmap, task
             git(project, "checkout", "-q", branch)
         workdir = project
     else:
-        workdir = project / WORKTREE_REL
-        listed = out(project, "worktree", "list", "--porcelain")
-        registered = any(Path(line[len("worktree "):]).resolve() == workdir.resolve()
-                         for line in listed.splitlines() if line.startswith("worktree "))
-        if not registered:
-            git(project, "worktree", "prune")
-            git(project, "worktree", "add", "-q", str(workdir), branch)
-        elif current_branch(workdir) != branch:
-            if dirty_paths(workdir, include_control=True):
-                raise HefestoError(f"El worktree de Hefesto tiene cambios sin commitear en otra rama "
-                                   f"({current_branch(workdir)}); revísalo antes de seguir.", EXIT_BLOCKED)
-            git(workdir, "checkout", "-q", branch)
+        workdir = None
+        legacy_candidates: list[Path] = []
+        if info.get("workdir"):
+            cand = Path(info["workdir"])
+            if project.resolve() in cand.resolve().parents or cand.resolve() == (project / WORKTREE_REL).resolve():
+                legacy_candidates.append(cand)
+        for ph_info in phases.values():
+            if isinstance(ph_info, dict) and ph_info.get("workdir"):
+                cand = Path(ph_info["workdir"])
+                if project.resolve() in cand.resolve().parents or cand.resolve() == (project / WORKTREE_REL).resolve():
+                    if cand not in legacy_candidates:
+                        legacy_candidates.append(cand)
+        inner_default = project / WORKTREE_REL
+        if inner_default not in legacy_candidates and inner_default.exists():
+            legacy_candidates.append(inner_default)
+
+        for legacy in legacy_candidates:
+            if legacy.exists():
+                has_changes = False
+                try:
+                    has_changes = bool(dirty_paths(legacy, include_control=True))
+                except Exception:
+                    pass
+                if has_changes:
+                    sys.stderr.write(f"Aviso: worktree antiguo en {legacy} tiene cambios sin commitear; se reutiliza.\n")
+                    workdir = legacy
+                    break
+                else:
+                    git(project, "worktree", "remove", str(legacy), check=False)
+                    if legacy.exists():
+                        shutil.rmtree(legacy, ignore_errors=True)
+                    git(project, "worktree", "prune", check=False)
+
+        if workdir is None:
+            root = worktree_root(project)
+            root.mkdir(parents=True, exist_ok=True)
+            atomic_write_json(root / "project.json", {"project": str(project.resolve())})
+            workdir = root / branch.replace("/", "__")
+            listed = out(project, "worktree", "list", "--porcelain")
+            registered = any(str(Path(line[len("worktree "):]).resolve()).lower() == str(workdir.resolve()).lower()
+                             for line in listed.splitlines() if line.startswith("worktree "))
+            if not registered:
+                git(project, "worktree", "prune", check=False)
+                git(project, "worktree", "add", "-q", str(workdir), branch)
+            elif current_branch(workdir) != branch:
+                if dirty_paths(workdir, include_control=True):
+                    raise HefestoError(f"El worktree de Hefesto tiene cambios sin commitear en otra rama "
+                                       f"({current_branch(workdir)}); revísalo antes de seguir.", EXIT_BLOCKED)
+                git(workdir, "checkout", "-q", branch)
     info["workdir"] = str(workdir)
     phases[slug] = info
     return info
@@ -205,13 +262,13 @@ def changed_paths(workdir: Path, base: str | None) -> list[str]:
 
 
 def checkpoint(project: Path, workdir: Path, cfg: config.Config, task: roadmap.Task, message: str,
-               extra_paths: tuple[str, ...] = ()) -> str:
+               extra_paths: tuple[str, ...] = (), include_control: bool = True) -> str:
     """Commit protegido: solo rutas de la tarea + control, sin secretos ni binarios grandes. Devuelve el hash."""
     branch = current_branch(workdir)
     if not guard.branch_allowed(branch):
         raise HefestoError(f"Commit bloqueado: la rama `{branch or '(detached)'}` no es `hefesto/*`.", EXIT_BLOCKED)
     is_local = bool(getattr(cfg, "settings", None) and cfg.settings.get("install_mode") == "local")
-    if not is_local:
+    if not is_local and include_control:
         sync_control_files(project, workdir, cfg)
         scopes = task.files + list(CONTROL_PATHS) + list(extra_paths)
     else:

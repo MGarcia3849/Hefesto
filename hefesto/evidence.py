@@ -85,9 +85,14 @@ def write(project: Path, record: dict[str, Any]) -> tuple[Path, dict[str, Any]]:
     record["prev_sha256"] = file_sha256(previous[0]) if previous else None
     record["prev_task_id"] = previous[1].get("task_id") if previous else None
     record["created_at"] = now_iso()
-    path = evidence_dir(project) / f"{record['task_id']}.json"
+    edir = evidence_dir(project)
+    task_id = record["task_id"]
+    path = edir / f"{task_id}.json"
     if path.exists():
-        raise HefestoError(f"Ya existe la evidencia {path.name}; las evidencias no se reescriben.", 4)
+        n = 2
+        while (edir / f"{task_id}.{n}.json").exists():
+            n += 1
+        path = edir / f"{task_id}.{n}.json"
     atomic_write_text(path, _canonical(record))
     return path, {"seq": record["seq"], "sha256": file_sha256(path), "task_id": record["task_id"]}
 
@@ -108,7 +113,14 @@ def verify_chain(project: Path, head: dict[str, Any] | None = None) -> list[str]
         if data.get("prev_sha256") != expected:
             errors.append(f"{path.name}: el hash de la evidencia anterior no coincide "
                           f"({(prev_data or {}).get('task_id', 'inicio')} fue editada o borrada)")
-        if path.stem != data.get("task_id"):
+        task_id = data.get("task_id")
+        stem = path.stem
+        valid_name = (stem == task_id) or (
+            task_id is not None
+            and stem.startswith(task_id + ".")
+            and stem[len(task_id) + 1:].isdigit()
+        )
+        if not valid_name:
             errors.append(f"{path.name}: task_id {data.get('task_id')} no coincide con el nombre")
         prev_path, prev_data = path, data
     if head:
@@ -122,9 +134,16 @@ def verify_chain(project: Path, head: dict[str, Any] | None = None) -> list[str]
     return errors
 
 
+def latest_evidence(project: Path, task_id: str) -> tuple[Path, dict[str, Any]] | None:
+    """Devuelve la evidencia más reciente de una tarea (última de la cadena)."""
+    matches = [(p, d) for p, d in load_all(project) if d.get("task_id") == task_id]
+    if matches:
+        return matches[-1]
+    return None
+
+
 def show(project: Path, task_id: str) -> dict[str, Any]:
-    path = evidence_dir(project) / f"{task_id}.json"
-    try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except FileNotFoundError as exc:
-        raise HefestoError(f"No hay evidencia para {task_id}.", 1) from exc
+    latest = latest_evidence(project, task_id)
+    if not latest:
+        raise HefestoError(f"No hay evidencia para {task_id}.", 1)
+    return latest[1]

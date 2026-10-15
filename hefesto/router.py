@@ -113,31 +113,36 @@ def _other_provider_available(project: Path, cfg: config.Config, entries: list[s
     return False
 
 
-def run(project: Path, role: str, instruction: str, task_id: str | None = None, dry_run: bool = False) -> RunOutcome:
+def run(project: Path, role: str, instruction: str, task_id: str | None = None, dry_run: bool = False,
+        workdir: Path | None = None, entries: list[str] | None = None,
+        task_run_id: str | None = None) -> RunOutcome:
     if role not in ROLES:
         raise HefestoError(f"Rol desconocido `{role}` ({', '.join(ROLES)}).", EXIT_INPUT)
     cfg = config.load(project)
     run_id = new_run_id()
     if dry_run:
         authors: set[str] = set()
-        if role == "reviewer":
-            try:
-                _, _, _, _, task_run_id = _task_context(project, task_id)
-                authors = _author_providers(project, role, task_run_id)
-            except Exception:
-                authors = set()
+        try:
+            task, rm, data, ctx_workdir, ctx_task_run_id = _task_context(project, task_id)
+            eff_task_run_id = task_run_id if task_run_id is not None else ctx_task_run_id
+            if role == "reviewer":
+                authors = _author_providers(project, role, eff_task_run_id)
+        except Exception:
+            authors = set()
         hops = plan_route(cfg, role, authors)
         chosen = any(h.outcome == "elegido" for h in hops)
         return RunOutcome(EXIT_OK if chosen else EXIT_UNAVAILABLE, run_id, None, hops)
     if guard.find_secrets(instruction):
         raise HefestoError("La instrucción contiene un secreto; no se envía a ningún proveedor.", EXIT_BLOCKED)
-    task, rm, data, workdir, task_run_id = _task_context(project, task_id)
-    authors = _author_providers(project, role, task_run_id) if role == "reviewer" else set()
+    task, rm, data, ctx_workdir, ctx_task_run_id = _task_context(project, task_id)
+    eff_workdir = workdir if workdir is not None else ctx_workdir
+    eff_task_run_id = task_run_id if task_run_id is not None else ctx_task_run_id
+    authors = _author_providers(project, role, eff_task_run_id) if role == "reviewer" else set()
     hops: list[Hop] = []
     timeout = int(cfg.get("limits", "timeout_seconds"))
     default_cooldown = int(cfg.get("quota", "cooldown_default_minutes"))
     packet_path: Path | None = None
-    chain = cfg.role_chain(role)
+    chain = entries if entries is not None else cfg.role_chain(role)
     other_available = _other_provider_available(project, cfg, chain, authors) if authors else False
 
     def try_entry(entry: str) -> RunOutcome | None:
@@ -148,15 +153,15 @@ def run(project: Path, role: str, instruction: str, task_id: str | None = None, 
         if not ok:
             hops.append(Hop(entry, mid, f"saltado: {reason}"))
             return None
-        pkt = packet.build(project, cfg, role, instruction, task, rm, data, mid, workdir)
+        pkt = packet.build(project, cfg, role, instruction, task, rm, data, mid, eff_workdir)
         packet_path = packet.save(project, pkt, task.id if task else None, role)
         call = Call(role=role, prompt=pkt.text, task_id=task.id if task else None, run_id=run_id,
                     model=model or str(cfg.get("adapters", provider, "model", default="") or ""),
                     model_id=mid,
-                    workdir=workdir, project=project, packet_path=packet_path.resolve(), timeout=timeout)
+                    workdir=eff_workdir, project=project, packet_path=packet_path.resolve(), timeout=timeout)
         result = adapters.get(cfg, provider).run(call)
         quota.record_call(provider)
-        _record(project, role, task, task_run_id, run_id, mid, result, packet_path)
+        _record(project, role, task, eff_task_run_id, run_id, mid, result, packet_path)
         if result.error_type in ("quota", "rate_limit"):
             until = quota.cooldown_until(result.reset_hint or result.summary, default_cooldown)
             quota.mark_cooldown(provider, until, result.error_type, result.summary)

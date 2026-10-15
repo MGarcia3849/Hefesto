@@ -205,3 +205,63 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - size: M
   - parallel: false
   - accept: cada delegación y cada iteración del loop se registra como activa con PID, rol, proveedor, tarea y hora, y escribe su salida en el log mientras ocurre; jobs la lista; watch la refresca con los límites arriba; nada queda huérfano si el proceso muere
+
+## Fase 9 — Aislamiento, paralelismo y memoria
+- [x] TASK-901: Contratos de worktrees fuera del proyecto, finish atómico, clean y discard
+  - verify: `python -m py_compile tests/test_isolation.py && python -m unittest tests.test_isolation 2>&1 | grep -q FAILED`
+  - files: tests/test_isolation.py
+  - role: core
+  - depends_on: none
+  - size: S
+  - parallel: false
+  - contract: tests/test_isolation.py
+  - accept: los tests fijan worktrees en ~/.hefesto/worktrees, que find_project resuelve desde ellos, que finish valida todo antes de tocar la copia principal, y clean/discard con confirmación; fallan por falta de implementación
+- [x] TASK-902: Worktrees fuera del proyecto y finish atómico
+  - verify: `python -m unittest tests.test_isolation.WorktreeLocationTests tests.test_isolation.AtomicFinishTests && python -m unittest tests.test_git && python tools/dev.py lint`
+  - files: hefesto/gitops.py, hefesto/acceptance.py, hefesto/project.py, hefesto/state.py, hefesto/progress.py, tests/helpers.py
+  - role: runner
+  - depends_on: TASK-901
+  - size: M
+  - parallel: false
+  - accept: el worktree de una fase vive fuera del proyecto y hefesto funciona desde dentro de él; finish no modifica nada de la copia principal si alguna comprobación previa falla
+- [x] TASK-903: `hefesto clean` y `hefesto discard`
+  - verify: `python -m unittest tests.test_isolation && python tools/dev.py lint`
+  - files: hefesto/maintenance.py, hefesto/cli.py, hefesto/gitops.py, hefesto/evidence.py, hefesto/acceptance.py, hefesto/workflow.py
+  - role: runner
+  - depends_on: TASK-902
+  - size: M
+  - parallel: false
+  - accept: clean elimina worktrees y ramas hefesto huérfanos sin tocar nada con cambios; discard revierte una tarea o descarta una fase dejando constancia en DECISIONS; ambos con TTY o --yes y las barreras de siempre
+- [x] TASK-904: Contratos del modo paralelo
+  - verify: `python -m py_compile tests/test_parallel.py && python -m unittest tests.test_parallel 2>&1 | grep -q FAILED`
+  - files: tests/test_parallel.py, tests/fakes/fake_agent.py
+  - role: core
+  - depends_on: TASK-903
+  - size: S
+  - parallel: false
+  - contract: tests/test_parallel.py
+  - accept: los tests fijan el scheduler (tareas disjuntas, dependencias, límites por modelo y global, concurrencia adaptativa), el ciclo automático por tarea y la integración serial con puerta de calidad; fallan por falta de implementación
+- [x] TASK-907: Enmienda del contrato del modo paralelo
+  - verify: `python -m py_compile tests/test_parallel.py`
+  - files: tests/test_parallel.py
+  - role: core
+  - size: S
+  - parallel: false
+  - contract: tests/test_parallel.py
+  - accept: el worker falso escribe dentro de las rutas de directorio y su verify es `test -d`; la aserción sobre la copia principal solo aplica con aislamiento worktree (DECISIONS 2026-10-15)
+- [x] TASK-905: Scheduler paralelo y ciclo automático por tarea
+  - verify: `python -m unittest tests.test_parallel && python tools/dev.py lint && python tools/dev.py test`
+  - files: hefesto/scheduler.py, hefesto/cli.py, hefesto/gitops.py, hefesto/acceptance.py, hefesto/quota.py, hefesto/activity.py, hefesto/state.py, hefesto/router.py, hefesto/adapters/base.py, hefesto/maintenance.py, hefesto/evidence.py, tests/test_parallel_robustness.py
+  - role: forge
+  - depends_on: TASK-907
+  - size: M
+  - parallel: false
+  - accept: varias tareas avanzan a la vez en worktrees propios sin pisarse ni exceder los límites; un rate_limit reduce a la mitad la concurrencia del modelo; la integración en la rama de la fase es serial; con max_parallel_tasks 1 el resultado es idéntico al serie
+- [x] TASK-906: Contratos e implementación del pack memory (memoria global)
+  - verify: `python -m unittest tests.test_memory && python tools/dev.py lint`
+  - files: tests/test_memory.py, hefesto/memory.py, hefesto/cli.py, hefesto/progress.py, hefesto/packet.py, hefesto.toml
+  - role: runner
+  - depends_on: none
+  - size: M
+  - parallel: false
+  - accept: remember --scope global deja la nota en _pendientes; memory review (TTY o --yes) la aprueba; memory search encuentra; resume y el paquete incluyen hasta N notas relevantes; un secreto se bloquea; sin basic-memory funciona con ~/hefesto/LEARNINGS.md

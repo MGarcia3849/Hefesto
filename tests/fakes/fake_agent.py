@@ -2,6 +2,8 @@
 
 Comportamiento por escenario JSON (`HEFESTO_FAKE_SCENARIO`, ruta a un fichero):
     {"gemini": {"mode": "ok", "summary": "hecho", "write": {"src/a.py": "x = 1\\n"}, "delay": 0}}
+Claves, de más a menos concreta: `nombre@rol#TAREA`, `nombre#TAREA` (TAREA = `HEFESTO_TASK_ID`),
+`nombre@rol`, `nombre` y `*`.
 Modos: ok | quota | rate_limit | auth | garbage | timeout | fail.
 Cada llamada se registra en `HEFESTO_FAKE_LOG` (JSONL): nombre, argv, cwd, stdin y claves de API visibles.
 """
@@ -50,7 +52,9 @@ def scenario(name: str) -> dict[str, object]:
         return {"mode": "ok"}
     data = json.loads(Path(path).read_text(encoding="utf-8"))
     role = os.environ.get("HEFESTO_ROLE", "")
-    key = f"{name}@{role}" if f"{name}@{role}" in data else name
+    task = os.environ.get("HEFESTO_TASK_ID", "")
+    candidates = ([f"{name}@{role}#{task}", f"{name}#{task}"] if task else []) + [f"{name}@{role}"]
+    key = next((k for k in candidates if k in data), name)
     entry = data.get(key, data.get("*", {"mode": "ok"}))
     if isinstance(entry, list):  # secuencia de respuestas: consume la primera
         counter = Path(path).with_suffix(f".{key.replace('@', '-')}.count")

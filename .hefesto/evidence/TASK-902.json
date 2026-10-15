@@ -1,0 +1,96 @@
+{
+  "attempts": 2,
+  "base_commit": "1fe6b5548e45c2fbe612685e5a37c6b02277f26b",
+  "branch": "hefesto/fase-9-aislamiento-paralelismo-y-memoria",
+  "commit": "ee5454c05820d8540184d9f1ccc60284b0659b7a",
+  "contract": [],
+  "created_at": "2026-10-14T22:51:41+00:00",
+  "files": [
+    {
+      "path": "hefesto/acceptance.py",
+      "sha256": "2f7b2a1a7dc73fa6def158977cb6fa82d6493aa4f7f494fcb235e4470fb8b297"
+    },
+    {
+      "path": "hefesto/gitops.py",
+      "sha256": "88c6dd79b88f7751c374915d712081dad7b380c6da9b221941dc879c7498e37f"
+    },
+    {
+      "path": "hefesto/project.py",
+      "sha256": "6bfd2dc02685d9c6b76d90a48c5bed65f85b03fe25e0b81fb6cc359048d5e5e4"
+    },
+    {
+      "path": "tests/helpers.py",
+      "sha256": "9b550c9f96bab11c78af3da61acc6059b15061946310e805d4f34a60076f27fd"
+    }
+  ],
+  "phase": "Fase 9 — Aislamiento, paralelismo y memoria",
+  "prev_sha256": "8a18c3f8d218570b39a3ba4ede71b451fed4befc5ddaa3e91976b20522b10d12",
+  "prev_task_id": "TASK-901",
+  "providers": [
+    "claude:sonnet",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-14T22:50:32+00:00",
+    "attempt": 1,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "",
+    "reviewer": "claude:sonnet",
+    "run_id": "ef38f2fb345e",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "b37050924a75",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "8ee7cd84e637",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "507d629de8e0",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "745307fca912",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "11402747814e",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "ef38f2fb345e",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 26,
+  "task_id": "TASK-902",
+  "title": "Worktrees fuera del proyecto y finish atómico",
+  "verify": {
+    "command": "python -m unittest tests.test_isolation.WorktreeLocationTests tests.test_isolation.AtomicFinishTests && python -m unittest tests.test_git && python tools/dev.py lint",
+    "duration_seconds": 67.692,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-902-a2-2026-10-14T225140+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (64 ficheros Python)\n.........\n----------------------------------------------------------------------\nRan 9 tests in 16.363s\n\nOK\n..................................\n----------------------------------------------------------------------\nRan 34 tests in 50.253s\n\nOK",
+    "sha256": "a1b80e062f4388855de1c2374d0a6487c4126fab98ff47192ecfb126e1b16dc2",
+    "trust": "auto"
+  }
+}

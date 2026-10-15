@@ -1,0 +1,59 @@
+{
+  "attempts": 1,
+  "base_commit": "c5166741dda780ea6254792f6c110a2f151e21da",
+  "branch": "hefesto/fase-9-aislamiento-paralelismo-y-memoria",
+  "commit": "04c9f258b82a8a1c521e1ed35b0e5530cdb3a60f",
+  "contract": [
+    "tests/test_parallel.py"
+  ],
+  "created_at": "2026-10-14T23:46:23+00:00",
+  "files": [
+    {
+      "path": "tests/fakes/fake_agent.py",
+      "sha256": "f8474fd0af8bdfd89c4a451481bf7a687491a8e9a4831dc2e245d073db45115d"
+    },
+    {
+      "path": "tests/test_parallel.py",
+      "sha256": "1b7fde518f585b377c5530f22007fe4bc687e04f746f18cb71dfac3037069434"
+    }
+  ],
+  "phase": "Fase 9 — Aislamiento, paralelismo y memoria",
+  "prev_sha256": "bbdcef8613bc2db13ff958b3889fda5af9d44b1ff61b8304a15764179c069785",
+  "prev_task_id": "TASK-903",
+  "providers": [
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-14T23:46:09+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "contrato completo de 10.1",
+    "reviewer": "gemini:default",
+    "run_id": "df087fe693f2",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "reviewer",
+      "run_id": "df087fe693f2",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 28,
+  "task_id": "TASK-904",
+  "title": "Contratos del modo paralelo",
+  "verify": {
+    "command": "python -m py_compile tests/test_parallel.py && python -m unittest tests.test_parallel 2>&1 | grep -q FAILED",
+    "duration_seconds": 13.047,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-904-a1-2026-10-14T234623+0000.log",
+    "output_summary": "",
+    "sha256": "c5cb0c20d55d3f5a4b2bdb00ec4cbe4cebed4920f7b1be505f434dbbd0f9f784",
+    "trust": "auto"
+  }
+}

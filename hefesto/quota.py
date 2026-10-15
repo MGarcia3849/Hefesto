@@ -6,23 +6,30 @@ Hefesto no estima cuota restante: si una CLI no la expone, el dato es `unknown`.
 
 from __future__ import annotations
 
+import contextlib
 import datetime as dt
 import re
+import threading
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
 
 from hefesto.lock import Lock
 from hefesto.util import atomic_write_json, now_iso, parse_iso, read_json, state_home, utcnow
 
 STATUSES = ("ok", "cooldown", "auth_error", "missing")
+_THREAD_LOCK = threading.Lock()
 
 
 def providers_path() -> Path:
     return state_home() / "providers.json"
 
 
-def _lock() -> Lock:
-    return Lock(state_home() / ".lock", timeout=30)
+@contextlib.contextmanager
+def _lock() -> Iterator[None]:
+    # Evita que un hilo lea owner mientras otro lo elimina (sharing violation
+    # en Windows). El lock de disco sigue protegiendo frente a otros procesos.
+    with _THREAD_LOCK, Lock(state_home() / ".lock", timeout=30):
+        yield
 
 
 def load() -> dict[str, Any]:

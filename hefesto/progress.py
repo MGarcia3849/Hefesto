@@ -45,25 +45,29 @@ def note(project: Path, text: str, orchestrator: str | None = None) -> dict[str,
     if not text.strip():
         raise HefestoError("La nota está vacía.", EXIT_INPUT)
     data = state.load(project)
+    redacted_text = redact(text.strip())[:2000]
     record = {"task_id": data.get("current_task_id"), "run_id": data.get("run_id"),
-              "orchestrator": orchestrator or current_orchestrator(), "text": text.strip()[:2000], "at": now_iso()}
-    record["text"] = redact(record["text"])
+              "orchestrator": orchestrator or current_orchestrator(), "text": redacted_text, "at": now_iso()}
     append_jsonl(progress_path(project), record)
     return record
 
 
 def resume_data(project: Path) -> dict[str, Any]:
+    from hefesto import memory
+
     data = state.load(project)
     out: dict[str, Any] = {"status": data["status"], "task": None, "next_action": data["next_action"],
                            "last_error": data.get("last_error"), "notes": [], "runs": [], "review": None,
                            "diff_stat": "", "branch": data.get("branch"), "workdir": data.get("workdir"),
-                           "graph": ""}
+                           "graph": "", "memory": []}
     notes = read_jsonl(progress_path(project))
+    task_obj = None
     if data.get("current_task_id"):
         from hefesto import packs, roadmap
 
         cfg = config.load(project)
         task = roadmap.load_valid(project).get(data["current_task_id"])
+        task_obj = task
         out["task"] = {"id": task.id, "title": task.title, "role": data.get("active_role") or task.role,
                        "attempts": data["attempts"], "verify": task.verify, "files": task.files}
         notes = [n for n in notes if n.get("run_id") == data.get("run_id")]
@@ -82,6 +86,7 @@ def resume_data(project: Path) -> dict[str, Any]:
             from hefesto import skills
             out["graph"] = skills.sanitize_text(redact(graph_extract))
     out["notes"] = notes[-MAX_NOTES:]
+    out["memory"] = [redact(m) for m in memory.relevant(project, task=task_obj)]
     return out
 
 
@@ -111,6 +116,10 @@ def render_resume(info: dict[str, Any]) -> str:
         lines.append("grafo de código:")
         graph_lines = [l.strip() for l in info["graph"].strip().splitlines() if l.strip()]
         lines += [f"  {l[:160]}" for l in graph_lines[:8]]
+    if info.get("memory"):
+        lines.append("memoria global:")
+        for m in info["memory"]:
+            lines.append(f"  - {m}")
     lines.append(f"siguiente acción: {info['next_action']}")
     return "\n".join(lines)
 
