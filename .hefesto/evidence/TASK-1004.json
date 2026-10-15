@@ -1,0 +1,92 @@
+{
+  "attempts": 3,
+  "base_commit": "ae4121fc739bc371c8ae6e6db0cc30164fa614de",
+  "branch": "hefesto/fase-10-validacion-final",
+  "commit": "2700c7eab8cb9e3f250e79d8b50aea02e1b58046",
+  "contract": [],
+  "created_at": "2026-10-15T10:08:11+00:00",
+  "files": [
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "fb3776950daa2363e00c8ab57c07a70fe95e74964aa0b198177e9747c6c775cb"
+    },
+    {
+      "path": "README.md",
+      "sha256": "c34823c272e900c1d6821290574ae648128cbdd79f990865d243f201dd0e0be8"
+    },
+    {
+      "path": "docs/ENTREGA.md",
+      "sha256": "049811dbd97f67b618af23addddf8539c397163e6aba59157389bc687990690b"
+    }
+  ],
+  "phase": "Fase 10 — Validación final",
+  "prev_sha256": "9c4573e65b7c6d0b41713cded03b5be9b58042fcbf20afdb918bd3cc95225f6d",
+  "prev_task_id": "TASK-1003",
+  "providers": [
+    "claude:sonnet",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-15T10:08:10+00:00",
+    "attempt": 2,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "publicación correcta y extracción completa",
+    "reviewer": "claude:sonnet",
+    "run_id": "9ae166324a92",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "e2c62b32c3f6",
+      "success": false
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "reviewer",
+      "run_id": "4d3f4ad8eaa6",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "204cf5c56305",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "1600cb0c65de",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "forge",
+      "run_id": "268858743710",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "9ae166324a92",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 35,
+  "task_id": "TASK-1004",
+  "title": "Documentación de v2.1 y entrega final",
+  "verify": {
+    "command": "grep -q \"hefesto parallel\" README.md && grep -q \"hefesto memory\" README.md && test -f docs/ENTREGA.md",
+    "duration_seconds": 0.061,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1004-a3-2026-10-15T100810+0000.log",
+    "output_summary": "",
+    "sha256": "97060faf585a982d7d7c4a01d347fe83e34675aceb2a4df70de50a8d91d44e7d",
+    "trust": "auto"
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "attempts": 3,
+  "base_commit": "548cfe4e425acf3f8f2754541adffe5dd103eaca",
+  "branch": "hefesto/fase-10-validacion-final",
+  "commit": "9087e1fa0bc36e307278acd98b39f723fb26ce36",
+  "contract": [],
+  "created_at": "2026-10-15T09:01:54+00:00",
+  "files": [
+    {
+      "path": "tests/helpers.py",
+      "sha256": "41ec24fa3c374b12ed78ca7ca144562ca51d5ca4a5ec1af1e0c7a69b12c2183b"
+    },
+    {
+      "path": "tools/dev.py",
+      "sha256": "acb954341ee1c28d4df348a6133058dc449100eb54c4bc60a8689a79cffcb3b7"
+    }
+  ],
+  "phase": "Fase 10 — Validación final",
+  "prev_sha256": "36430aabfdf08406ffb311993853865722e6f33b41f1eabb8b3be7bbd1fbd9f7",
+  "prev_task_id": "TASK-1001",
+  "providers": [
+    "claude:sonnet",
+    "codex:default",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-15T09:01:32+00:00",
+    "attempt": 2,
+    "authors": [
+      "codex:default",
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "demo acreditada, try/finally, árbol de procesos",
+    "reviewer": "claude:sonnet",
+    "run_id": "3990208db213",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "79994fd67feb",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "b33bd78db09c",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "638265e772f0",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "forge",
+      "run_id": "85fbda8fc618",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "3990208db213",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 33,
+  "task_id": "TASK-1002",
+  "title": "Demo con fakes en tools/dev.py",
+  "verify": {
+    "command": "python -m unittest tests.test_demo && python tools/dev.py lint",
+    "duration_seconds": 20.597,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1002-a3-2026-10-15T090153+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (71 ficheros Python)\n..\n----------------------------------------------------------------------\nRan 2 tests in 19.695s\n\nOK",
+    "sha256": "e7d2b6c5117d695a0589902d9dd0be678ba1bed1f108ac45331725da0d5e6b55",
+    "trust": "auto"
+  }
+}

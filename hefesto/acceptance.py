@@ -96,7 +96,8 @@ def review(project: Path, task_id: str, verdict: str, notes: str, run_id: str | 
         exception = check_independence(cfg, authors, reviewer)
         touched_contract = [p for p in rm.contract_paths(task) if any(
             c == p or c.startswith(p.rstrip("/") + "/") for c in changed)]
-        if touched_contract:
+        is_core = (data.get("started_role") == "core" and task.role == "core")
+        if touched_contract and not is_core:
             verdict = "fail"
             notes = (f"Revisión negativa automática: la implementación modificó tests de contrato "
                      f"({', '.join(touched_contract)}). " + notes).strip()
@@ -104,7 +105,7 @@ def review(project: Path, task_id: str, verdict: str, notes: str, run_id: str | 
                   "attempt": data["attempts"], "exception": exception, "at": now_iso()}
         log.record(project, "reviews", {"task_id": task_id, **record})
         if verdict == "fail":
-            code, message = workflow.register_failure(project, task_id, f"revisión negativa: {notes}")
+            code, message = workflow.register_failure(project, task_id, f"revisión negativa: {notes}", source="review")
             return (code if code else EXIT_INPUT), (message if code else f"Revisión negativa registrada. "
                                                     f"Rol del siguiente intento: {message}")
         data = state.load(project)
@@ -143,7 +144,8 @@ def done(project: Path, task_id: str) -> tuple[int, str]:
         result = evidence.run_verify(project, workdir, task_id, task.verify, timeout, label=f"a{data['attempts'] + 1}")
         if result.exit_code != 0:
             code, message = workflow.register_failure(project, task_id,
-                                                      f"verify salió con {result.exit_code}:\n{result.summary}")
+                                                      f"verify salió con {result.exit_code}:\n{result.summary}",
+                                                      source="verify")
             if code:
                 return code, f"verify en rojo.\n{message}"
             return EXIT_INPUT, f"verify en rojo (exit {result.exit_code}). Rol del siguiente intento: {message}\n{result.summary}"
@@ -192,8 +194,8 @@ def done(project: Path, task_id: str) -> tuple[int, str]:
                 raise
         all_done = all(t.marker == "x" or t.id == task_id for t in rm.tasks)
         data = state.transition(data, "COMPLETED" if all_done else "IDLE")
-        data.update({"current_task_id": None, "active_role": None, "attempts": 0, "last_error": None,
-                     "error_history": [], "review": None, "last_checkpoint": commit, "evidence_head": head,
+        data.update({"current_task_id": None, "active_role": None, "started_role": None, "attempts": 0, "last_error": None,
+                     "error_history": [], "review": None, "last_failure": None, "last_checkpoint": commit, "evidence_head": head,
                      "next_action": "hefesto finish" if all_done else "hefesto next"})
         state.save(project, data)
         log.event(project, "done", f"{task_id} completada", commit=commit)

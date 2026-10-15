@@ -160,7 +160,12 @@ def cmd_fail(args: argparse.Namespace) -> int:
     from hefesto import workflow
 
     code, message = workflow.fail(_project(args), args.task, args.reason)
-    print(message if code else f"Intento registrado. Rol del siguiente intento: {message}")
+    if code:
+        print(message)
+    elif "ya se contó" in message:
+        print(message)
+    else:
+        print(f"Intento registrado. Rol del siguiente intento: {message}")
     return code
 
 
@@ -833,10 +838,32 @@ def summarize_log_line(line: str) -> str:
                     return f"{name} {target}".strip()[:160]
                 if su.get("state"):
                     return f"[{su.get('state')}] {su.get('step_type', '')}".strip()[:160]
+
+            delta = data.get("delta")
+            if isinstance(delta, dict):
+                text = delta.get("text") or delta.get("text_delta")
+                if isinstance(text, str) and text.strip():
+                    return text.strip()[:160]
+                if delta.get("type") == "input_json_delta" or "partial_json" in delta:
+                    name = delta.get("name") or data.get("name")
+                    return f"(llamada a herramienta: {name})" if name else "(llamada a herramienta)"
+                if delta.get("type") == "tool_use" or delta.get("name"):
+                    name = delta.get("name") or ""
+                    return f"(llamada a herramienta: {name})" if name else "(llamada a herramienta)"
+            elif isinstance(delta, str) and delta.strip():
+                return delta.strip()[:160]
+
+            if "partial_json" in data or data.get("type") == "input_json_delta":
+                name = data.get("name")
+                return f"(llamada a herramienta: {name})" if name else "(llamada a herramienta)"
+
             if data.get("event") == "result":
                 res = data.get("result")
                 if isinstance(res, dict) and res.get("response"):
-                    return str(res.get("response")).strip()[:160]
+                    resp = str(res.get("response")).strip()
+                    if not (resp.startswith("{") and resp.endswith("}")):
+                        return resp[:160]
+
             msg = data.get("message")
             if isinstance(msg, dict):
                 content = msg.get("content")
@@ -854,19 +881,54 @@ def summarize_log_line(line: str) -> str:
                             return f"{name} {target}".strip()[:160]
                         if first.get("type") == "text":
                             return str(first.get("text") or "").strip()[:160]
+                if isinstance(content, str) and content.strip():
+                    return content.strip()[:160]
+            elif isinstance(msg, str) and msg.strip():
+                return msg.strip()[:160]
+
             cb = data.get("content_block")
-            if isinstance(cb, dict) and cb.get("type") == "tool_use":
-                return f"tool: {cb.get('name', '')}".strip()[:160]
+            if isinstance(cb, dict):
+                if cb.get("type") == "tool_use":
+                    name = str(cb.get("name") or "")
+                    return f"(llamada a herramienta: {name})" if name else "(llamada a herramienta)"
+                if cb.get("text"):
+                    return str(cb.get("text")).strip()[:160]
+
             item = data.get("item")
             if isinstance(item, dict):
                 if item.get("text"):
                     return str(item.get("text")).strip()[:160]
                 if item.get("type") == "tool_call":
-                    return f"tool: {item.get('name', '')}".strip()[:160]
-            for key in ("response", "result", "text", "summary", "error"):
+                    name = str(item.get("name") or "")
+                    return f"(llamada a herramienta: {name})" if name else "(llamada a herramienta)"
+
+            call = data.get("tool_call") or data.get("call")
+            if isinstance(call, dict):
+                name = str(call.get("name") or "tool")
+                args = call.get("args") or call.get("input")
+                target = ""
+                if isinstance(args, dict):
+                    target = str(args.get("path") or args.get("file_path") or args.get("command") or args.get("target") or "")
+                elif isinstance(args, str):
+                    target = args
+                return f"{name} {target}".strip()[:160]
+
+            for key in ("response", "result", "text", "summary", "error", "content"):
                 val = data.get(key)
                 if isinstance(val, str) and val.strip():
-                    return val.strip()[:160]
+                    val_str = val.strip()
+                    if not (val_str.startswith("{") and val_str.endswith("}")):
+                        return val_str[:160]
+
+            dtype = data.get("type")
+            if dtype and isinstance(dtype, str):
+                if dtype in ("content_block_delta", "input_json_delta"):
+                    name = data.get("name")
+                    return f"(llamada a herramienta: {name})" if name else "(llamada a herramienta)"
+                return f"[{dtype}]"[:160]
+            return ""
+    if clean.startswith("{") or clean.startswith("["):
+        return "(llamada a herramienta)"
     return clean[:160]
 
 
@@ -912,13 +974,15 @@ def cmd_jobs(args: argparse.Namespace) -> int:
     headers = ["TIPO", "ROL", "PROVEEDOR", "TAREA", "TIEMPO", "ÚLTIMA LÍNEA"]
     rows = []
     for it in items:
+        summary = summarize_log_line(str(it.get("last_line") or ""))
+        clean_last = skills.sanitize_text(skills.ANSI_RE.sub("", summary))
         rows.append([
             str(it.get("kind") or "worker"),
             str(it.get("role") or ""),
             str(it.get("provider") or ""),
             str(it.get("task_id") or "-"),
             f"{it.get('seconds', 0)}s",
-            str(it.get("last_line") or ""),
+            clean_last,
         ])
     widths = [len(h) for h in headers]
     for r in rows:

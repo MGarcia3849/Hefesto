@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import platform
 import re
 import subprocess
@@ -118,6 +119,118 @@ def auth_status(provider: str) -> str:
     return "unknown"
 
 
+def cpu_count() -> int | None:
+    try:
+        return os.cpu_count()
+    except Exception:
+        return None
+
+
+def available_ram() -> int | None:
+    try:
+        if sys.platform == "win32" or platform.system() == "Windows":
+            import ctypes
+
+            class MEMORYSTATUSEX(ctypes.Structure):
+                _fields_ = [
+                    ("dwLength", ctypes.c_ulong),
+                    ("dwMemoryLoad", ctypes.c_ulong),
+                    ("ullTotalPhys", ctypes.c_ulonglong),
+                    ("ullAvailPhys", ctypes.c_ulonglong),
+                    ("ullTotalPageFile", ctypes.c_ulonglong),
+                    ("ullAvailPageFile", ctypes.c_ulonglong),
+                    ("ullTotalVirtual", ctypes.c_ulonglong),
+                    ("ullAvailVirtual", ctypes.c_ulonglong),
+                    ("ullAvailExtendedVirtual", ctypes.c_ulonglong),
+                ]
+
+            stat = MEMORYSTATUSEX()
+            stat.dwLength = ctypes.sizeof(MEMORYSTATUSEX)
+            if hasattr(ctypes, "windll") and ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(stat)):
+                return int(stat.ullAvailPhys)
+        elif sys.platform.startswith("linux") or platform.system() == "Linux":
+            meminfo = Path("/proc/meminfo")
+            if meminfo.is_file():
+                for line in meminfo.read_text(encoding="utf-8", errors="replace").splitlines():
+                    if line.startswith("MemAvailable:"):
+                        parts = line.split()
+                        return int(parts[1]) * 1024
+        elif sys.platform == "darwin" or platform.system() == "Darwin":
+            page_size = 4096
+            vm_proc = subprocess.run(["vm_stat"], capture_output=True, text=True, timeout=5)
+            if vm_proc.returncode == 0:
+                free_pages = 0
+                inactive_pages = 0
+                found = False
+                for line in vm_proc.stdout.splitlines():
+                    if "page size of" in line:
+                        m = re.search(r"page size of (\d+) bytes", line)
+                        if m:
+                            page_size = int(m.group(1))
+                    elif line.startswith("Pages free:"):
+                        m = re.search(r":\s*(\d+)", line)
+                        if m:
+                            free_pages = int(m.group(1))
+                            found = True
+                    elif line.startswith("Pages inactive:"):
+                        m = re.search(r":\s*(\d+)", line)
+                        if m:
+                            inactive_pages = int(m.group(1))
+                            found = True
+                if found:
+                    return (free_pages + inactive_pages) * page_size
+    except Exception:
+        pass
+    return None
+
+
+def check_resources(cfg: config.Config | None = None) -> Check:
+    cpus = cpu_count()
+    ram_bytes = available_ram()
+
+    cpu_part = f"{cpus} CPU" if cpus else "CPU desconocida"
+    ram_part = f"{ram_bytes / (1024**3):.1f} GB RAM disponible" if ram_bytes else "RAM disponible desconocida"
+
+    raw_val = cfg.get("limits", "max_parallel_tasks", default=4) if cfg else 4
+    max_parallel_invalid = False
+    try:
+        if isinstance(raw_val, bool):
+            raise ValueError("booleano no permitido")
+        max_parallel = int(raw_val)
+        if max_parallel <= 0:
+            raise ValueError("debe ser positivo")
+    except (ValueError, TypeError):
+        max_parallel_invalid = True
+        max_parallel = 4
+
+    if max_parallel_invalid:
+        detail = (f"{cpu_part}, {ram_part} — valor inválido de limits.max_parallel_tasks ({raw_val!r})")
+        return Check(WARN, "recursos", detail)
+
+    rec_cpu = cpus if (cpus and cpus > 0) else None
+    rec_ram = int(ram_bytes / (1024**3)) if (ram_bytes and ram_bytes > 0) else None
+
+    recommended: int | None = None
+    if rec_cpu is not None and rec_ram is not None:
+        recommended = max(1, min(rec_cpu, rec_ram))
+    elif rec_cpu is not None:
+        recommended = max(1, rec_cpu)
+    elif rec_ram is not None:
+        recommended = max(1, rec_ram)
+
+    if recommended is None:
+        return Check(INFO, "recursos", f"{cpu_part}, {ram_part}")
+
+    if max_parallel > recommended:
+        detail = (f"{cpu_part}, {ram_part} — max_parallel_tasks ({max_parallel}) supera lo recomendado "
+                  f"({recommended} agentes, 1 CPU y 1 GB por agente)")
+        return Check(WARN, "recursos", detail)
+
+    detail = (f"{cpu_part}, {ram_part} (recomendado hasta {recommended} agentes en paralelo; "
+              f"max_parallel_tasks={max_parallel})")
+    return Check(OK, "recursos", detail)
+
+
 def run_checks(project: Path | None) -> list[Check]:
     checks: list[Check] = []
     py_ok = sys.version_info >= (3, 11)
@@ -126,6 +239,11 @@ def run_checks(project: Path | None) -> list[Check]:
     if IS_WINDOWS:
         plat += " — Windows nativo (soporte añadido por decisión del usuario, ver DECISIONS.md)"
     checks.append(Check(INFO, "plataforma", plat))
+    try:
+        cfg = config.load(project, validate_layers=False)
+    except Exception:
+        cfg = None
+    checks.append(check_resources(cfg))
     git = _binary("git", required=True)
     checks.append(git)
     if git.level == OK:
@@ -148,11 +266,7 @@ def run_checks(project: Path | None) -> list[Check]:
         checks.append(Check(INFO, f"límites {prov}", limits.limits_summary(prov)))
     checks.append(_node_check())
     checks.append(_npx_check())
-    try:
-        cfg = config.load(project, validate_layers=False)
-        npm_ver = cfg.get("skills_sources", "npm_version", default="1.7.2")
-    except Exception:
-        npm_ver = "1.7.2"
+    npm_ver = cfg.get("skills_sources", "npm_version", default="1.7.2") if cfg else "1.7.2"
     checks.append(Check(INFO, "skills (npm)", f"versión fijada {npm_ver}"))
     checks.append(_binary("shellcheck", purpose="opcional: lint de install.sh"))
     checks.append(_graphify_check())

@@ -1,0 +1,89 @@
+{
+  "attempts": 2,
+  "base_commit": "703eaa75f7f250c4ca8af52c006534b8b71f832a",
+  "branch": "hefesto/fase-10-validacion-final",
+  "commit": "15dd306b6c9e8df35f33eaf77c0322b21cbddcb5",
+  "contract": [],
+  "created_at": "2026-10-15T09:46:17+00:00",
+  "files": [
+    {
+      "path": "hefesto/acceptance.py",
+      "sha256": "cb1dfbb349105c3d9a7b738513de6ad980b97d5696b0f3ffde497afb28cacfc1"
+    },
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "6e42e6c76aaeb8546e819fe595d2a0ca9c7e8336f7debd6546906585aa59e28a"
+    },
+    {
+      "path": "hefesto/doctor.py",
+      "sha256": "4b7286b101584cf1945ccf8956e3c48992886ac9843ed8218012135027004483"
+    },
+    {
+      "path": "hefesto/workflow.py",
+      "sha256": "87c9547748a58100976829b1bd79bf52a9190504b1d8194255ae5920e85ea2fd"
+    },
+    {
+      "path": "tests/test_polish.py",
+      "sha256": "ccbf97a4e7ccb03553dccd13f71a998f6dc66671566d2868510be6d58bce9fdd"
+    }
+  ],
+  "phase": "Fase 10 — Validación final",
+  "prev_sha256": "8c944e7ab5bcfbaf105f9e93cffc0cfe5d4788b9d663ec4a6f86c59d2acd8f22",
+  "prev_task_id": "TASK-1002",
+  "providers": [
+    "claude:sonnet",
+    "codex:default",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-15T09:46:01+00:00",
+    "attempt": 1,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "guarda por started_role, dedup sin hueco, doctor y jobs",
+    "reviewer": "claude:sonnet",
+    "run_id": "720998e1ad66",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "329db5e9f2e4",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "1ca650a99376",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "2fbcdaf5839d",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "720998e1ad66",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 34,
+  "task_id": "TASK-1003",
+  "title": "Pulido anotado durante la construcción",
+  "verify": {
+    "command": "python -m unittest tests.test_polish && python tools/dev.py lint",
+    "duration_seconds": 14.583,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1003-a2-2026-10-15T094616+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (72 ficheros Python)\n..................\n----------------------------------------------------------------------\nRan 18 tests in 13.618s\n\nOK",
+    "sha256": "89a72e5445fc93011ace4633b624fc997dc749c29ac734f504c8d8a7b12c59d7",
+    "trust": "auto"
+  }
+}

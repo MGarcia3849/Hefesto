@@ -1,0 +1,59 @@
+{
+  "attempts": 1,
+  "base_commit": "c5cedfa387c31f1a6e580ef2fd69f3754ba16b52",
+  "branch": "hefesto/fase-10-validacion-final",
+  "commit": "80cc8b6d14b148a827b05d33b916d8236b44c44e",
+  "contract": [
+    "tests/test_demo.py"
+  ],
+  "created_at": "2026-10-15T08:32:39+00:00",
+  "files": [
+    {
+      "path": "tests/test_demo.py",
+      "sha256": "14bfab8d5d99ef0ee23f86e34be9352f37082f7dcc7c231b3d2d74ade83aeb8b"
+    },
+    {
+      "path": "tests/test_parallel.py",
+      "sha256": "3c5321daeb6da957a5e44b295da4b437d053612e303802dafc500863e5b4c0fc"
+    }
+  ],
+  "phase": "Fase 10 — Validación final",
+  "prev_sha256": "7eb262e4b510b0504adbe20630bcf53cdc9c38ddcbf3660ed2f5069a4cf2fcc1",
+  "prev_task_id": "TASK-906",
+  "providers": [
+    "codex:default"
+  ],
+  "review": {
+    "at": "2026-10-15T08:32:37+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "contrato de demo y margen e2e",
+    "reviewer": "codex:default",
+    "run_id": "0cd3c065f661",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "0cd3c065f661",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 32,
+  "task_id": "TASK-1001",
+  "title": "Contrato de la demo con fakes y margen del e2e paralelo",
+  "verify": {
+    "command": "python -m py_compile tests/test_demo.py && python -m unittest tests.test_demo 2>&1 | grep -q FAILED",
+    "duration_seconds": 0.55,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1001-a1-2026-10-15T083238+0000.log",
+    "output_summary": "",
+    "sha256": "64d38d5f2a5f971227ed46de0d33e651e36113a39d28bed53efb4d22e215552a",
+    "trust": "auto"
+  }
+}

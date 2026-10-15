@@ -63,10 +63,12 @@ def mark_started(project: Path, task: roadmap.Task, data: dict[str, Any], extra:
         "current_task_id": task.id,
         "run_id": new_run_id(),
         "active_role": task.role,
+        "started_role": task.role,
         "attempts": 0,
         "last_error": None,
         "error_history": [],
         "review": None,
+        "last_failure": None,
         "next_action": next_action_for(task.role, task.id),
         **extra,
     })
@@ -99,7 +101,23 @@ def require_current(data: dict[str, Any], task_id: str) -> None:
                            f"tarea {data['current_task_id'] or '-'}).", EXIT_CONFLICT)
 
 
-def register_failure(project: Path, task_id: str, reason: str) -> tuple[int, str]:
+def _author_runs(project: Path, task_run_id: str | None) -> list[dict[str, Any]]:
+    if not task_run_id:
+        return []
+    runs_file = project / ".hefesto" / "logs" / "runs.jsonl"
+    if not runs_file.is_file():
+        return []
+    try:
+        return [
+            r for r in util.read_jsonl(runs_file)
+            if r.get("task_run_id") == task_run_id
+            and r.get("role") in ("runner", "forge", "visual", "core")
+        ]
+    except Exception:
+        return []
+
+
+def register_failure(project: Path, task_id: str, reason: str, source: str = "fail") -> tuple[int, str]:
     """Suma exactamente un intento. Devuelve (código, rol siguiente o mensaje). Llamar con el lock tomado."""
     cfg = config.load(project)
     max_attempts = int(cfg.get("limits", "max_attempts"))
@@ -110,7 +128,20 @@ def register_failure(project: Path, task_id: str, reason: str) -> tuple[int, str
     attempts = data["attempts"] + 1
     history = list(data.get("error_history") or []) + [{"attempt": attempts, "role": data.get("active_role"),
                                                          "error": reason[:2000], "at": now_iso()}]
-    data.update({"attempts": attempts, "last_error": reason[:2000], "error_history": history, "review": None})
+    author_runs = _author_runs(project, data.get("run_id"))
+    data.update({
+        "attempts": attempts,
+        "last_error": reason[:2000],
+        "error_history": history,
+        "review": None,
+        "last_failure": {
+            "source": source,
+            "attempt": attempts,
+            "at": now_iso(),
+            "author_runs": len(author_runs),
+            "author_run_ids": [r.get("run_id") for r in author_runs if r.get("run_id")],
+        },
+    })
     if attempts >= max_attempts:
         roadmap.set_marker(roadmap.roadmap_path(project), task_id, "!")
         data = state.transition(data, "BLOCKED_NEED_ARCHITECT_REVIEW")
@@ -137,7 +168,24 @@ def register_failure(project: Path, task_id: str, reason: str) -> tuple[int, str
 
 def fail(project: Path, task_id: str, reason: str) -> tuple[int, str]:
     with project_lock(project):
-        return register_failure(project, task_id, reason)
+        data = state.load(project)
+        require_current(data, task_id)
+        last_failure = data.get("last_failure")
+        if isinstance(last_failure, dict) and last_failure.get("source") == "review":
+            if last_failure.get("attempt") == data.get("attempts"):
+                current_author_runs = _author_runs(project, data.get("run_id"))
+                prev_runs_count = int(last_failure.get("author_runs", 0))
+                prev_run_ids = set(last_failure.get("author_run_ids") or [])
+                new_runs = [r for r in current_author_runs if r.get("run_id") not in prev_run_ids]
+                if len(current_author_runs) <= prev_runs_count and not new_runs:
+                    cfg = config.load(project)
+                    max_attempts = int(cfg.get("limits", "max_attempts"))
+                    rm = roadmap.load_valid(project)
+                    task = rm.get(task_id)
+                    next_role = data.get("active_role") or role_for_attempt(task.role, data["attempts"] + 1, max_attempts)
+                    msg = f"el intento ya se contó con la revisión negativa. Rol del siguiente intento: {next_role}"
+                    return util.EXIT_OK, msg
+        return register_failure(project, task_id, reason, source="fail")
 
 
 def unblock(project: Path, task_id: str, note: str, yes: bool = False) -> str:
@@ -152,8 +200,8 @@ def unblock(project: Path, task_id: str, note: str, yes: bool = False) -> str:
             raise HefestoError(f"{task_id} no está bloqueada.", EXIT_CONFLICT)
         roadmap.set_marker(roadmap.roadmap_path(project), task_id, " ")
         data = state.transition(data, "IDLE")
-        data.update({"current_task_id": None, "active_role": None, "attempts": 0, "run_id": None,
-                     "error_history": [], "next_action": "hefesto next"})
+        data.update({"current_task_id": None, "active_role": None, "started_role": None, "attempts": 0, "run_id": None,
+                     "error_history": [], "last_failure": None, "next_action": "hefesto next"})
         state.save(project, data)
         append_decision(project, f"Desbloqueo de {task_id}", note)
         log.event(project, "unblock", f"{task_id} desbloqueada")

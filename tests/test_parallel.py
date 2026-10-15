@@ -663,7 +663,7 @@ class EndToEndTests(ParallelBase):
     def test_three_fake_haiku_write_at_once_in_their_own_worktrees(self) -> None:
         scheduler = sched()
         self.write_roadmap(simple(3))
-        self.scenario_for({f"TASK-00{i}": f"src/m{i}.py" for i in range(1, 4)}, delay=2.0)
+        self.scenario_for({f"TASK-00{i}": f"src/m{i}.py" for i in range(1, 4)}, delay=5.0)
         results = self.run_parallel()
         self.assertEqual({r.status for r in results.values()}, {"integrated"}, results)
         runner_calls = [c for c in self.calls() if c["name"] == "claude"]
@@ -673,7 +673,9 @@ class EndToEndTests(ParallelBase):
                     for i in range(1, 4)}
         self.assertEqual(cwds, expected)
         starts = sorted(c["t"] for c in runner_calls)
-        self.assertLess(starts[-1] - starts[0], 2.0, "las tres instancias deben solaparse en el tiempo")
+        # Con la máquina cargada, lanzar un proceso puede tardar más de 2 s: basta con que el último arranque antes
+        # de que termine el primero (cada runner tarda 5 s).
+        self.assertLess(starts[-1] - starts[0], 5.0, "las tres instancias deben solaparse en el tiempo")
         reviews = [c for c in self.calls() if c["name"] == "gemini"]
         self.assertEqual(len(reviews), 3)
         for i in range(1, 4):

@@ -2,7 +2,7 @@
 
 Framework de orquestación multiagente para trabajar con tus suscripciones de **Claude**, **ChatGPT (Codex)** y **Google (Gemini)**, sin usar la API de pago. El estado, los intentos, la verificación y los commits los gestiona la CLI `hefesto`, con lógica determinista y cubierta por tests. Ningún prompt es fuente de verdad.
 
-> Estado: **Hito 3 — distribución y arranque en cualquier proyecto** (`v2.1.0`). La especificación completa está en [`HEFESTO_V2_1.md`](HEFESTO_V2_1.md) y las desviaciones, en [`DECISIONS.md`](DECISIONS.md).
+> Estado: **v2.1.0 — framework multiagente determinista**. La especificación completa está en [`HEFESTO_V2_1.md`](HEFESTO_V2_1.md) y las desviaciones, en [`DECISIONS.md`](DECISIONS.md).
 
 ## Requisitos
 
@@ -88,31 +88,102 @@ Con `auto`, si el orquestador se queda sin cuota a mitad, la siguiente iteració
 
 Antes de delegar, `hefesto providers check [--probe]` muestra el preflight de cada proveedor. La sonda (`--probe`, o `quota.probe = true`) gasta una llamada mínima y se cachea; confirma que el proveedor responde **ahora**, no que la cuota alcance para toda la tarea.
 
+### Modo paralelo y concurrencia adaptativa
+
+Hefesto permite ejecutar múltiples tareas en paralelo en fases con tareas independientes:
+
+```bash
+hefesto route --dry-run               # simula el lote paralelo previsto según la capacidad disponible
+hefesto parallel                      # ejecuta el lote concurrente respetando límites globales y por modelo
+hefesto parallel --max-parallel 4     # limita el número máximo de agentes concurrentes
+```
+
+- **Aislamiento en worktrees propios:** cada tarea paralela se ejecuta en un worktree independiente fuera del repositorio (`~/.hefesto/worktrees/`), evitando colisiones y manteniendo la copia principal limpia.
+- **Límites de concurrencia y reparto por modelo:** respeta el límite global (`limits.max_parallel_tasks`) y el tope configurado por modelo (`limits.max_parallel_per_model`, p. ej. 3 instancias de Haiku o Gemini Flash, 1 de Sonnet).
+- **Concurrencia adaptativa:** si un proveedor devuelve `rate_limit`, Hefesto reduce a la mitad la concurrencia permitida para ese modelo; tras varios éxitos consecutivos sin saturación, recupera progresivamente el nivel original.
+- **Integración serial con control de conflictos:** las tareas completadas se integran una a una en la rama de la fase (`rebase` + `verify`). Si una tarea genera un conflicto de rebase con los cambios de otra tarea previa ya integrada, el scheduler no aborta: marca esa tarea como en conflicto (`[!]`) en el ROADMAP, preserva intacta su rama de trabajo para inspección o resolución manual, y continúa integrando las restantes tareas.
+- `hefesto route --dry-run` sin indicar tarea muestra el plan de ejecución paralelo previsto según el estado actual, dependencias y capacidad.
+
+### Mantenimiento y reversión: clean y discard
+
+```bash
+hefesto clean                         # detecta y limpia worktrees y ramas hefesto huérfanos sin cambios
+hefesto clean --include-unmerged      # incluye también ramas temporales no fusionadas (pide confirmación)
+hefesto discard TASK-003              # revierte los commits de la tarea y restaura su estado a pendiente [ ]
+hefesto discard fase-1                # descarta una fase completa dejando constancia en DECISIONS
+```
+
+- `hefesto clean`: inspecciona el repositorio en busca de worktrees obsoletos o ramas `hefesto/*` huérfanas ya integradas o sin trabajo pendiente, eliminándolos de forma segura. Requiere terminal interactiva o `--yes`.
+- `hefesto discard`: deshace de forma limpia el trabajo de una tarea (revierte el commit de código y el de evidencia de forma atómica) o descarta una fase entera, dejando constancia documentada de la decisión en `.hefesto/DECISIONS.md`.
+
+### Supervisión, límites y panel de actividad
+
+Supervisa el uso de cuota y el progreso de los agentes en tiempo real sin gastar llamadas de API:
+
+```bash
+hefesto limits                        # tabla de uso en ventanas de 5 h y semanal de cada proveedor (offline)
+hefesto jobs                          # lista de agentes activos, tarea asignada y última línea de actividad
+hefesto watch                         # monitor interactivo en directo (refresco configurable con --interval)
+hefesto watch --once                  # captura instantánea del estado del monitor y salida inmediata
+```
+
+- `hefesto limits`: lee el porcentaje de uso real de las ventanas deslizantes de 5 horas y semanales analizando los registros locales de sesión de Codex y la caché de Claude Code (`unknown` si la CLI no lo expone, como Gemini).
+- `hefesto jobs`: muestra una tabla limpia con los procesos en ejecución (`TIPO`, `ROL`, `PROVEEDOR`, `TAREA`, `TIEMPO`, `ÚLTIMA LÍNEA`), resumiendo llamadas a herramientas y salidas significativas.
+- `hefesto watch`: pantalla completa dividida que combina la tabla de límites en la cabecera con la actividad detallada de los últimos logs de cada agente en marcha.
+- `hefesto statusline`: comando integrado para que Claude Code muestre en su línea de estado el contexto de Hefesto y el consumo de cuota (lee JSON por stdin).
+
+### Memoria técnica global entre proyectos
+
+Hefesto incorpora un sistema de memoria técnica entre proyectos con revisión humana obligatoria:
+
+```bash
+hefesto remember "lección técnica aprendida"                 # guarda en .hefesto/LEARNINGS.md del proyecto
+hefesto remember "lección global" --scope global             # registra propuesta en ~/.hefesto/memory/_pendientes/
+hefesto remember "patrón React" --scope global --kind stacks --stack react
+hefesto memory search "docker"                               # busca notas en la memoria global indexada
+hefesto memory review                                        # revisa interactivamente notas pendientes globales
+hefesto memory prune                                         # limpia notas duplicadas u obsoletas
+```
+
+- **Nada entra en la memoria global sin aprobación humana:** las notas añadidas con `--scope global` quedan en `~/.hefesto/memory/_pendientes/`. Solo pasan a la memoria permanente tras la validación interactiva del usuario mediante `hefesto memory review` (requiere TTY o `--yes`).
+- **Inyección contextual relevante:** `hefesto resume` y el paquete de contexto de la tarea (`packet`) incluyen de forma automática las notas más relevantes según el stack y la tarea actual, sin desbordar los tokens disponibles. Los agentes únicamente tienen acceso de lectura a la memoria global.
+
 ## Comandos
 
 | Comando | Qué hace |
 |---|---|
-| `init [dir] [--copy] [--shared] [--providers …]` | Inicializa sin sobrescribir nada; modo local por defecto; ejecuta `doctor`. |
+| `init [dir] [--shared] [--providers …]` | Inicializa sin sobrescribir nada; modo local por defecto; ejecuta `doctor`. |
 | `bootstrap [dir] [--yes] [--providers LISTA]` | Detecta modo (crear, continuar o mejorar) y arranca en modo local. |
 | `adopt [dir] [--providers LISTA]` | Adopta un proyecto existente sin modificar código; propone ROADMAP. |
 | `self-update [--to TAG]` | Actualiza a un tag oficial mostrando el changelog con confirmación. |
 | `migrate` | Migra proyectos antiguos aplicando copias de seguridad automáticas. |
-| `doctor` | Dependencias, CLIs, autenticación (sin gastar llamadas), API keys en el entorno, allowlist, lock y estado. |
-| `config validate` / `config show` | Valida las capas y muestra la configuración efectiva con el origen de cada valor. |
-| `status` / `next` | Estado compacto y siguiente tarea disponible. |
+| `doctor` | Dependencias, CLIs, autenticación, recursos (CPU/RAM), allowlist, lock y estado. |
+| `config validate` / `config show [--json]` | Valida las capas y muestra la configuración efectiva con el origen de cada valor. |
+| `status [--protocol]` / `next` | Estado compacto y siguiente tarea disponible. |
 | `start TASK` / `fail TASK "motivo"` | Inicia una tarea (con lock y aislamiento git) o registra un intento fallido; al 3.º salta el circuit breaker. |
-| `trust` / `unblock TASK "nota"` | Solo humanos y con terminal: aprobar `verify` y desbloquear tareas. |
+| `trust [--yes]` / `unblock TASK "nota" [--yes]` | Solo humanos y con terminal: aprobar `verify` y desbloquear tareas. |
 | `run ROL "…" [--task] [--dry-run]` | Delegación con paquete de contexto, cadena de fallback y cooldowns. |
-| `packet TASK` / `route TASK --dry-run` | Paquete que recibiría el agente y la ruta prevista, sin llamadas. |
+| `packet TASK [--role] [--model]` / `route [TASK] --dry-run` | Paquete que recibiría el agente y ruta prevista (o lote paralelo sin tarea). |
+| `parallel [--max-parallel N]` | Ejecuta tareas en paralelo respetando concurrencia y límites por modelo. |
 | `review TASK --verdict pass\|fail` | Veredicto con regla de independencia (proveedor distinto, o modelo superior). |
-| `done TASK` / `finish [FASE] [--pr]` | Aceptación y commit; integración de la fase en la rama principal. |
-| `evidence TASK` / `evidence verify` | Evidencia de una tarea; integridad de la cadena de hashes. |
-| `providers status\|add\|remove\|reset` | Proveedores, allowlist del proyecto y cooldowns. |
+| `done TASK` / `finish [FASE] [--pr] [--yes]` | Aceptación y commit; integración de la fase en la rama principal. |
+| `evidence TASK` / `evidence verify` | Evidencia de una tarea; integridad de la cadena de hashes SHA-256. |
+| `clean [--yes] [--include-unmerged]` | Elimina worktrees y ramas hefesto huérfanos sin cambios. |
+| `discard TARGET [--yes]` | Revierte una tarea o descarta una fase dejando constancia en DECISIONS. |
+| `providers status\|check\|add\|remove\|reset` | Proveedores, allowlist del proyecto, preflight y cooldowns. |
 | `local enable\|disable` | Modelo local compatible con OpenAI (desactivado por defecto). |
-| `providers check [--probe]` | Preflight de cuota de los proveedores (`unknown` si la CLI no expone su uso). |
 | `sync [--check]` / `prompt plan\|next\|retro` | Materializa el protocolo para las tres CLIs / imprime un paso. |
 | `note "…"` / `resume [--json]` / `handoff` | Progreso continuo y relevo entre orquestadores. |
-| `loop [--orchestrator …] [--max-tasks N] [--max-turns M] [--wait]` / `stop` | Ciclo headless con topes, relevo automático y parada limpia. |
+| `loop [--orchestrator …] [--max-tasks N] [--wait]` / `stop` | Ciclo headless con topes, relevo automático y parada limpia. |
+| `skill [find\|fetch\|update\|TÉRMINO]` | Busca y gestiona skills locales y del registro público con informe de riesgos. |
+| `promote NAME [--yes]` | Promueve una propuesta de skill a promovidas. |
+| `pack list\|enable\|disable\|update` | Catálogo y gestión de packs externos curados. |
+| `limits [--json]` | Uso real de ventanas de 5 h y semanal de cada proveedor. |
+| `statusline` | Comando de línea de estado para Claude Code (lee JSON por stdin). |
+| `jobs [--json]` | Muestra los agentes activos y la última línea de su log de forma legible. |
+| `watch [--once] [--interval N]` | Monitor de límites y actividad de agentes en directo. |
+| `remember "…" [--scope …]` | Guarda una nota en la memoria local o propuesta global. |
+| `memory review\|search\|prune` | Gestión y revisión humana de la memoria global entre proyectos. |
 
 Códigos de salida: `0` correcto · `1` entrada inválida o `verify` en rojo con intentos restantes · `2` circuit breaker o barrera de seguridad · `3` dependencia o proveedor no disponible · `4` conflicto de estado o lock.
 
@@ -140,26 +211,42 @@ Las comprobaciones de la CLI (`guard.py`) se aplican siempre, pase lo que pase e
 ## Desarrollo
 
 ```bash
-make lint test smoke             # o, sin make: python tools/dev.py lint|test|smoke
-make smoke-live                  # opcional: llamadas reales mínimas; gasta cuota y pide confirmación
+python tools/dev.py lint test smoke      # o, con make en entornos POSIX: make lint test smoke
+python tools/dev.py demo                 # demostración completa con fakes: ciclo serie + paralelo con conflicto
+make smoke-live                          # opcional: llamadas reales mínimas; gasta cuota y pide confirmación
 ```
 
-Los tests usan CLIs falsas (`tests/fakes/`) y repositorios temporales: no llaman a ningún proveedor real.
+Los tests usan CLIs falsas (`tests/fakes/`) y repositorios temporales: no llaman a ningún proveedor real ni gastan cuota.
+- `python tools/dev.py demo`: ejecuta en un entorno temporal aislado la demostración completa con fakes exigida para la entrega de v2.1. Primero comprueba el ciclo serie completo (start → runner → reviewer → verify → done → evidence verify), y después una fase de 3 tareas en paralelo donde una de ellas sufre un conflicto intencionado de rebase, verificando que los runners trabajan solapados, la rama en conflicto se aísla sin corromper la fase y la cadena de evidencias se mantiene íntegra.
 
 ## Publicar Hefesto
 
-La publicación de Hefesto y la creación de releases es una acción **humana** (el framework nunca ejecuta `git push` de forma autónoma). Comandos exactos para publicar la versión:
+La integración de cada fase en la rama principal configurada del proyecto la realiza `hefesto finish` (tras verificar tests, precondiciones y solicitar confirmación).
 
-```bash
-git checkout main
-hefesto finish
-git push origin main
-git tag -a v2.1.0 -m "Hefesto v2.1.0"
-git push origin v2.1.0
-gh release create v2.1.0 --notes-file CHANGELOG.md
-```
+Sin embargo, **publicar (push, tag, release) es siempre una acción humana**: el framework nunca ejecuta `git push` de forma autónoma.
 
-Y, para quien parta de cero y cree el repositorio remoto en GitHub por primera vez:
+Para publicar una nueva versión una vez integradas las fases:
+
+1. Asegúrate de estar en la rama principal (por ejemplo `main`):
+   ```bash
+   git checkout main
+   ```
+2. Sube la rama principal al repositorio remoto:
+   ```bash
+   git push origin main
+   ```
+3. Crea y sube la etiqueta anotada de la versión:
+   ```bash
+   git tag -a v2.1.0 -m "Hefesto v2.1.0"
+   git push origin v2.1.0
+   ```
+4. Publica la release en GitHub utilizando únicamente la sección correspondiente a dicha versión en `CHANGELOG.md` (no pases el changelog entero):
+   ```bash
+   # Extrae solo la sección de la versión a un fichero temporal de notas
+   gh release create v2.1.0 --title "Hefesto v2.1.0" --notes-file <fichero-con-seccion-v2.1.0>
+   ```
+
+*(Solo si aún no tienes repositorio remoto)*:
 ```bash
 gh repo create <usuario>/Hefesto --private --source . --push
 ```

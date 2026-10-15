@@ -33,10 +33,20 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 - **Revisor independiente:** Enrutamiento de `hefesto run reviewer` que omite automáticamente a los proveedores autores de la tarea en curso.
 - **Adaptador `agy` endurecido:** Adaptador reforzado para el entorno Google Antigravity CLI.
 
-### Conocido / pendiente
-- **Hito 4 (Ecosistema y paralelismo):**
-  - Catálogo y gestión de skills externas: `skill find`, `fetch` y `promote`.
-  - Packs curados externos: pack `context` (Graphify para navegación de código sin LLM), pack `usage` (ccusage para métricas locales de tokens) y pack `memory` (Basic Memory para memoria técnica permanente entre proyectos).
-  - Planificador concurrente (`max_parallel_tasks`) con worktrees aislados por tarea y concurrencia adaptativa por proveedor.
-  - Limpieza y mantenimiento de estados huérfanos con `clean` y `discard`.
+### Hito 4 — Ecosistema, paralelismo y validación final
+- **Ecosistema de skills y packs:** Catálogo curado de packs (`pack list|enable|disable|update`), búsqueda de skills locales y públicas (`skill find`), descarga segura a `_proposals/` con informe automatizado de riesgos (`skill fetch`), promoción interactiva (`promote`), y pack `context` con integración de Graphify para análisis estructural de código sin consumo de LLM.
+- **Aislamiento con worktrees fuera del proyecto:** Creación de worktrees en `~/.hefesto/worktrees/` fuera del árbol del repositorio, evitando interferencias con la copia principal y asegurando que herramientas como `agy` resuelvan limpiamente la raíz de trabajo.
+- **Integración y finalización atómica (`finish`):** Validación completa de precondiciones, conflictos y cadena de evidencias antes de realizar modificaciones en la copia principal; si falla alguna comprobación, el espacio de trabajo permanece inalterado.
+- **Mantenimiento y reversión (`clean` y `discard`):** Comando `hefesto clean` para eliminar worktrees y ramas `hefesto/*` huérfanas sin cambios no guardados; comando `hefesto discard` para revertir tareas de forma atómica (código y evidencia) o descartar fases enteras dejando constancia justificada en `DECISIONS.md`.
+- **Evidencias numeradas y encadenadas:** Evidencias con número de secuencia (`seq`), hash del commit resultante, hash criptográfico de la evidencia previa (`prev_sha256`) y seguimiento de cabeza local (`evidence_head`) para auditoría e integridad criptográfica estricta.
+- **Scheduler paralelo con concurrencia adaptativa por modelo:** Comando `hefesto parallel` que ejecuta lotes de tareas independientes en worktrees disjuntos respetando límites globales (`max_parallel_tasks`) y por modelo (`max_parallel_per_model`); adaptación dinámica de concurrencia al 50% ante `rate_limit` por modelo con recuperación tras éxitos; integración serial en la rama de la fase marcando conflictos como `[!]` sin abortar el resto del lote. Simulación previa con `hefesto route --dry-run`.
+- **Memoria técnica global entre proyectos:** Notas locales o propuestas globales (`hefesto remember`), circuito de revisión humana obligatoria (`hefesto memory review`), búsqueda textual (`hefesto memory search`), saneamiento de duplicados (`hefesto memory prune`), e inyección contextual de notas relevantes en `resume` y paquetes de tarea.
+- **Supervisión de límites y actividad (`limits`, `jobs`, `watch` y `statusline`):** Comando `hefesto limits` para lectura offline de límites de 5 h y semanal de Codex y Claude Code; comando `hefesto jobs` con visualización tabular limpia de agentes activos y última línea de actividad legible; monitor en directo `hefesto watch`; y puente `hefesto statusline` para la línea de estado de Claude Code.
+- **Diagnóstico y robustez:** `hefesto doctor` ampliado con comprobación de CPU y memoria RAM disponible para cálculo de concurrencia recomendada; guarda de contratos en `review` adaptada para permitir enmiendas legítimas al rol Core; comando `fail` idempotente tras revisión negativa sin duplicar conteo de intentos.
+- **Suite de demostración y validación final:** Comando `python tools/dev.py demo` que valida en un entorno temporal aislado tanto el ciclo serie completo como una fase paralela de 3 tareas con conflicto de rebase intencionado; suite de 427 tests automatizados en verde.
+
+### Desviaciones conocidas / Notas
 - **CLI gemini para cuentas individuales:** Google ha retirado la CLI directa de Gemini para cuentas personales; se debe utilizar el adaptador `agy` (Antigravity CLI).
+- **Límites de uso en Claude y Gemini:** Las CLIs no proporcionan API para consultar la cuota restante (`unknown` en preflight y `hefesto limits`).
+- **PowerShell `--add-to-path`:** La rama de PowerShell de `install.sh` en Windows interactúa con el registro del entorno del usuario pero no está cubierta por tests en CI para proteger el sistema host.
+- **Pack `memory` (basic-memory):** Versión externa sin fijar; opera de forma predeterminada mediante el flujo nativo de archivos auditables en Markdown.

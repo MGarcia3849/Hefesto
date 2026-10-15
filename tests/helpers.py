@@ -119,7 +119,8 @@ def path_with_fakes(target: Path, *names: str) -> str:
 
 
 def smoke_flow(project: Path, env: dict[str, str],
-               hefesto: Callable[..., subprocess.CompletedProcess[str]]) -> int:
+               hefesto: Callable[..., subprocess.CompletedProcess[str]], *,
+               run: Callable[..., subprocess.CompletedProcess] = subprocess.run) -> int:
     """init → TASK-001 (verify: true) → trust → start → runner falso → reviewer falso → done.
 
     Todo con procesos reales de `hefesto` y CLIs falsas; `trust` (humano, TTY) se simula en proceso.
@@ -144,12 +145,12 @@ def smoke_flow(project: Path, env: dict[str, str],
         return result
 
     try:
-        step("init", str(project), "--providers", "gemini,codex")
+        step("init", str(project), "--shared", "--providers", "gemini,codex")
         (project / ".hefesto" / "ROADMAP.md").write_text(
             "# ROADMAP\n\n## Fase 1 — Humo\n- [ ] TASK-001: Saludo\n  - verify: `true`\n  - files: src/\n"
             "  - role: runner\n  - size: S\n", encoding="utf-8")
         for args in (("add", "-A"), ("commit", "-q", "-m", "inicial")):
-            subprocess.run(["git", *args], cwd=project, env=env, check=True, capture_output=True)
+            run(["git", *args], cwd=project, env=env, check=True, capture_output=True)
         saved = dict(os.environ)
         os.environ.update(env)
         try:
@@ -170,7 +171,7 @@ def smoke_flow(project: Path, env: dict[str, str],
         step("-C", str(project), "done", "TASK-001")
         step("-C", str(project), "evidence", "verify")
         status = step("-C", str(project), "status").stdout
-        log = subprocess.run(["git", "log", "--format=%s", "-2"], cwd=project, capture_output=True, text=True).stdout
+        log = run(["git", "log", "--format=%s", "-2"], cwd=project, capture_output=True, text=True).stdout
         if "COMPLETED" not in status or "hefesto(TASK-001): Saludo [verified]" not in log:
             raise AssertionError(f"estado o commit incoherente:\n{status}\n{log}")
     except AssertionError as exc:

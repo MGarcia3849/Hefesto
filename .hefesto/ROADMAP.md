@@ -265,3 +265,36 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - size: M
   - parallel: false
   - accept: remember --scope global deja la nota en _pendientes; memory review (TTY o --yes) la aprueba; memory search encuentra; resume y el paquete incluyen hasta N notas relevantes; un secreto se bloquea; sin basic-memory funciona con ~/hefesto/LEARNINGS.md
+
+## Fase 10 — Validación final
+- [x] TASK-1001: Contrato de la demo con fakes y margen del e2e paralelo
+  - verify: `python -m py_compile tests/test_demo.py && python -m unittest tests.test_demo 2>&1 | grep -q FAILED`
+  - files: tests/test_demo.py, tests/test_parallel.py
+  - role: core
+  - size: S
+  - parallel: false
+  - contract: tests/test_demo.py
+  - accept: tests/test_demo.py fija `python tools/dev.py demo` (fase con tres tareas paralelas, una con conflicto tras rebase, más el ciclo serie) y falla por falta de implementación; el e2e de tres haiku tolera carga de la máquina
+- [x] TASK-1002: Demo con fakes en tools/dev.py
+  - verify: `python -m unittest tests.test_demo && python tools/dev.py lint`
+  - files: tools/dev.py, tests/helpers.py
+  - role: runner
+  - depends_on: TASK-1001
+  - size: M
+  - parallel: false
+  - accept: `python tools/dev.py demo` muestra paso a paso el ciclo serie y la fase paralela con conflicto, en temporales, sin tocar HEFESTO_HOME del usuario, y sale con 0
+- [x] TASK-1003: Pulido anotado durante la construcción
+  - verify: `python -m unittest tests.test_polish && python tools/dev.py lint`
+  - files: hefesto/acceptance.py, hefesto/workflow.py, hefesto/cli.py, hefesto/doctor.py, tests/test_polish.py
+  - role: runner
+  - size: M
+  - parallel: false
+  - accept: la guarda de contratos de `review` no se aplica a tareas de rol core; `fail` tras una revisión negativa del mismo intento no vuelve a contarlo; `hefesto jobs` muestra una tabla legible sin JSON crudo; `doctor` informa de CPU y RAM disponibles para el modo paralelo
+- [x] TASK-1004: Documentación de v2.1 y entrega final
+  - verify: `grep -q "hefesto parallel" README.md && grep -q "hefesto memory" README.md && test -f docs/ENTREGA.md`
+  - files: README.md, CHANGELOG.md, docs/ENTREGA.md
+  - role: runner
+  - depends_on: TASK-1002, TASK-1003
+  - size: M
+  - parallel: false
+  - accept: README y CHANGELOG cubren parallel, clean/discard, memory, limits/watch/jobs; docs/ENTREGA.md recoge la entrega de la sección 14 con salidas reales de lint, test, smoke, demo y doctor
