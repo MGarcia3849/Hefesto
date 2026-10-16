@@ -41,3 +41,8 @@ Decidido por el usuario en el chat. Tras publicar la v2.1, Fase 11 «Aprendizaje
 ## 2026-10-16 — Fase 11: skills en el paquete de tarea; «Aprendizaje» pasa a Fase 12
 
 Pedido por el usuario en el chat (2026-10-16): Hefesto debe elegir las skills que aplican a cada tarea y pasárselas al trabajador, sin que el Core lo haga a mano. La especificación ya lo exigía (sección 5.3: el paquete lleva «reglas del rol y las skills que aplican») y no se construyó. Reglas: selección determinista (sin LLM) entre skills ya instaladas (framework, promovidas, proyecto y carpetas del usuario); el texto de la skill va dentro del paquete para que sirva a cualquier proveedor; buscar en skills.sh sigue siendo solo una propuesta (`skill suggest --online`) y descargar o promover sigue siendo decisión humana (sección 11.1). La fase «Aprendizaje» decidida el 2026-10-15 se renumera a Fase 12 sin otros cambios.
+
+
+## 2026-10-16 — La rama principal pasa a ser `main`
+
+`build/hito-1` era la rama de integración de los hitos iniciales y ya coincide con `main` (ef7f673), que es la publicada en GitHub. Desde la Fase 11 se integra directamente en `main` (`execution.main_branch` en `.hefesto/hefesto.toml`).

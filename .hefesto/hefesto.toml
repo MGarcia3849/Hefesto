@@ -1,6 +1,8 @@
 # Configuración del proyecto: Hefesto construyéndose a sí mismo.
 [execution]
 test_command = "python tools/dev.py lint && python tools/dev.py test"
+# Desde la Fase 11 se integra en main (build/hito-1 era la rama de los hitos iniciales).
+main_branch = "main"
 
 [limits]
 timeout_seconds = 1500
