@@ -111,3 +111,12 @@ min_score = 2
 max_chars_per_skill = 6000
 user_roots = ["~/.claude/skills", "~/.codex/skills"]
 exclude = []
+
+[skills_auto]
+enabled = true
+min_installs = 1000
+min_stars = 100
+max_per_task = 1
+good_score = 6
+search_ttl_hours = 24
+

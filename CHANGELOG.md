@@ -4,6 +4,13 @@ Todas las novedades notables de Hefesto se documentan en este archivo.
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## Instalación automática de skills
+
+- **Contratos de instalación automática (`TASK-1201`, `tests/test_skill_auto.py`):** Suite de contratos para la búsqueda, filtrado por calidad, descarte ante riesgos, promoción sin preguntar y barreras de seguridad (ADR 2026-10-16).
+- **Búsqueda, filtrado, auditoría y promoción automática (`TASK-1202`, `hefesto/skill_auto.py`, `hefesto.toml`, `hefesto/config.py`):** Función `skill_auto.ensure(project, cfg, role, task)` gobernada por `[skills_auto]` (`enabled = true`, `min_installs = 1000`, `min_stars = 100`, `max_per_task = 1`, `good_score = 6`, `search_ttl_hours = 24`) que busca en `skills.sh` con las dos primeras palabras clave de la tarea cuando ninguna de las skills que la selección elige para la tarea (las mismas que muestra `hefesto skill suggest`) alcanza `good_score`, descarta candidatas con métricas desconocidas o bajas, intenta en cada ejecución (`start` o `skill auto`) hasta 3 descargas con `skills.fetch` y hasta `max_per_task` instalaciones (límite por ejecución, no total acumulado de la tarea), elimina propuestas con cualquier riesgo y promueve las limpias a `~/hefesto/skills/promoted` registrando todo en `skills/auto.jsonl`, sin ejecutar nunca `npx skills add` ni instalar desde un trabajador delegado (`HEFESTO_ROLE`).
+- **Integración en `start` y subcomando `hefesto skill auto TASK` (`TASK-1203`, `hefesto/cli.py`):** Invocación automática en `hefesto start TASK` (sin alterar su código de salida ante errores de red, `npx` o `git`) y comando bajo demanda `hefesto skill auto TASK`.
+- **Documentación y protocolo actualizados (`TASK-1204`, `README.md`, `CHANGELOG.md`, `prompts/protocol/next.md`):** Documentación del circuito automático y la tabla `[skills_auto]` en `README.md`, y actualización de `prompts/protocol/next.md` para reflejar que `start` ya instala automáticamente las skills que falten.
+
 ## Skills en el paquete de tarea
 
 - **Descubrimiento y selección determinista (`hefesto/skill_select.py`):** Descubrimiento de skills instaladas en carpetas del proyecto (`.claude/skills`, `.agents/skills`), promovidas (`~/hefesto/skills/promoted`), framework (`skills/`) y carpetas del usuario configurables (`skills_selection.user_roots`, por defecto `["~/.claude/skills", "~/.codex/skills"]`), deduplicando por nombre en ese orden de preferencia (`proyecto` > `promovida` > `framework` > `usuario`).

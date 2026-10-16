@@ -145,14 +145,33 @@ def cmd_next(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def _auto_skills(proj: Path, task_id: str, verbose: bool = False) -> None:
+    from hefesto import roadmap, skill_auto, skills
+
+    try:
+        cfg = config.load(proj)
+        task = roadmap.load_valid(proj).get(task_id)
+        result = skill_auto.ensure(proj, cfg, task.role, task)
+        for name in result.installed:
+            print(skills.sanitize_text(f"skill instalada automáticamente: {name}"))
+        for spec, reason in result.rejected:
+            print(skills.sanitize_text(f"skill descartada: {spec} ({reason})"))
+        if verbose and result.skipped and not result.installed and not result.rejected:
+            print(skills.sanitize_text(f"sin instalar: {result.skipped}"))
+    except Exception as exc:
+        print(skills.sanitize_text(f"aviso: instalación automática de skills no disponible: {exc}"))
+
+
 def cmd_start(args: argparse.Namespace) -> int:
     from hefesto import workflow
 
-    data = workflow.start(_project(args), args.task)
+    proj = _project(args)
+    data = workflow.start(proj, args.task)
     print(f"{args.task} en curso (run {data['run_id']}, rol {data['active_role']}).")
     if data.get("branch"):
         print(f"  rama: {data['branch']}  aislamiento: {data.get('isolation')}  directorio: {data.get('workdir')}")
     print(f"  siguiente: {data['next_action']}")
+    _auto_skills(proj, args.task)
     return EXIT_OK
 
 
@@ -539,6 +558,12 @@ def cmd_skill(args: argparse.Namespace) -> int:
         )
 
     subcmd = tokens[0].lower()
+    if subcmd == "auto":
+        if len(tokens) < 2:
+            raise HefestoError("Indica el ID de la tarea: `hefesto skill auto TASK-NNN`.", EXIT_INPUT)
+        _auto_skills(_project(args), tokens[1], verbose=True)
+        return EXIT_OK
+
     if subcmd == "suggest":
         if len(tokens) < 2:
             raise HefestoError("Indica el ID de la tarea: `hefesto skill suggest TASK-NNN`.", EXIT_INPUT)
@@ -1372,7 +1397,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.set_defaults(func=cmd_prompt)
 
     p = sub.add_parser("skill", help="busca y gestiona skills locales y del registro público")
-    p.add_argument("args", nargs="*", help="subcomando (find, fetch, update, suggest) o término de búsqueda")
+    p.add_argument("args", nargs="*", help="subcomando (find, fetch, update, suggest, auto) o término de búsqueda")
     p.add_argument("--owner", help="filtra por propietario en `skill find`")
     p.add_argument("--online", action="store_true", help="con suggest, busca también en skills.sh; nunca descarga")
     p.set_defaults(func=cmd_skill)

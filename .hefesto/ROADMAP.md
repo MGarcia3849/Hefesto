@@ -349,3 +349,38 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - size: S
   - parallel: false
   - accept: README explica de dónde salen las skills, cómo se eligen, `skills_selection` y `skill suggest`; el paso `plan` indica cuándo fijar `skills:` en una tarea y el paso `next` que revise las skills del paquete y proponga con `skill suggest --online` las que falten, sin instalarlas
+
+## Fase 12 — Instalación automática de skills
+- [x] TASK-1201: Contratos de la instalación automática de skills
+  - verify: `python -m py_compile tests/test_skill_auto.py && python -m unittest tests.test_skill_auto 2>&1 | grep -q "FAILED"`
+  - files: tests/test_skill_auto.py
+  - role: core
+  - depends_on: none
+  - size: S
+  - parallel: false
+  - contract: tests/test_skill_auto.py
+  - accept: los tests compilan y fallan porque aún no existen hefesto/skill_auto.py, la sección `[skills_auto]`, la llamada desde `start` ni `hefesto skill auto`
+- [x] TASK-1202: Buscar, filtrar, descargar y promover sin preguntar
+  - verify: `python -m unittest tests.test_skill_auto.AutoInstallTests tests.test_skill_auto.SafetyTests && python tools/dev.py lint`
+  - files: hefesto/skill_auto.py, hefesto.toml, hefesto/config.py
+  - role: runner
+  - depends_on: TASK-1201
+  - size: M
+  - parallel: false
+  - accept: `skill_auto.ensure(project, cfg, role, task)` busca en skills.sh con las palabras clave de la tarea solo si las skills instaladas no bastan; filtra por instalaciones y estrellas mínimas (desconocido = descartado) y excluye las ya instaladas; descarga la mejor con `skills.fetch`, la descarta y borra su propuesta si el informe de riesgos trae cualquier riesgo, y si no la promueve sin TTY; nunca falla la tarea por red, npx o git; no repite la misma búsqueda dentro de `search_ttl_hours`; se niega si `HEFESTO_ROLE` está definido; deja constancia en `skills/auto.jsonl` del HEFESTO_HOME
+- [x] TASK-1203: `start` instala las skills que falten y `hefesto skill auto TASK`
+  - verify: `python -m unittest tests.test_skill_auto.CliTests && python -m unittest tests.test_skill_select && python tools/dev.py lint`
+  - files: hefesto/cli.py
+  - role: runner
+  - depends_on: TASK-1202
+  - size: S
+  - parallel: false
+  - accept: `hefesto start TASK` llama a `skill_auto.ensure` tras iniciar la tarea e imprime qué instaló o descartó, sin cambiar su código de salida; `hefesto skill auto TASK` hace lo mismo bajo demanda; con `skills_auto.enabled = false` no se busca nada
+- [x] TASK-1204: Documentación de la instalación automática
+  - verify: `grep -q "skills_auto" README.md && grep -q "skill auto" README.md && grep -q "Instalación automática de skills" CHANGELOG.md`
+  - files: README.md, CHANGELOG.md, prompts/protocol/next.md
+  - role: runner
+  - depends_on: TASK-1203
+  - size: S
+  - parallel: false
+  - accept: README explica el circuito automático (cuándo busca, filtros, informe de riesgos que descarta, registro en auto.jsonl, cómo desactivarlo y que un trabajador delegado nunca instala), la tabla de `[skills_auto]` y `skill auto`; CHANGELOG con la entrada; el paso `next` deja de pedir proponer skills a mano

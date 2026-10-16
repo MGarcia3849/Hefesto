@@ -12,7 +12,7 @@ Un ciclo completo para **una** tarea. La CLI `hefesto` es la única fuente de ve
    - `IN_PROGRESS`: ejecuta `hefesto resume` y sigue desde su «siguiente acción». **No repitas** delegaciones que figuren como completadas.
    - `IDLE`: `hefesto next` y luego `hefesto start TASK`. Si `start` sale con 2 por tamaño L, la tarea la divide el Core (paso `plan`).
 2. Antes de elegir enfoque, consulta `.hefesto/DECISIONS.md` y `.hefesto/LEARNINGS.md`. Si existe `graphify-out/graph.json`, usa `graphify query`, `graphify explain` o `graphify path` en vez de leer ficheros a ciegas.
-3. Implementación: antes de delegar, revisa con `hefesto skill suggest TASK` qué skills llevará el paquete; si falta alguna obvia, propón con `--online` (`hefesto skill suggest TASK --online`) candidatas al usuario, sin descargarlas ni promoverlas tú. Lanza `hefesto run <rol> "<instrucción concreta>"` con el rol que indique `status` (runner → runner → forge). El trabajador recibe el paquete de la tarea; tú solo das la instrucción.
+3. Implementación: `start` ya instala automáticamente las skills que falten; revisa con `hefesto skill suggest TASK` qué skills llevará el paquete. Lanza `hefesto run <rol> "<instrucción concreta>"` con el rol que indique `status` (runner → runner → forge). El trabajador recibe el paquete de la tarea; tú solo das la instrucción.
    - Salida 0: lee el resumen. Salida 1: el trabajador falló; decide entre reintentar con otra instrucción o `hefesto fail TASK "motivo"`.
    - Salida 3: ningún proveedor del rol tiene cuota. **No es un fallo de la tarea**: `hefesto note "pausa: sin cuota para <rol>"` y termina.
    - Tras cada delegación: `hefesto note "qué se hizo / qué falta"`.

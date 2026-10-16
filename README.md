@@ -175,7 +175,7 @@ hefesto memory prune                                         # limpia notas dupl
 | `sync [--check]` / `prompt plan\|next\|retro` | Materializa el protocolo para las tres CLIs / imprime un paso. |
 | `note "…"` / `resume [--json]` / `handoff` | Progreso continuo y relevo entre orquestadores. |
 | `loop [--orchestrator …] [--max-tasks N] [--wait]` / `stop` | Ciclo headless con topes, relevo automático y parada limpia. |
-| `skill [find\|fetch\|update\|suggest\|TÉRMINO]` | Busca y gestiona skills locales y del registro público con informe de riesgos; sugiere skills para una tarea. |
+| `skill [find\|fetch\|update\|suggest\|auto\|TÉRMINO]` | Busca y gestiona skills locales y del registro público con informe de riesgos; sugiere (`skill suggest TASK`) o instala automáticamente (`skill auto TASK`) skills para una tarea. |
 | `promote NAME [--yes]` | Promueve una propuesta de skill a promovidas. |
 | `pack list\|enable\|disable\|update` | Catálogo y gestión de packs externos curados. |
 | `limits [--json]` | Uso real de ventanas de 5 h y semanal de cada proveedor. |
@@ -232,7 +232,29 @@ hefesto skill suggest TASK-001 --online   # propone además candidatas de skills
 hefesto route TASK-001 --dry-run          # muestra el proveedor/modelo previsto y las skills que llevará el paquete
 ```
 
-`hefesto skill suggest TASK --online` **solo propone**: consulta el registro público con las palabras clave de la tarea y muestra cada candidata con su nivel de confianza y el comando `hefesto skill fetch <id>` correspondiente. Descargar (`skill fetch`) y activar (`promote`) siguen siendo siempre acciones humanas.
+`hefesto skill suggest TASK --online` **solo propone**: consulta el registro público con las palabras clave de la tarea y muestra cada candidata con su nivel de confianza y el comando `hefesto skill fetch <id>` correspondiente.
+
+### Instalación automática de skills
+
+Cuando las skills instaladas no bastan para cubrir una tarea, Hefesto puede buscar, auditar, descargar y promover automáticamente desde `skills.sh` las skills necesarias (sustituyendo a la regla de promoción solo humana únicamente para este circuito acotado, ADR 2026-10-16):
+
+- **Cuándo y qué busca:** se activa automáticamente al ejecutar `hefesto start TASK` y bajo demanda con `hefesto skill auto TASK`, **solo si ninguna de las skills que la selección elige para la tarea (las mismas que muestra `hefesto skill suggest TASK`) alcanza `good_score`**. Toma las **dos primeras palabras clave** de la tarea y busca en `skills.sh`, sin repetir la misma búsqueda dentro de la ventana `search_ttl_hours`.
+- **Filtros de calidad y límites:** exige que cada candidata alcance al menos `min_installs` y `min_stars` (cualquier dato desconocido o `unknown` descarta la candidata), omite las skills ya instaladas (y las que empiezan por `hefesto-`) y ordena las restantes por instalaciones y estrellas descendentes. En cada ejecución (`start` o `skill auto`) intenta como máximo **3 descargas** (`fetch`) y hasta `max_per_task` instalaciones (límite por invocación, no total acumulado de la tarea).
+- **Informe de riesgos y promoción:** cada candidata se descarga con `skills.fetch` a `skills/_proposals/`. Si el informe de riesgos detecta cualquier riesgo (en `SOURCE.json` o `SKILL.md`), **se descarta y se borra su propuesta** inmediatamente. Si está limpia de riesgos, se promueve sin preguntar a `~/hefesto/skills/promoted`, desde donde entra sola en la selección del paquete de la tarea.
+- **Seguridad, auditoría y desactivación:** nunca ejecuta `npx skills add` ni código incluido en la skill; un trabajador delegado (`HEFESTO_ROLE` en el entorno) **nunca instala**; ningún fallo de red, `npx` o `git` hace fallar la tarea; y todas las búsquedas, instalaciones, descartes y errores quedan registrados en `~/hefesto/skills/auto.jsonl` (`skills/auto.jsonl` dentro de `HEFESTO_HOME`). Para desactivarlo, configura `skills_auto.enabled = false`.
+
+| Clave de `[skills_auto]` | Por defecto | Descripción |
+|---|---|---|
+| `enabled` | `true` | Activa la búsqueda e instalación automática de skills (`skills_auto.enabled = false` la desactiva). |
+| `min_installs` | `1000` | Mínimo de instalaciones requerido en `skills.sh` (un valor desconocido descarta la candidata). |
+| `min_stars` | `100` | Mínimo de estrellas en GitHub requerido (un valor desconocido descarta la candidata). |
+| `max_per_task` | `1` | Número máximo de skills que pueden instalarse automáticamente en cada ejecución (`start` o `skill auto`), no el total acumulado de la tarea (hasta 3 intentos de descarga por ejecución). |
+| `good_score` | `6` | Puntuación a partir de la cual se considera que alguna de las skills que la selección elige para la tarea (las mismas que muestra `hefesto skill suggest`) basta y se omite la búsqueda en red. |
+| `search_ttl_hours` | `24` | Horas durante las que no se repite en `skills.sh` una misma búsqueda ya registrada en `skills/auto.jsonl`. |
+
+```bash
+hefesto skill auto TASK-001               # ejecuta bajo demanda la búsqueda e instalación automática para la tarea
+```
 
 ## Desarrollo
 

@@ -1,0 +1,60 @@
+{
+  "attempts": 1,
+  "base_commit": "e673bc269758bcb389b3366b59fed8cf8b596bb7",
+  "branch": "hefesto/fase-12-instalacion-automatica-de-skills",
+  "commit": "df1cc95f43e6e62cd164401ca0982054ee48654f",
+  "contract": [],
+  "created_at": "2026-10-16T18:18:03+00:00",
+  "files": [
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "e815b4758c4be3b9eb6fd5a922d1fcae0e5963c5e3fd598ccc16b791fc538c69"
+    }
+  ],
+  "phase": "Fase 12 — Instalación automática de skills",
+  "prev_sha256": "236deb3c0c3c2705f1a0d0f1e5eda2bb23bb4a7027ab609d20a74ddc375b1197",
+  "prev_task_id": "TASK-1202",
+  "providers": [
+    "codex:default",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-16T18:17:41+00:00",
+    "attempt": 0,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "OK",
+    "reviewer": "codex:default",
+    "run_id": "ab520a35436b",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "d7cde1ac6fae",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "ab520a35436b",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 44,
+  "task_id": "TASK-1203",
+  "title": "`start` instala las skills que falten y `hefesto skill auto TASK`",
+  "verify": {
+    "command": "python -m unittest tests.test_skill_auto.CliTests && python -m unittest tests.test_skill_select && python tools/dev.py lint",
+    "duration_seconds": 20.908,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1203-a1-2026-10-16T181802+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (76 ficheros Python)\n....\n----------------------------------------------------------------------\nRan 4 tests in 3.056s\n\nOK\n.....................\n----------------------------------------------------------------------\nRan 21 tests in 16.319s\n\nOK",
+    "sha256": "7d86a9880c04bbd6f2200d820066f6ee4484d4860b994c749ec8f318f54c2471",
+    "trust": "auto"
+  }
+}

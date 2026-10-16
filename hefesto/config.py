@@ -301,6 +301,13 @@ def validate(cfg: Config) -> list[str]:
         val = cfg.get("skills_selection", key)
         if val is not None and (not isinstance(val, list) or not all(isinstance(x, str) for x in val)):
             errors.append(f"skills_selection.{key} debe ser una lista de textos")
+    auto_enabled = cfg.get("skills_auto", "enabled", default=True)
+    if not isinstance(auto_enabled, bool):
+        errors.append("skills_auto.enabled debe ser booleano")
+    for key in ("min_installs", "min_stars", "max_per_task", "good_score", "search_ttl_hours"):
+        val = cfg.get("skills_auto", key)
+        if val is not None and (isinstance(val, bool) or not isinstance(val, int) or val < 0):
+            errors.append(f"skills_auto.{key} debe ser un entero ≥ 0")
     return errors
 
 

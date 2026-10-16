@@ -1,0 +1,80 @@
+{
+  "attempts": 2,
+  "base_commit": "cffaf1707324f87dddb164a81422545109c9ae76",
+  "branch": "hefesto/fase-12-instalacion-automatica-de-skills",
+  "commit": "1b4624567797bc82e86b1ade5528061f290878ec",
+  "contract": [],
+  "created_at": "2026-10-16T19:58:55+00:00",
+  "files": [
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "40c5e214eb56a1605bd356e28bd2eaca18b26c1f4b33edb46923fec315b05172"
+    },
+    {
+      "path": "README.md",
+      "sha256": "b1aa226e4e0592736c99537c21e6294623e2ec0dd82c64b5c106aa79276a29b5"
+    },
+    {
+      "path": "prompts/protocol/next.md",
+      "sha256": "bfa986f7e7620cbd04980586e29c8e2f455ae8259af281ab12a311f3158cfec9"
+    }
+  ],
+  "phase": "Fase 12 — Instalación automática de skills",
+  "prev_sha256": "b636af2a3b3da67496acf9eea7477ddf7c11a5e4671d9c4297a3b4887407428b",
+  "prev_task_id": "TASK-1203",
+  "providers": [
+    "codex:default",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-16T18:28:58+00:00",
+    "attempt": 1,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "Resuelto.",
+    "reviewer": "codex:default",
+    "run_id": "6b89de463663",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "9683eacbc020",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "902ac84c7e29",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "002f494fb44c",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "6b89de463663",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 45,
+  "task_id": "TASK-1204",
+  "title": "Documentación de la instalación automática",
+  "verify": {
+    "command": "grep -q \"skills_auto\" README.md && grep -q \"skill auto\" README.md && grep -q \"Instalación automática de skills\" CHANGELOG.md",
+    "duration_seconds": 0.074,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1204-a2-2026-10-16T195854+0000.log",
+    "output_summary": "",
+    "sha256": "ead33146d57f82d5d9d22701b911368b14f76a255b79288710eef7729ffdb26f",
+    "trust": "human"
+  }
+}

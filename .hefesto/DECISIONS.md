@@ -46,3 +46,7 @@ Pedido por el usuario en el chat (2026-10-16): Hefesto debe elegir las skills qu
 ## 2026-10-16 — La rama principal pasa a ser `main`
 
 `build/hito-1` era la rama de integración de los hitos iniciales y ya coincide con `main` (ef7f673), que es la publicada en GitHub. Desde la Fase 11 se integra directamente en `main` (`execution.main_branch` en `.hefesto/hefesto.toml`).
+
+## 2026-10-16 — Fase 12: instalación automática de skills; «Aprendizaje» pasa a Fase 13
+
+Decidido por el usuario en el chat (2026-10-16), eligiendo expresamente «totalmente automática» frente a «solo fuentes fiables» y «preguntar antes, como Vercel», y confirmándolo de nuevo tras avisarle de que quita la confirmación humana: Hefesto busca en skills.sh, descarga y promueve sin preguntar la mejor skill para cada tarea cuando las instaladas no bastan. Esto sustituye, solo para este circuito, la regla de la sección 11.1 de que `promote` es siempre humano. Salvaguardas que se mantienen: filtros de calidad de la propia skill de Vercel (instalaciones y estrellas mínimas; un dato desconocido descarta), el informe de riesgos de `fetch` descarta cualquier skill con un riesgo detectado, nunca se ejecuta `npx skills add` ni código de la skill, un trabajador delegado (`HEFESTO_ROLE`) nunca instala, y todo queda registrado en `skills/auto.jsonl`. Se desactiva con `skills_auto.enabled = false`. La fase «Aprendizaje» pasa a ser la Fase 13.

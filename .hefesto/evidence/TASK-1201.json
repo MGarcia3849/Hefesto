@@ -1,0 +1,67 @@
+{
+  "attempts": 1,
+  "base_commit": "3f9eba330f059f7b2da16e9878083332fe7c8994",
+  "branch": "hefesto/fase-12-instalacion-automatica-de-skills",
+  "commit": "5c0d90f11984314b97b079f924a328f6233af932",
+  "contract": [
+    "tests/test_skill_auto.py"
+  ],
+  "created_at": "2026-10-16T17:59:38+00:00",
+  "files": [
+    {
+      "path": "tests/test_skill_auto.py",
+      "sha256": "b8e7b59ec609ccf2f48caee694a834039e48ed0389fd3cf8fe84d5e7805b6fe1"
+    }
+  ],
+  "phase": "Fase 12 — Instalación automática de skills",
+  "prev_sha256": "d4180d316bc0dc2cc468f15337a8308b4b34d9e0b1bce707820741ae1c410a9f",
+  "prev_task_id": "TASK-1106",
+  "providers": [
+    "codex:default"
+  ],
+  "review": {
+    "at": "2026-10-16T17:59:21+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Contrato endurecido tras dos revisiones.",
+    "reviewer": "codex:default",
+    "run_id": "6cc989cd29ca",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "d0b1ae40b061",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "44fc08ad2c69",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "6cc989cd29ca",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 42,
+  "task_id": "TASK-1201",
+  "title": "Contratos de la instalación automática de skills",
+  "verify": {
+    "command": "python -m py_compile tests/test_skill_auto.py && python -m unittest tests.test_skill_auto 2>&1 | grep -q \"FAILED\"",
+    "duration_seconds": 15.888,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1201-a1-2026-10-16T175937+0000.log",
+    "output_summary": "",
+    "sha256": "f6fd6026149f280ae2dca2cfed6e8c453fffbe2007dbbda36e3e6bc5dda6035f",
+    "trust": "auto"
+  }
+}
