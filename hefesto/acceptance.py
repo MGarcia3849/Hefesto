@@ -272,7 +272,7 @@ def _cleanup_temp_finish(project: Path, temp_worktree: Path, temp_branch: str) -
     listed = gitops.git(project, "worktree", "list", "--porcelain", check=False).stdout
     if any(str(Path(line[len("worktree "):]).resolve()).lower() == str(temp_worktree.resolve()).lower()
            for line in listed.splitlines() if line.startswith("worktree ")):
-        gitops.git(project, "worktree", "remove", "--force", str(temp_worktree), check=False)
+        gitops.remove_worktree(project, temp_worktree, force=True)
     if temp_worktree.exists():
         shutil.rmtree(temp_worktree, ignore_errors=True)
     gitops.git(project, "worktree", "prune", check=False)
@@ -354,6 +354,7 @@ def finish(project: Path, phase: str | None, pr: bool, yes: bool = False) -> tup
         gitops.git(project, "branch", temp_branch, branch)
         gitops.worktree_root(project).mkdir(parents=True, exist_ok=True)
         gitops.git(project, "worktree", "add", "-q", str(temp_worktree), temp_branch)
+        gitops.link_worktree(project, temp_worktree, cfg.get("execution", "worktree_links", default=[]) or [])
 
         base = info.get("base") or gitops.out(project, "merge-base", main, branch)
         rebase = gitops.git(temp_worktree, "rebase", "--onto", main, base, temp_branch, check=False)
@@ -433,7 +434,7 @@ def finish(project: Path, phase: str | None, pr: bool, yes: bool = False) -> tup
 
             merged = gitops.out(project, "rev-parse", "HEAD")
             if info.get("isolation") == "worktree":
-                gitops.git(project, "worktree", "remove", "--force", str(workdir), check=False)
+                gitops.remove_worktree(project, workdir, force=True)
                 if workdir.exists():
                     shutil.rmtree(workdir, ignore_errors=True)
                 gitops.git(project, "worktree", "prune", check=False)

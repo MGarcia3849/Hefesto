@@ -53,6 +53,19 @@ hefesto done TASK-001            # verify + commit + evidencia encadenada
 hefesto finish                   # integra la fase en la rama principal (rebase, tests, tu confirmación)
 ```
 
+### Dependencias compartidas en los worktrees (`[execution]`)
+
+`hefesto finish` ejecuta la suite (`execution.test_command`) y los `verify` en un worktree temporal limpio que no incluye las carpetas ignoradas por git de la copia principal (como `node_modules`). Para compartir esas dependencias sin reinstalarlas, configura `execution.worktree_links` (por defecto `[]`) en `.hefesto/hefesto.toml`, con rutas relativas a la raíz del proyecto:
+
+```toml
+[execution]
+worktree_links = ["sentinel-app/node_modules"]
+```
+
+- **Dónde se aplica:** en el worktree temporal de `hefesto finish`, en el worktree de la fase (`hefesto start` con aislamiento en worktree) y en los worktrees de tareas en paralelo (`hefesto parallel`).
+- **Solo carpetas existentes e ignoradas por git:** crea una *junction* en Windows o un enlace simbólico (`symlink`) a directorio en el resto de plataformas únicamente si la carpeta existe en la copia principal, no existe en el worktree y git la ignora (si no está ignorada o ensucia `git status --porcelain`, el enlace se retira al instante para que nunca acabe en un commit). Las rutas absolutas, con `..`, `.git` o `.hefesto` se rechazan.
+- **Borrado seguro del worktree:** `git worktree remove` entra por las *junctions* y borraría el contenido real de la carpeta enlazada en la copia principal; por eso Hefesto registra los enlaces creados y los quita siempre (`gitops.remove_worktree`) antes de borrar cualquier worktree.
+
 ## Orquestador intercambiable
 
 Cualquiera de las tres CLIs puede conducir el ciclo. Abre una en el proyecto y lanza el paso `next`:

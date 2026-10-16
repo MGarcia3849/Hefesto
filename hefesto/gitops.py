@@ -7,6 +7,7 @@ Reglas: commits solo en `hefesto/*`; `git add` solo de las rutas de la tarea; nu
 from __future__ import annotations
 
 import hashlib
+import os
 import shutil
 import subprocess
 import sys
@@ -14,11 +15,12 @@ from pathlib import Path
 from typing import Any
 
 from hefesto import config, guard, roadmap, util
-from hefesto.util import EXIT_BLOCKED, EXIT_CONFLICT, EXIT_UNAVAILABLE, HefestoError, atomic_write_json
+from hefesto.util import EXIT_BLOCKED, EXIT_CONFLICT, EXIT_UNAVAILABLE, HefestoError, atomic_write_json, read_json
 
 # Ficheros de control de Hefesto que viajan en los commits de la tarea.
 CONTROL_PATHS = (".hefesto/ROADMAP.md", ".hefesto/DECISIONS.md", ".hefesto/LEARNINGS.md", ".hefesto/evidence")
 WORKTREE_REL = ".hefesto/worktree"
+_LINKS_FILENAME = "hefesto-links.json"
 
 
 def is_control_path(path: str | Path) -> bool:
@@ -191,7 +193,7 @@ def prepare_workdir(project: Path, cfg: config.Config, rm: roadmap.Roadmap, task
                     workdir = legacy
                     break
                 else:
-                    git(project, "worktree", "remove", str(legacy), check=False)
+                    remove_worktree(project, legacy)
                     if legacy.exists():
                         shutil.rmtree(legacy, ignore_errors=True)
                     git(project, "worktree", "prune", check=False)
@@ -207,6 +209,7 @@ def prepare_workdir(project: Path, cfg: config.Config, rm: roadmap.Roadmap, task
             if not registered:
                 git(project, "worktree", "prune", check=False)
                 git(project, "worktree", "add", "-q", str(workdir), branch)
+                link_worktree(project, workdir, cfg.get("execution", "worktree_links", default=[]) or [])
             elif current_branch(workdir) != branch:
                 if dirty_paths(workdir, include_control=True):
                     raise HefestoError(f"El worktree de Hefesto tiene cambios sin commitear en otra rama "
@@ -311,3 +314,190 @@ def file_hashes(workdir: Path, commit: str, paths: list[str]) -> list[dict[str, 
 
 def commit_files(workdir: Path, commit: str) -> list[str]:
     return [p for p in out(workdir, "diff-tree", "--no-commit-id", "--name-only", "-r", "--root", commit).splitlines() if p]
+
+
+def _is_link(path: Path) -> bool:
+    """True si `path` es un enlace simbólico o una junction de Windows."""
+    if os.path.islink(path):
+        return True
+    try:
+        attrs = getattr(os.lstat(path), "st_file_attributes", 0)
+    except OSError:
+        return False
+    return bool(attrs & 0x400)  # FILE_ATTRIBUTE_REPARSE_POINT
+
+
+def _create_dir_link(src: Path, dest: Path) -> None:
+    if os.name == "nt":
+        import _winapi
+
+        _winapi.CreateJunction(str(src.resolve()), os.path.abspath(dest))
+    else:
+        os.symlink(str(src.resolve()), dest, target_is_directory=True)
+
+
+def _unlink_only(path: Path) -> None:
+    """Elimina solo el enlace (junction o symlink), nunca su contenido."""
+    if not _is_link(path):
+        return
+    if os.name == "nt" and not os.path.islink(path):
+        os.rmdir(path)
+    else:
+        try:
+            os.unlink(path)
+        except OSError:
+            if os.name == "nt":
+                os.rmdir(path)
+            else:
+                raise
+
+
+def _prune_empty_parents(path: Path, root: Path) -> None:
+    root_res = root.resolve()
+    parent = path.parent
+    while True:
+        try:
+            if _is_link(parent) or not _is_within(parent, root) or parent.resolve() == root_res:
+                break
+            parent.rmdir()
+        except OSError:
+            break
+        parent = parent.parent
+
+
+def _clean_link_path(raw: Any) -> str:
+    if not isinstance(raw, str) or not raw.strip():
+        raise HefestoError(f"Ruta de worktree_links inválida: {raw!r}")
+    if raw.startswith(("/", "\\")) or (len(raw) > 1 and raw[1] == ":") or Path(raw).is_absolute():
+        raise HefestoError(f"Ruta de worktree_links no puede ser absoluta: {raw!r}")
+    parts = [p for p in raw.replace("\\", "/").strip("/").split("/") if p]
+    if not parts or any(p.casefold() in (".", "..", ".git", ".hefesto") for p in parts):
+        raise HefestoError(f"Ruta de worktree_links insegura: {raw!r}")
+    return "/".join(parts)
+
+
+def _has_link_ancestor(path: Path, root: Path) -> bool:
+    """True si `root` o algún ancestro entre `root` y `path.parent` es un enlace o junction."""
+    if _is_link(root):
+        return True
+    try:
+        rel_parts = path.relative_to(root).parts[:-1]
+    except ValueError:
+        return True
+    cur = root
+    for part in rel_parts:
+        cur = cur / part
+        if _is_link(cur):
+            return True
+    return False
+
+
+def _is_within(child: Path, root: Path) -> bool:
+    try:
+        return child.resolve().is_relative_to(root.resolve())
+    except OSError:
+        return False
+
+
+def _worktree_links_registry(worktree: Path) -> Path | None:
+    if not worktree.exists():
+        return None
+    res = git(worktree, "rev-parse", "--git-dir", check=False)
+    if res.returncode != 0 or not res.stdout.strip():
+        return None
+    git_dir = Path(res.stdout.strip())
+    if not git_dir.is_absolute():
+        git_dir = (worktree / git_dir).resolve()
+    return git_dir / _LINKS_FILENAME
+
+
+def link_worktree(project: Path, worktree: Path, paths: list[str] | tuple[str, ...]) -> list[str]:
+    """Enlaza carpetas ignoradas de `project` en `worktree` y registra los enlaces creados."""
+    cleaned = [_clean_link_path(raw) for raw in paths]
+    if not cleaned or not worktree.exists() or project.resolve() == worktree.resolve():
+        return []
+    reg = _worktree_links_registry(worktree)
+    if reg is None:
+        return []
+    existing = read_json(reg, default=[])
+    recorded: list[str] = [r for r in existing if isinstance(r, str)] if isinstance(existing, list) else []
+    linked: list[str] = []
+    for rel in cleaned:
+        src = project / rel
+        dest = worktree / rel
+        if _is_link(src) or _has_link_ancestor(src, project):
+            continue
+        if not _is_within(src.parent, project) or not _is_within(src, project):
+            continue
+        if not src.is_dir() or os.path.lexists(dest) or _is_link(dest):
+            continue
+        if _has_link_ancestor(dest, worktree) or not _is_within(dest.parent, worktree):
+            continue
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        if _has_link_ancestor(dest, worktree) or not _is_within(dest.parent, worktree):
+            continue
+        _create_dir_link(src, dest)
+        had_rel = rel in recorded
+        if not had_rel:
+            recorded.append(rel)
+        atomic_write_json(reg, recorded)
+        ignored = git(worktree, "check-ignore", "-q", "--", rel, check=False).returncode == 0
+        dirty = bool(git(worktree, "status", "--porcelain", "--", rel, check=False).stdout.strip())
+        if not ignored or dirty:
+            _unlink_only(dest)
+            _prune_empty_parents(dest, worktree)
+            if not had_rel and not _is_link(dest):
+                recorded = [r for r in recorded if r != rel]
+                atomic_write_json(reg, recorded)
+            continue
+        linked.append(rel)
+    return linked
+
+
+def remove_worktree(project: Path, worktree: Path, force: bool = False) -> subprocess.CompletedProcess[Any]:
+    """Quita los enlaces creados por `link_worktree` (sin tocar su destino) y ejecuta `git worktree remove`."""
+    args = ["worktree", "remove"]
+    if force:
+        args.append("--force")
+    args.append(str(worktree))
+    if worktree.exists() or os.path.lexists(worktree):
+        reg = _worktree_links_registry(worktree)
+        recorded: list[Any] = []
+        if reg is not None and reg.exists():
+            data = read_json(reg, default=[])
+            if isinstance(data, list):
+                recorded = data
+        targets: list[Path] = []
+        unsafe: list[str] = []
+        for rel in recorded:
+            try:
+                clean_rel = _clean_link_path(rel)
+            except HefestoError as exc:
+                unsafe.append(f"{rel!r}: {exc}")
+                continue
+            target = worktree / clean_rel
+            if _has_link_ancestor(target, worktree) or not _is_within(target.parent, worktree):
+                unsafe.append(f"{target}: ancestro enlazado o ruta fuera del worktree")
+                continue
+            targets.append(target)
+            if _is_link(target):
+                try:
+                    _unlink_only(target)
+                except OSError as exc:
+                    unsafe.append(f"{target}: {exc}")
+                    continue
+                _prune_empty_parents(target, worktree)
+        unsafe.extend(f"{t}: entrada registrada aún presente" for t in targets if os.path.lexists(t) or _is_link(t))
+        if unsafe:
+            return subprocess.CompletedProcess(
+                ["git", *args],
+                returncode=1,
+                stdout="",
+                stderr=f"No se pudieron retirar los enlaces con seguridad; se cancela git worktree remove: {', '.join(unsafe)}",
+            )
+        if reg is not None and reg.exists():
+            try:
+                reg.unlink()
+            except OSError:
+                pass
+    return git(project, *args, check=False)

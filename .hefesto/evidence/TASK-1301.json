@@ -1,0 +1,61 @@
+{
+  "attempts": 1,
+  "base_commit": "1870d7435eed1ddc31b84ae5da458518d8110971",
+  "branch": "hefesto/fase-13-dependencias-compartidas-en-los-worktrees",
+  "commit": "9e1d00b8cca10333ae46856c996c94667791729b",
+  "contract": [
+    "tests/test_worktree_links.py"
+  ],
+  "created_at": "2026-10-16T20:20:58+00:00",
+  "files": [
+    {
+      "path": "tests/test_worktree_links.py",
+      "sha256": "ba4102fb667550420af2cf85ba2f272967d1ff92c15ea566e63a2fb2b5da3f72"
+    }
+  ],
+  "phase": "Fase 13 — Dependencias compartidas en los worktrees",
+  "prev_sha256": "73885649998c8c59e363ae4bf4ed08ac63fcdb6244ec8d29d3e9a0aefbfefc4a",
+  "prev_task_id": "TASK-1204",
+  "providers": [
+    "codex:default"
+  ],
+  "review": {
+    "at": "2026-10-16T20:20:53+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Contrato corregido tras la primera revisión (fail en a5e7e7a72b3d): patrones portables, is_link sin isjunction, cobertura de scheduler y del error de git.",
+    "reviewer": "codex:default",
+    "run_id": "75b1103c0805",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "a5e7e7a72b3d",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "75b1103c0805",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 46,
+  "task_id": "TASK-1301",
+  "title": "Contratos de los enlaces de dependencias en worktrees",
+  "verify": {
+    "command": "python -m py_compile tests/test_worktree_links.py && python -m unittest tests.test_worktree_links 2>&1 | grep -q \"FAILED\"",
+    "duration_seconds": 4.085,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1301-a1-2026-10-16T202057+0000.log",
+    "output_summary": "",
+    "sha256": "7ba31d537a8100d6cb51d563ee84cc7f5aed6b8e7a51a6f3da9af60d2ccd4390",
+    "trust": "auto"
+  }
+}

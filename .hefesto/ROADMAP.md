@@ -384,3 +384,38 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - size: S
   - parallel: false
   - accept: README explica el circuito automático (cuándo busca, filtros, informe de riesgos que descarta, registro en auto.jsonl, cómo desactivarlo y que un trabajador delegado nunca instala), la tabla de `[skills_auto]` y `skill auto`; CHANGELOG con la entrada; el paso `next` deja de pedir proponer skills a mano
+
+## Fase 13 — Dependencias compartidas en los worktrees
+- [x] TASK-1301: Contratos de los enlaces de dependencias en worktrees
+  - verify: `python -m py_compile tests/test_worktree_links.py && python -m unittest tests.test_worktree_links 2>&1 | grep -q "FAILED"`
+  - files: tests/test_worktree_links.py
+  - role: core
+  - depends_on: none
+  - size: S
+  - parallel: false
+  - contract: tests/test_worktree_links.py
+  - accept: los tests compilan y fallan porque aún no existen `gitops.link_worktree`, `gitops.remove_worktree` ni `execution.worktree_links`
+- [x] TASK-1302: `link_worktree`, `remove_worktree` y `execution.worktree_links`
+  - verify: `python -m unittest tests.test_worktree_links.LinkTests tests.test_worktree_links.ConfigTests tests.test_worktree_links.RemoveTests.test_remove_keeps_link_targets tests.test_worktree_links.RemoveTests.test_remove_without_links tests.test_worktree_links.RemoveTests.test_remove_missing_worktree_returns_error_code && python tools/dev.py lint`
+  - files: hefesto/gitops.py, hefesto/config.py, hefesto.toml
+  - role: runner
+  - depends_on: TASK-1301
+  - size: M
+  - parallel: false
+  - accept: `link_worktree` enlaza (junction en Windows, symlink de directorio en el resto) solo carpetas existentes e ignoradas por git cuyo destino no existe, rechaza rutas inseguras con `HefestoError` y registra los enlaces creados; `remove_worktree` quita esos enlaces sin tocar su contenido y luego ejecuta `git worktree remove [--force]` sin `check`; `[execution] worktree_links = []` en hefesto.toml con su validación en `config.validate`
+- [x] TASK-1303: Enlazar en finish, fase y paralelo; borrar siempre con `remove_worktree`
+  - verify: `python -m unittest tests.test_worktree_links tests.test_isolation tests.test_parallel tests.test_parallel_robustness && python tools/dev.py lint`
+  - files: hefesto/acceptance.py, hefesto/gitops.py, hefesto/scheduler.py, hefesto/maintenance.py
+  - role: runner
+  - depends_on: TASK-1302
+  - size: M
+  - parallel: false
+  - accept: `finish` enlaza `execution.worktree_links` en su worktree temporal antes de la suite y los verify; `ensure_phase_branch` y el scheduler enlazan en los worktrees que crean; las 17 llamadas a `git worktree remove` de acceptance, maintenance, scheduler y gitops pasan por `gitops.remove_worktree` conservando su `force` y el uso que hacen del resultado
+- [x] TASK-1304: Documentación de `worktree_links`
+  - verify: `grep -q "worktree_links" README.md && grep -q "worktree_links" CHANGELOG.md`
+  - files: README.md, CHANGELOG.md
+  - role: runner
+  - depends_on: TASK-1303
+  - size: S
+  - parallel: false
+  - accept: README explica para qué sirve `execution.worktree_links` (p. ej. `["sentinel-app/node_modules"]`), que solo enlaza carpetas ignoradas por git y que los enlaces se quitan antes de borrar un worktree; CHANGELOG con la entrada «Dependencias compartidas en los worktrees»

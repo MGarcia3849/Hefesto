@@ -1,0 +1,100 @@
+{
+  "attempts": 3,
+  "base_commit": "1d39af29637f82381733046ccfcf069a80a7f6ee",
+  "branch": "hefesto/fase-13-dependencias-compartidas-en-los-worktrees",
+  "commit": "bf8e536599d40d55ac33a6bc970f2d497aad4646",
+  "contract": [],
+  "created_at": "2026-10-16T20:36:14+00:00",
+  "files": [
+    {
+      "path": "hefesto.toml",
+      "sha256": "8714728f00c775b1362d48f4394964664f8fb20b626bd6c8eb86731c212580d2"
+    },
+    {
+      "path": "hefesto/config.py",
+      "sha256": "55a945e32850f6aa7e3a771712a69a1c6c3c74b85f4c506109865214e371ace6"
+    },
+    {
+      "path": "hefesto/gitops.py",
+      "sha256": "b8bd1d3ab45bf2f0293916002f5733e76066a3aeea9ed9572dcaaa3f67dda23d"
+    }
+  ],
+  "phase": "Fase 13 — Dependencias compartidas en los worktrees",
+  "prev_sha256": "a78eec4df993f940ae312d4141935468e4db5d67cbeb16bef58eae2f981e6e02",
+  "prev_task_id": "TASK-1301",
+  "providers": [
+    "claude:sonnet",
+    "codex:default",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-16T20:36:09+00:00",
+    "attempt": 2,
+    "authors": [
+      "codex:default",
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "remove_worktree aborta y conserva el registro ante cualquier entrada insegura; link_worktree registra cada enlace al crearlo, confinado y sin distinguir mayúsculas.",
+    "reviewer": "claude:sonnet",
+    "run_id": "13689f2081f4",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "325690db191c",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "b91e7d030e21",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "ddc7d2ed2bd3",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "ad881abd7e97",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "24f7e82fc63c",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "forge",
+      "run_id": "a0c71eaedd8d",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "13689f2081f4",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 47,
+  "task_id": "TASK-1302",
+  "title": "`link_worktree`, `remove_worktree` y `execution.worktree_links`",
+  "verify": {
+    "command": "python -m unittest tests.test_worktree_links.LinkTests tests.test_worktree_links.ConfigTests tests.test_worktree_links.RemoveTests.test_remove_keeps_link_targets tests.test_worktree_links.RemoveTests.test_remove_without_links tests.test_worktree_links.RemoveTests.test_remove_missing_worktree_returns_error_code && python tools/dev.py lint",
+    "duration_seconds": 3.32,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1302-a3-2026-10-16T203614+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (77 ficheros Python)\n........\n----------------------------------------------------------------------\nRan 8 tests in 2.173s\n\nOK",
+    "sha256": "4875fc3ef1938e891b31e161d4974dec9c4d470e28cafb5c0b441336044f32c4",
+    "trust": "auto"
+  }
+}

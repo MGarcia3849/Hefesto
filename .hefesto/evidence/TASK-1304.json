@@ -1,0 +1,71 @@
+{
+  "attempts": 1,
+  "base_commit": "662da02924cfdc5d22523d59b11c572ae069a251",
+  "branch": "hefesto/fase-13-dependencias-compartidas-en-los-worktrees",
+  "commit": "96040c6a430d8443253639284437f371e2ee56cd",
+  "contract": [],
+  "created_at": "2026-10-16T20:48:37+00:00",
+  "files": [
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "4d52b1bd9d7ee28e1b3a74c7d1f435cedbcf6561449d68140d870d8293d999f5"
+    },
+    {
+      "path": "README.md",
+      "sha256": "b3be921b8ae3183070234abae2053801820a3d294f85f3fd60099b2ea7261903"
+    }
+  ],
+  "phase": "Fase 13 — Dependencias compartidas en los worktrees",
+  "prev_sha256": "42b6a6beb1b0287a825b667222851c72413d189c38a3724d50b1734eeef52507",
+  "prev_task_id": "TASK-1303",
+  "providers": [
+    "claude:sonnet",
+    "codex:default",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-16T20:48:36+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:default"
+    ],
+    "exception": null,
+    "notes": "Documentación exacta frente a gitops/config.",
+    "reviewer": "claude:sonnet",
+    "run_id": "ccf8f5d35177",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "2cca3a94031a",
+      "success": false
+    },
+    {
+      "model_id": "codex:default",
+      "role": "runner",
+      "run_id": "2cca3a94031a",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "ccf8f5d35177",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 49,
+  "task_id": "TASK-1304",
+  "title": "Documentación de `worktree_links`",
+  "verify": {
+    "command": "grep -q \"worktree_links\" README.md && grep -q \"worktree_links\" CHANGELOG.md",
+    "duration_seconds": 0.065,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1304-a1-2026-10-16T204836+0000.log",
+    "output_summary": "",
+    "sha256": "2e7bd1fcc87fbc1eb611d34c7586f5dc24a6ab24e51a37ef9ce39789dd414c28",
+    "trust": "auto"
+  }
+}

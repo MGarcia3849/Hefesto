@@ -4,6 +4,13 @@ Todas las novedades notables de Hefesto se documentan en este archivo.
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## Dependencias compartidas en los worktrees
+
+- **Contratos de enlaces en worktrees (`TASK-1301`, `tests/test_worktree_links.py`):** Suite de contratos para el enlazado de carpetas ignoradas, validación de rutas seguras, preservación del contenido al eliminar worktrees e integración en `finish`, fase y paralelo.
+- **Enlaces y borrado seguro (`TASK-1302`):** Nueva clave `execution.worktree_links` (por defecto `[]`), con validación de rutas seguras. `gitops.link_worktree` enlaza carpetas existentes e ignoradas por git mediante junctions en Windows o symlinks en el resto; `gitops.remove_worktree` retira los enlaces antes del borrado, preservando su contenido.
+- **Integración en worktrees (`TASK-1303`):** Dependencias compartidas en el worktree temporal de `finish` antes de la suite y los `verify`, en el de fase y en los de tareas en paralelo. Todos los borrados pasan por `gitops.remove_worktree`.
+- **Documentación actualizada (`TASK-1304`, `README.md`, `CHANGELOG.md`):** Documentación de `execution.worktree_links`, uso en worktrees y borrado seguro en `README.md` y registro de cambios en `CHANGELOG.md`.
+
 ## Instalación automática de skills
 
 - **Contratos de instalación automática (`TASK-1201`, `tests/test_skill_auto.py`):** Suite de contratos para la búsqueda, filtrado por calidad, descarte ante riesgos, promoción sin preguntar y barreras de seguridad (ADR 2026-10-16).

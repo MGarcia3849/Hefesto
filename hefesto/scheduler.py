@@ -483,7 +483,7 @@ def run_parallel(
                 tw = task_workdir(project, pb, t.id)
                 if tw.exists():
                     if not gitops.dirty_paths(tw, include_control=True):
-                        gitops.git(project, "worktree", "remove", str(tw), check=False)
+                        gitops.remove_worktree(project, tw)
                         _drop_task_branch(project, pb, tb)
                 else:
                     _drop_task_branch(project, pb, tb)
@@ -580,6 +580,9 @@ def run_parallel(
                                     gitops.git(project, "worktree", "add", "-q", "-b", tb, str(tw), tip)
                                 else:
                                     gitops.git(project, "worktree", "add", "-q", str(tw), tb)
+                                gitops.link_worktree(
+                                    project, tw, cfg.get("execution", "worktree_links", default=[]) or []
+                                )
                             roadmap.set_marker(roadmap.roadmap_path(project), task.id, "~")
 
                         if loop.stop_path(project).exists():
@@ -587,7 +590,7 @@ def run_parallel(
                             with project_lock(project):
                                 roadmap.set_marker(roadmap.roadmap_path(project), task.id, " ")
                                 if not gitops.dirty_paths(tw, include_control=True):
-                                    gitops.git(project, "worktree", "remove", str(tw), check=False)
+                                    gitops.remove_worktree(project, tw)
                                     _drop_task_branch(project, phase_branch, tb)
                             break
 
@@ -643,7 +646,7 @@ def run_parallel(
                         roadmap.set_marker(roadmap.roadmap_path(project), task_id, " ")
                         if job.workdir.exists():
                             if not gitops.dirty_paths(job.workdir, include_control=True):
-                                gitops.git(project, "worktree", "remove", str(job.workdir), check=False)
+                                gitops.remove_worktree(project, job.workdir)
                                 _drop_task_branch(project, phase_branch, tb)
                         else:
                             _drop_task_branch(project, phase_branch, tb)
@@ -664,7 +667,7 @@ def run_parallel(
                         roadmap.set_marker(roadmap.roadmap_path(project), task_id, " ")
                         if job.workdir.exists():
                             if not gitops.dirty_paths(job.workdir, include_control=True):
-                                gitops.git(project, "worktree", "remove", str(job.workdir), check=False)
+                                gitops.remove_worktree(project, job.workdir)
                                 _drop_task_branch(project, phase_branch, tb)
                         else:
                             _drop_task_branch(project, phase_branch, tb)
@@ -686,7 +689,7 @@ def run_parallel(
                         with project_lock(project):
                             roadmap.set_marker(roadmap.roadmap_path(project), task_id, "!")
                             if job.workdir.exists() and not gitops.dirty_paths(job.workdir, include_control=True):
-                                gitops.git(project, "worktree", "remove", str(job.workdir), check=False)
+                                gitops.remove_worktree(project, job.workdir)
                         results[task_id] = TaskResult(
                             task_id=task_id,
                             status="failed",
@@ -709,7 +712,7 @@ def run_parallel(
                     except (HefestoError, subprocess.CalledProcessError, Exception) as exc:
                         roadmap.set_marker(roadmap.roadmap_path(project), task_id, "!")
                         if job.workdir.exists() and not gitops.dirty_paths(job.workdir, include_control=True):
-                            gitops.git(project, "worktree", "remove", str(job.workdir), check=False)
+                            gitops.remove_worktree(project, job.workdir)
                         results[task_id] = TaskResult(
                             task_id=task_id,
                             status="failed",
@@ -723,7 +726,7 @@ def run_parallel(
                     if reb.returncode != 0:
                         gitops.git(job.workdir, "rebase", "--abort", check=False)
                         roadmap.set_marker(roadmap.roadmap_path(project), task_id, "!")
-                        gitops.git(project, "worktree", "remove", str(job.workdir), check=False)
+                        gitops.remove_worktree(project, job.workdir)
                         results[task_id] = TaskResult(
                             task_id=task_id,
                             status="conflict",
@@ -750,7 +753,7 @@ def run_parallel(
                         # sobre la fase actual sin descartar los commits de intentos previos.
                         if exhausted:
                             if not gitops.dirty_paths(job.workdir, include_control=True):
-                                gitops.git(project, "worktree", "remove", str(job.workdir), check=False)
+                                gitops.remove_worktree(project, job.workdir)
                             results[task_id] = TaskResult(task_id, "failed", last_errors[task_id] or "",
                                                           attempts[task_id])
                         continue
@@ -828,7 +831,7 @@ def run_parallel(
                         )
 
                         # 7. Eliminar worktree y rama de la tarea
-                        gitops.git(project, "worktree", "remove", str(job.workdir), check=False)
+                        gitops.remove_worktree(project, job.workdir)
                         _drop_task_branch(project, phase_branch, tb)
 
                         results[task_id] = TaskResult(
@@ -840,7 +843,7 @@ def run_parallel(
                     except (HefestoError, subprocess.CalledProcessError, Exception) as exc:
                         roadmap.set_marker(roadmap.roadmap_path(project), task_id, "!")
                         if job.workdir.exists() and not gitops.dirty_paths(job.workdir, include_control=True):
-                            gitops.git(project, "worktree", "remove", str(job.workdir), check=False)
+                            gitops.remove_worktree(project, job.workdir)
                         if not ff_done:
                             results[task_id] = TaskResult(
                                 task_id=task_id,

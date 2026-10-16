@@ -1,0 +1,72 @@
+{
+  "attempts": 1,
+  "base_commit": "d79e9f768f2ff7e8946748b9c5634e0cfd7fdee5",
+  "branch": "hefesto/fase-13-dependencias-compartidas-en-los-worktrees",
+  "commit": "3e0b921cd9a3a988295a96227171131ff517aadc",
+  "contract": [],
+  "created_at": "2026-10-16T20:44:04+00:00",
+  "files": [
+    {
+      "path": "hefesto/acceptance.py",
+      "sha256": "4b1f7d6308a3190f4e99559256b022c18b4643a5ac5843a9da3b1bb92f0ea5c3"
+    },
+    {
+      "path": "hefesto/gitops.py",
+      "sha256": "4f1357db63c8898c6e92bf3220d593c4c6227901d8a2a8eb764868c6b4a939ad"
+    },
+    {
+      "path": "hefesto/maintenance.py",
+      "sha256": "1c4c30b451ab5499ac6380181bb6e71d1a50943f656fd04598c5ffdea98b27df"
+    },
+    {
+      "path": "hefesto/scheduler.py",
+      "sha256": "652d4855e1b1fbe2bc2d17cb91bf0fba45e64215b9b9a416d1c26fc83fa3022e"
+    }
+  ],
+  "phase": "Fase 13 — Dependencias compartidas en los worktrees",
+  "prev_sha256": "2f8a479a35fe5c3ada86ad2d427289c2a7ea3237cf2c953e190cec1b9c6f385b",
+  "prev_task_id": "TASK-1302",
+  "providers": [
+    "codex:default",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-16T20:41:53+00:00",
+    "attempt": 0,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "Los 15 borrados pasan por remove_worktree (el criterio decía 17 por un recuento con las líneas de add); enlaces tras cada worktree add.",
+    "reviewer": "codex:default",
+    "run_id": "7bac8359bb87",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "dbe225217c9b",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "7bac8359bb87",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 48,
+  "task_id": "TASK-1303",
+  "title": "Enlazar en finish, fase y paralelo; borrar siempre con `remove_worktree`",
+  "verify": {
+    "command": "python -m unittest tests.test_worktree_links tests.test_isolation tests.test_parallel tests.test_parallel_robustness && python tools/dev.py lint",
+    "duration_seconds": 130.162,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1303-a1-2026-10-16T204404+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (77 ficheros Python)\n...........................................................................\n----------------------------------------------------------------------\nRan 75 tests in 129.021s\n\nOK",
+    "sha256": "186f13d96a48c87816d680f47077cb448cd63648c8c86c08536e3cbb450fb22a",
+    "trust": "auto"
+  }
+}

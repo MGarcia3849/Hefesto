@@ -71,6 +71,7 @@ isolation = "auto"                  # auto | branch | worktree
 finish_strategy = "squash"          # squash | merge, al integrar en la rama principal
 main_branch = "auto"                # auto = la rama que había al hacer init (main/master)
 test_command = ""                   # suite completa que `finish` ejecuta; vacío = solo los verify
+worktree_links = []                 # carpetas ignoradas que se enlazan en los worktrees (p. ej. ["node_modules"])
 
 [reviewer]
 # Jerarquía para la regla de independencia: un revisor del mismo proveedor solo vale

@@ -209,7 +209,7 @@ def clean(project: Path, include_unmerged: bool = False) -> str:
         failed_branches: set[str] = set()
         for path, br in wt_rm:
             if path.exists():
-                proc = gitops.git(project, "worktree", "remove", str(path), check=False)
+                proc = gitops.remove_worktree(project, path)
                 if proc.returncode != 0 or path.exists():
                     reason = proc.stderr.strip() or "no se pudo eliminar el worktree"
                     wt_keep.append((path, br, reason))
@@ -466,7 +466,7 @@ def _discard_phase(project: Path, phase_slug: str, data: dict[str, Any]) -> str:
         gitops.git(project, "checkout", "-q", main)
 
     if ph_workdir and ph_workdir.exists() and ph_workdir.resolve() != project.resolve():
-        proc = gitops.git(project, "worktree", "remove", str(ph_workdir), check=False)
+        proc = gitops.remove_worktree(project, ph_workdir)
         if proc.returncode != 0 or ph_workdir.exists():
             err_msg = proc.stderr.strip() or (
                 "la ruta sigue existiendo" if proc.returncode == 0 else f"código {proc.returncode}"

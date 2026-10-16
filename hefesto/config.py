@@ -281,6 +281,19 @@ def validate(cfg: Config) -> list[str]:
     extra = cfg.get("trust", "extra_safe_prefixes", default=[])
     if not isinstance(extra, list) or not all(isinstance(x, str) for x in extra):
         errors.append("trust.extra_safe_prefixes debe ser una lista de textos")
+    wt_links = cfg.get("execution", "worktree_links", default=[])
+    if not isinstance(wt_links, list) or not all(isinstance(x, str) for x in wt_links):
+        errors.append("execution.worktree_links debe ser una lista de textos")
+    else:
+        for entry in wt_links:
+            parts = [p for p in entry.replace("\\", "/").strip("/").split("/") if p]
+            if (not entry.strip() or entry.startswith(("/", "\\"))
+                    or (len(entry) > 1 and entry[1] == ":") or Path(entry).is_absolute()
+                    or not parts or any(p.casefold() in (".", "..", ".git", ".hefesto") for p in parts)):
+                errors.append(
+                    f"execution.worktree_links: ruta inválida o insegura `{entry}` "
+                    "(debe ser relativa, sin `..`, `.git` ni `.hefesto`)"
+                )
     npm_version = cfg.get("skills_sources", "npm_version")
     if not isinstance(npm_version, str) or not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", npm_version):
         errors.append("skills_sources.npm_version debe ser exactamente X.Y.Z (solo dígitos y puntos)")
