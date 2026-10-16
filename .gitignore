@@ -12,3 +12,10 @@ __pycache__/
 .hefesto/worktrees/
 .hefesto/progress.jsonl
 graphify-out/
+
+# Estado de HEFESTO_HOME cuando coincide con la copia instalada (si no, `self-update` ve cambios sin commitear)
+/VERSION
+skills/find-cache.json
+skills/_proposals/
+skills/promoted/
+skills/auto.jsonl
