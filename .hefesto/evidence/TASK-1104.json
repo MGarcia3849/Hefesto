@@ -1,0 +1,72 @@
+{
+  "attempts": 2,
+  "base_commit": "0d0d836a223e6a2627a2bf6fed4b5077d51d9046",
+  "branch": "hefesto/fase-11-skills-en-el-paquete-de-tarea",
+  "commit": "78674901ec941547332d45ad4f3ee6dbfc345d55",
+  "contract": [],
+  "created_at": "2026-10-16T10:07:41+00:00",
+  "files": [
+    {
+      "path": "hefesto/packet.py",
+      "sha256": "912557d16f45df01bac96b3cd68baa31bfa4211539c7defaf596dc84edf7fd14"
+    }
+  ],
+  "phase": "Fase 11 — Skills en el paquete de tarea",
+  "prev_sha256": "783a5a706c5910ff19383dd83b1dac103799b9d45a5908004920ae45b6657209",
+  "prev_task_id": "TASK-1103",
+  "providers": [
+    "codex:default",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-16T10:07:33+00:00",
+    "attempt": 1,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "Resuelto.",
+    "reviewer": "codex:default",
+    "run_id": "0685dc1265df",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "e8e5553bd9db",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "fed2dd37d5f6",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "f5a96420f8ff",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "0685dc1265df",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 39,
+  "task_id": "TASK-1104",
+  "title": "Las skills elegidas entran en el paquete del trabajador",
+  "verify": {
+    "command": "python -m unittest tests.test_skill_select.PacketSkillsTests && python -m unittest tests.test_context_pack && python tools/dev.py lint",
+    "duration_seconds": 7.455,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1104-a2-2026-10-16T100741+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (74 ficheros Python)\n....\n----------------------------------------------------------------------\nRan 4 tests in 2.527s\n\nOK\n.........\n----------------------------------------------------------------------\nRan 9 tests in 3.585s\n\nOK",
+    "sha256": "ebb1f26cf1517dc73453d282d000b1705ba1da17f255e1990afc2bba972493f2",
+    "trust": "auto"
+  }
+}

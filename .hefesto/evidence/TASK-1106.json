@@ -1,0 +1,84 @@
+{
+  "attempts": 2,
+  "base_commit": "5e68faff254bb3e56b0799b37aee212e5fa785c0",
+  "branch": "hefesto/fase-11-skills-en-el-paquete-de-tarea",
+  "commit": "04d48e2d1d8a952e208cfba2141effabd971395b",
+  "contract": [],
+  "created_at": "2026-10-16T16:17:25+00:00",
+  "files": [
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "74f42ccc19a5ad7ccddb4d126bc796a4198bdc4c5430d81261e8aa59623ca622"
+    },
+    {
+      "path": "README.md",
+      "sha256": "0bdf6e6a9b28123b90610fa9cb7f43f0350d84f6d04a0dce9650dcbd82a0c0e4"
+    },
+    {
+      "path": "prompts/protocol/next.md",
+      "sha256": "5aaf6940f0934fb69474a20d839550cabd28fae78044d61a3289eaba214daaab"
+    },
+    {
+      "path": "prompts/protocol/plan.md",
+      "sha256": "e91e74a57c3ee0c4a3fa8964d454a3fe9a3c0df27832fd5e4101010bdea45713"
+    }
+  ],
+  "phase": "Fase 11 — Skills en el paquete de tarea",
+  "prev_sha256": "206fc8b69b4fc494e4eb119fffce08de72098179d25c728e08ede8fa7161d158",
+  "prev_task_id": "TASK-1105",
+  "providers": [
+    "codex:default",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-16T16:17:23+00:00",
+    "attempt": 1,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "Resuelto.",
+    "reviewer": "codex:default",
+    "run_id": "b8360a127e32",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "6cf250fa4ce1",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "04c057329e47",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "f6e244430036",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "b8360a127e32",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 41,
+  "task_id": "TASK-1106",
+  "title": "Documentación de la selección de skills",
+  "verify": {
+    "command": "grep -q \"skill suggest\" README.md && grep -q \"skills_selection\" README.md && grep -q \"skills:\" prompts/protocol/plan.md && grep -q \"Skills en el paquete\" CHANGELOG.md",
+    "duration_seconds": 0.217,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1106-a2-2026-10-16T161724+0000.log",
+    "output_summary": "",
+    "sha256": "eb686a5373927d939b1db1a6f0c3b8f5ea2aaa2e120b490f1cc0569c498ba604",
+    "trust": "auto"
+  }
+}

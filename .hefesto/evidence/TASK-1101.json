@@ -1,0 +1,55 @@
+{
+  "attempts": 1,
+  "base_commit": "ef7f67375032436eccfa7bfa07440c6db8061afd",
+  "branch": "hefesto/fase-11-skills-en-el-paquete-de-tarea",
+  "commit": "994f52d41fb58263e5d83ee9a234795ca9713db9",
+  "contract": [
+    "tests/test_skill_select.py"
+  ],
+  "created_at": "2026-10-16T08:03:27+00:00",
+  "files": [
+    {
+      "path": "tests/test_skill_select.py",
+      "sha256": "92219336ca400a24ec29b7467b0ff534e5a4ea527db7a402765d112272662cb5"
+    }
+  ],
+  "phase": "Fase 11 — Skills en el paquete de tarea",
+  "prev_sha256": "0041cfa1c986e8b2e8afa5467327bfeab2e8b1bda9dea6c7b520b9460ed2b4fe",
+  "prev_task_id": "TASK-1004",
+  "providers": [
+    "codex:default"
+  ],
+  "review": {
+    "at": "2026-10-16T08:03:21+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Contrato coherente y aislado; corregida la referencia a la sección 5.3.",
+    "reviewer": "codex:default",
+    "run_id": "824fb6b33f37",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "824fb6b33f37",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 36,
+  "task_id": "TASK-1101",
+  "title": "Contratos de la selección de skills por tarea",
+  "verify": {
+    "command": "python -m py_compile tests/test_skill_select.py && python -m unittest tests.test_skill_select 2>&1 | grep -q \"FAILED\"",
+    "duration_seconds": 4.484,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1101-a1-2026-10-16T080326+0000.log",
+    "output_summary": "",
+    "sha256": "90f1951afa1a3d5016ecbe324e29abac126db75a5e28dcb9e39e9b699b932325",
+    "trust": "auto"
+  }
+}

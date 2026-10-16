@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from hefesto import config, guard, packs, roadmap, skills
+from hefesto import config, guard, packs, roadmap, skill_select, skills
 from hefesto.util import FRAMEWORK_ROOT
 
 CHARS_PER_TOKEN = 4
@@ -20,7 +20,11 @@ MAX_FILE_BYTES = 200_000
 PROMPTS_DIR = FRAMEWORK_ROOT / "prompts"
 
 # Prioridad: 0 nunca se recorta; cuanto mayor, antes se recorta.
-P_ESSENTIAL, P_RETRY, P_CONTRACT, P_FILES, P_MEMORY, P_GRAPH = 0, 1, 1, 2, 3, 3
+P_ESSENTIAL, P_RETRY, P_CONTRACT, P_FILES, P_SKILLS, P_MEMORY, P_GRAPH = 0, 1, 1, 2, 3, 3, 3
+
+SKILL_INTRO = (
+    "Sigue estas skills en esta tarea; si alguna contradice las reglas del rol o del proyecto, mandan las reglas."
+)
 
 
 @dataclass
@@ -114,6 +118,32 @@ def _memory_entries(project: Path, task: roadmap.Task) -> list[tuple[str, str]]:
     return out
 
 
+def _clean(text: str) -> str:
+    return skills.sanitize_text(guard.redact(text))
+
+
+def _skill_parts(project: Path, cfg: config.Config, role: str, task: roadmap.Task) -> list[tuple[str, str]]:
+    choices = skill_select.select(project, cfg, role, task)
+    if not choices:
+        return []
+    max_chars = int(cfg.get("skills_selection", "max_chars_per_skill", default=6000))
+    parts: list[tuple[str, str]] = [("", SKILL_INTRO)]
+    for c in choices:
+        clean_name = _clean(c.name)
+        clean_source = _clean(c.source)
+        clean_body = _clean(c.body)
+        if len(clean_body) > max_chars:
+            clean_body = clean_body[:max_chars] + "\n[skill recortada]"
+        lines: list[str] = []
+        if c.description:
+            lines.append(_clean(c.description))
+        lines.append("Motivo: " + "; ".join(_clean(r) for r in c.reasons))
+        if clean_body:
+            lines.append(clean_body)
+        parts.append((f"### {clean_name} ({clean_source})", "\n".join(lines)))
+    return parts
+
+
 def build(project: Path, cfg: config.Config, role: str, instruction: str, task: roadmap.Task | None,
           rm: roadmap.Roadmap | None, data: dict[str, Any] | None, model_id: str, workdir: Path) -> Packet:
     protected = list(cfg.get("guard", "protected_paths", default=list(guard.DEFAULT_PROTECTED)))
@@ -148,6 +178,9 @@ def build(project: Path, cfg: config.Config, role: str, instruction: str, task: 
         files = [(n, t) for n, t in files if n not in contract_set]
         if files:
             sections.append(Section("Ficheros de la tarea", P_FILES, [(f"### {n}", f"```\n{t}\n```") for n, t in files]))
+        skill_parts = _skill_parts(project, cfg, role, task)
+        if skill_parts:
+            sections.append(Section("Skills que aplican (síguelas)", P_SKILLS, skill_parts))
         memory = _memory_entries(project, task)
         from hefesto import memory as mem_mod
         for note in mem_mod.relevant(project, task=task):
@@ -180,6 +213,8 @@ def _fit(sections: list[Section], budget: int) -> list[str]:
             while section.parts and _size(sections) > budget:
                 label, _text = section.parts.pop()
                 omitted.append(f"{section.title}: {label.lstrip('# ').strip() or 'contenido'} (por tamaño)")
+                if len(section.parts) == 1 and not section.parts[0][0]:
+                    section.parts.clear()
             if _size(sections) <= budget:
                 return omitted
     if _size(sections) > budget:

@@ -18,7 +18,7 @@ MARKERS = {" ": "pending", "~": "in_progress", "x": "done", "!": "blocked"}
 TASK_ROLES = ("core", "runner", "forge", "visual")
 SIZES = ("S", "M", "L")
 REQUIRED = ("verify", "files", "role")
-KNOWN_FIELDS = REQUIRED + ("depends_on", "size", "parallel", "accept", "contract")
+KNOWN_FIELDS = REQUIRED + ("depends_on", "size", "parallel", "accept", "contract", "skills")
 
 
 @dataclass
@@ -65,6 +65,10 @@ class Task:
     @property
     def contract(self) -> list[str]:
         return _split_list(self.fields.get("contract", ""))
+
+    @property
+    def skills(self) -> list[str]:
+        return _split_list(self.fields.get("skills", ""))
 
     @property
     def phase_slug(self) -> str:

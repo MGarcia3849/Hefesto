@@ -298,3 +298,54 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - size: M
   - parallel: false
   - accept: README y CHANGELOG cubren parallel, clean/discard, memory, limits/watch/jobs; docs/ENTREGA.md recoge la entrega de la sección 14 con salidas reales de lint, test, smoke, demo y doctor
+
+## Fase 11 — Skills en el paquete de tarea
+- [x] TASK-1101: Contratos de la selección de skills por tarea
+  - verify: `python -m py_compile tests/test_skill_select.py && python -m unittest tests.test_skill_select 2>&1 | grep -q "FAILED"`
+  - files: tests/test_skill_select.py
+  - role: core
+  - depends_on: none
+  - size: S
+  - parallel: false
+  - contract: tests/test_skill_select.py
+  - accept: los tests compilan y fallan porque aún no existen hefesto/skill_select.py, el campo `skills` del ROADMAP, la sección de skills del paquete ni `hefesto skill suggest`
+- [x] TASK-1102: Descubrimiento y puntuación determinista de skills
+  - verify: `python -m unittest tests.test_skill_select.DiscoveryTests tests.test_skill_select.SelectionTests && python tools/dev.py lint`
+  - files: hefesto/skill_select.py, hefesto.toml, hefesto/config.py
+  - role: runner
+  - depends_on: TASK-1101
+  - size: M
+  - parallel: false
+  - accept: `skill_select.select()` reúne skills del framework, promovidas, del proyecto (`.claude/skills`, `.agents/skills`) y de las carpetas del usuario configurables (`~/.claude/skills`, `~/.codex/skills`); excluye las de protocolo y las de `skills_selection.exclude`; deduplica por nombre; puntúa por palabras clave de la tarea (título, accept, extensiones de `files`, rol) y devuelve como mucho `max_skills` con sus motivos, siempre en el mismo orden para el mismo estado
+- [x] TASK-1103: Campo `skills` en las tareas del ROADMAP
+  - verify: `python -m unittest tests.test_skill_select.RoadmapSkillsTests && python -m unittest tests.test_foundation && python tools/dev.py lint`
+  - files: hefesto/roadmap.py
+  - role: runner
+  - depends_on: TASK-1101
+  - size: S
+  - parallel: false
+  - accept: `- skills: a, b` es un campo válido de tarea, `Task.skills` devuelve la lista y las skills fijadas así se incluyen siempre en la selección aunque no puntúen
+- [x] TASK-1104: Las skills elegidas entran en el paquete del trabajador
+  - verify: `python -m unittest tests.test_skill_select.PacketSkillsTests && python -m unittest tests.test_context_pack && python tools/dev.py lint`
+  - files: hefesto/packet.py
+  - role: runner
+  - depends_on: TASK-1102, TASK-1103
+  - size: M
+  - parallel: false
+  - accept: el paquete lleva la sección «Skills que aplican (síguelas)» con nombre, origen, motivo y el SKILL.md saneado y redactado (recortado a `max_chars_per_skill`), para que funcione con cualquier proveedor aunque no pueda leer fuera del proyecto; se recorta antes que los ficheros de la tarea y después que la memoria; sin skills elegidas no aparece la sección
+- [x] TASK-1105: `hefesto skill suggest TASK` y skills en `route`
+  - verify: `python -m unittest tests.test_skill_select.SuggestTests && python tools/dev.py lint`
+  - files: hefesto/cli.py, hefesto/skill_select.py
+  - role: runner
+  - depends_on: TASK-1102, TASK-1103
+  - size: S
+  - parallel: false
+  - accept: `hefesto skill suggest TASK` muestra las skills locales elegidas con su puntuación y motivo; con `--online` busca además en skills.sh con las palabras clave de la tarea y lista candidatas con su confianza y el comando `skill fetch` a ejecutar, sin descargar ni promover nada; `hefesto route TASK` muestra las skills que llevará el paquete
+- [x] TASK-1106: Documentación de la selección de skills
+  - verify: `grep -q "skill suggest" README.md && grep -q "skills_selection" README.md && grep -q "skills:" prompts/protocol/plan.md && grep -q "Skills en el paquete" CHANGELOG.md`
+  - files: README.md, CHANGELOG.md, prompts/protocol/plan.md, prompts/protocol/next.md
+  - role: runner
+  - depends_on: TASK-1104, TASK-1105
+  - size: S
+  - parallel: false
+  - accept: README explica de dónde salen las skills, cómo se eligen, `skills_selection` y `skill suggest`; el paso `plan` indica cuándo fijar `skills:` en una tarea y el paso `next` que revise las skills del paquete y proponga con `skill suggest --online` las que falten, sin instalarlas

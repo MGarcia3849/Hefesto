@@ -290,6 +290,17 @@ def validate(cfg: Config) -> list[str]:
     git_base = cfg.get("skills_sources", "git_base")
     if git_base is not None and not isinstance(git_base, str):
         errors.append("skills_sources.git_base debe ser texto")
+    sel_enabled = cfg.get("skills_selection", "enabled", default=True)
+    if not isinstance(sel_enabled, bool):
+        errors.append("skills_selection.enabled debe ser booleano")
+    for key in ("max_skills", "min_score", "max_chars_per_skill"):
+        val = cfg.get("skills_selection", key)
+        if val is not None and (isinstance(val, bool) or not isinstance(val, int) or val < 0):
+            errors.append(f"skills_selection.{key} debe ser un entero ≥ 0")
+    for key in ("user_roots", "exclude"):
+        val = cfg.get("skills_selection", key)
+        if val is not None and (not isinstance(val, list) or not all(isinstance(x, str) for x in val)):
+            errors.append(f"skills_selection.{key} debe ser una lista de textos")
     return errors
 
 

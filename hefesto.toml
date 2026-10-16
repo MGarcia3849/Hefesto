@@ -103,3 +103,11 @@ query_budget = 1500
 max_notes = 5                           # máximo de notas relevantes a incluir en el contexto
 max_chars = 2000                        # tope de caracteres en total de las notas de memoria
 prune_days = 365                        # días tras los cuales una nota se propone para borrado
+
+[skills_selection]
+enabled = true
+max_skills = 3
+min_score = 2
+max_chars_per_skill = 6000
+user_roots = ["~/.claude/skills", "~/.codex/skills"]
+exclude = []

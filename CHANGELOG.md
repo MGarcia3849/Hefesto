@@ -4,6 +4,15 @@ Todas las novedades notables de Hefesto se documentan en este archivo.
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## Skills en el paquete de tarea
+
+- **Descubrimiento y selección determinista (`hefesto/skill_select.py`):** Descubrimiento de skills instaladas en carpetas del proyecto (`.claude/skills`, `.agents/skills`), promovidas (`~/hefesto/skills/promoted`), framework (`skills/`) y carpetas del usuario configurables (`skills_selection.user_roots`, por defecto `["~/.claude/skills", "~/.codex/skills"]`), deduplicando por nombre en ese orden de preferencia (`proyecto` > `promovida` > `framework` > `usuario`).
+- **Puntuación por palabras clave y configuración `[skills_selection]`:** Selección sin LLM mediante coincidencia de palabra entera entre palabras clave de la tarea (título, `accept`, extensiones de `files` y `role`) y los metadatos de cada skill, donde cada palabra clave suma una sola vez en el primer campo donde casa (`name` +3, si no `tags` +2, si no `description` +1; no se acumulan), gobernada por `enabled`, `max_skills`, `min_score`, `max_chars_per_skill`, `user_roots` y `exclude` (excluyendo siempre las skills de protocolo).
+- **Campo `skills` en el ROADMAP (`hefesto/roadmap.py`):** Soporte para el campo opcional `- skills: a, b` en las tareas del ROADMAP (`Task.skills`), incluyendo siempre en primer lugar las skills fijadas (también con `enabled = false` o aunque superen el tope total `max_skills`, salvo las listadas en `exclude`; las automáticas solo ocupan los huecos libres que dejan las fijadas hasta `max_skills`, p. ej. con `max_skills = 3` y 2 fijadas entra como mucho 1 automática).
+- **Inyección saneada en el paquete del trabajador (`hefesto/packet.py`):** Inclusión de la sección `## Skills que aplican (síguelas)` con nombre, origen, motivos y el cuerpo de `SKILL.md` saneado, con secretos redactados y recortado a `max_chars_per_skill`, con prioridad de recorte tras la memoria y antes que los ficheros de la tarea.
+- **Sugerencia de skills y visibilidad en enrutado (`skill suggest` y `route`):** Nuevo subcomando `hefesto skill suggest TASK` para inspeccionar las skills locales elegidas con su puntuación y motivo, opción `--online` que propone candidatas en `skills.sh` con nivel de confianza y comando `hefesto skill fetch` (sin descargar ni promover automáticamente), y visualización de las skills del paquete en `hefesto route TASK --dry-run`.
+- **Protocolo y documentación actualizados:** Actualización de `prompts/protocol/plan.md`, `prompts/protocol/next.md` y `README.md` con las pautas de uso de `skills:` y `hefesto skill suggest`.
+
 ## v2.1.0 — 2026-10-14
 
 ### Hito 1 — Núcleo en serie

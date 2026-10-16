@@ -163,7 +163,7 @@ hefesto memory prune                                         # limpia notas dupl
 | `start TASK` / `fail TASK "motivo"` | Inicia una tarea (con lock y aislamiento git) o registra un intento fallido; al 3.º salta el circuit breaker. |
 | `trust [--yes]` / `unblock TASK "nota" [--yes]` | Solo humanos y con terminal: aprobar `verify` y desbloquear tareas. |
 | `run ROL "…" [--task] [--dry-run]` | Delegación con paquete de contexto, cadena de fallback y cooldowns. |
-| `packet TASK [--role] [--model]` / `route [TASK] --dry-run` | Paquete que recibiría el agente y ruta prevista (o lote paralelo sin tarea). |
+| `packet TASK [--role] [--model]` / `route [TASK] --dry-run` | Paquete que recibiría el agente y ruta prevista con las skills del paquete (o lote paralelo sin tarea). |
 | `parallel [--max-parallel N]` | Ejecuta tareas en paralelo respetando concurrencia y límites por modelo. |
 | `review TASK --verdict pass\|fail` | Veredicto con regla de independencia (proveedor distinto, o modelo superior). |
 | `done TASK` / `finish [FASE] [--pr] [--yes]` | Aceptación y commit; integración de la fase en la rama principal. |
@@ -175,7 +175,7 @@ hefesto memory prune                                         # limpia notas dupl
 | `sync [--check]` / `prompt plan\|next\|retro` | Materializa el protocolo para las tres CLIs / imprime un paso. |
 | `note "…"` / `resume [--json]` / `handoff` | Progreso continuo y relevo entre orquestadores. |
 | `loop [--orchestrator …] [--max-tasks N] [--wait]` / `stop` | Ciclo headless con topes, relevo automático y parada limpia. |
-| `skill [find\|fetch\|update\|TÉRMINO]` | Busca y gestiona skills locales y del registro público con informe de riesgos. |
+| `skill [find\|fetch\|update\|suggest\|TÉRMINO]` | Busca y gestiona skills locales y del registro público con informe de riesgos; sugiere skills para una tarea. |
 | `promote NAME [--yes]` | Promueve una propuesta de skill a promovidas. |
 | `pack list\|enable\|disable\|update` | Catálogo y gestión de packs externos curados. |
 | `limits [--json]` | Uso real de ventanas de 5 h y semanal de cada proveedor. |
@@ -207,6 +207,32 @@ Las comprobaciones de la CLI (`guard.py`) se aplican siempre, pase lo que pase e
 ## Skills del framework
 
 `sync` instala en cada proyecto (como `hefesto-skill-<nombre>`): `git-checkpointer`, `test-runner`, `skill-creator`, `retro`, `frontend-taste`, `motion-system` y `ui-anatomy`. Las propuestas nuevas van a `skills/_proposals/` y nunca se activan solas.
+
+### Skills en el paquete de tarea
+
+Al delegar una tarea, Hefesto selecciona de forma determinista (sin LLM) las skills locales aplicables y las inyecta directamente en el paquete del trabajador:
+
+- **Orígenes y orden de preferencia:** se descubren skills en las carpetas del **proyecto** (`.claude/skills` y `.agents/skills`), **promovidas** (`~/hefesto/skills/promoted`), **framework** (`skills/`) y **usuario** (`skills_selection.user_roots`, por defecto `["~/.claude/skills", "~/.codex/skills"]`). Al deduplicar por nombre, prevalece el primer origen en ese orden (`proyecto` > `promovida` > `framework` > `usuario`). Las skills de protocolo (`hefesto-next`, `hefesto-plan`, `hefesto-retro`) y las listadas en `exclude` nunca se seleccionan.
+- **Cómo se eligen:** se extraen palabras clave del título de la tarea, el criterio `accept`, las extensiones de `files` (`.component.ts` → `angular`, `.ts` → `typescript`, `.tsx`/`.jsx` → `react`, `.css`/`.scss` → `css`, `.html` → `html`, `.py` → `python`, `.dart` → `flutter`) y el `role`. La coincidencia es siempre por palabra entera (nunca subcadena) y cada palabra clave suma una sola vez, en el primer campo donde casa: `name` (`+3`), si no `tags` (`+2`), si no `description` (`+1`) —no se acumulan entre campos—. Entran las que alcanzan al menos `min_score`, ordenadas por puntuación descendente hasta completar los huecos que dejen las fijadas hasta `max_skills`.
+- **Inyección en el paquete:** el cuerpo de cada `SKILL.md` elegida entra saneado (sin bytes nulos ni secuencias de control), con secretos redactados (`[REDACTED]`) y recortado a `max_chars_per_skill` bajo la sección `## Skills que aplican (síguelas)` del paquete, de modo que cualquier proveedor las siga aunque no tenga acceso fuera del repositorio. Ante límite de tokens del paquete, esta sección se recorta después de la memoria y antes que los ficheros de la tarea; si no hay skills seleccionadas, la sección se omite.
+- **Fijar skills en el ROADMAP:** una tarea puede declarar el campo opcional `- skills: a, b`. Las skills fijadas así entran siempre en primer lugar aunque no puntúen por palabras clave (e incluso si `skills_selection.enabled = false`) y aunque superen `max_skills`, salvo que figuren en `exclude`. Como `max_skills` es el tope total, las automáticas solo ocupan los huecos libres que dejan las fijadas (por ejemplo, con `max_skills = 3` y 2 fijadas entra como mucho 1 automática). Si una skill fijada no está instalada, se ignora sin fallar.
+
+| Clave de `[skills_selection]` | Por defecto | Descripción |
+|---|---|---|
+| `enabled` | `true` | Activa la selección automática por palabras clave (si es `false`, solo entran las fijadas con `- skills:`). |
+| `max_skills` | `3` | Número máximo total de skills en el paquete: las automáticas solo ocupan los huecos que dejan las fijadas (las fijadas entran todas aunque superen `max_skills`). |
+| `min_score` | `2` | Puntuación mínima para que una skill entre por selección automática. |
+| `max_chars_per_skill` | `6000` | Límite de caracteres por cuerpo de skill antes de añadir `[skill recortada]`. |
+| `user_roots` | `["~/.claude/skills", "~/.codex/skills"]` | Carpetas de usuario adicionales donde descubrir skills instaladas. |
+| `exclude` | `[]` | Lista de nombres de skills vetadas en el proyecto (ni automáticas ni fijadas). |
+
+```bash
+hefesto skill suggest TASK-001            # muestra las skills locales seleccionadas, su origen, puntuación y motivos
+hefesto skill suggest TASK-001 --online   # propone además candidatas de skills.sh según las palabras clave de la tarea
+hefesto route TASK-001 --dry-run          # muestra el proveedor/modelo previsto y las skills que llevará el paquete
+```
+
+`hefesto skill suggest TASK --online` **solo propone**: consulta el registro público con las palabras clave de la tarea y muestra cada candidata con su nivel de confianza y el comando `hefesto skill fetch <id>` correspondiente. Descargar (`skill fetch`) y activar (`promote`) siguen siendo siempre acciones humanas.
 
 ## Desarrollo
 

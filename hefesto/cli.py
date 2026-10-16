@@ -316,7 +316,7 @@ def cmd_packet(args: argparse.Namespace) -> int:
 
 
 def cmd_route(args: argparse.Namespace) -> int:
-    from hefesto import config, providers, roadmap, router, scheduler
+    from hefesto import config, providers, roadmap, router, scheduler, skill_select, skills
 
     proj = _project(args)
     cfg = config.load(proj)
@@ -337,6 +337,9 @@ def cmd_route(args: argparse.Namespace) -> int:
             skipped = [f"{h.entry} ({h.outcome})" for h in hops if h.outcome != "elegido"]
             print(f"  {role:<9} {why:<34} → {chosen.model_id if chosen else 'NINGUNO disponible'}"
                   + (f"   saltados: {'; '.join(skipped)}" if skipped else ""))
+        choices = skill_select.select(proj, cfg, task.role, task)
+        names = ", ".join(skills.sanitize_text(c.name) for c in choices) if choices else "ninguna"
+        print(f"skills del paquete: {names}")
         return EXIT_OK
 
     rm = roadmap.load_valid(proj)
@@ -536,6 +539,71 @@ def cmd_skill(args: argparse.Namespace) -> int:
         )
 
     subcmd = tokens[0].lower()
+    if subcmd == "suggest":
+        if len(tokens) < 2:
+            raise HefestoError("Indica el ID de la tarea: `hefesto skill suggest TASK-NNN`.", EXIT_INPUT)
+        from hefesto import roadmap, skill_select
+
+        proj = _project(args)
+        cfg = config.load(proj)
+        rm = roadmap.load_valid(proj)
+        task = rm.get(tokens[1])
+        choices = skill_select.select(proj, cfg, task.role, task)
+        if choices:
+            headers = ["NOMBRE", "ORIGEN", "PUNTOS", "MOTIVO"]
+            rows = [
+                [
+                    skills.sanitize_text(str(c.name)),
+                    skills.sanitize_text(str(c.source)),
+                    skills.sanitize_text(str(c.score)),
+                    skills.sanitize_text("; ".join(c.reasons)),
+                ]
+                for c in choices
+            ]
+            widths = [len(h) for h in headers]
+            for row in rows:
+                for i, col in enumerate(row):
+                    widths[i] = max(widths[i], len(col))
+            print(skills.sanitize_text("  ".join(h.ljust(widths[i]) for i, h in enumerate(headers))))
+            for row in rows:
+                print(skills.sanitize_text("  ".join(col.ljust(widths[i]) for i, col in enumerate(row))))
+        else:
+            print(skills.sanitize_text(f"Ninguna skill instalada encaja con {task.id}."))
+
+        if getattr(args, "online", False):
+            words = skill_select.keywords(task.role, task)
+            term = " ".join(words[:2]).strip()
+            if term:
+                try:
+                    online_results = skills.find(term)
+                except HefestoError as exc:
+                    print(skills.sanitize_text(f"Aviso: {exc}"))
+                    online_results = []
+                if online_results:
+                    headers_on = ["NOMBRE", "INSTALACIONES", "CONFIANZA"]
+                    rows_on = [
+                        [
+                            skills.sanitize_text(str(r.get("name", ""))),
+                            skills.sanitize_text(str(r.get("installs", ""))),
+                            skills.sanitize_text(str(r.get("trust", ""))),
+                        ]
+                        for r in online_results
+                    ]
+                    widths_on = [len(h) for h in headers_on]
+                    for row in rows_on:
+                        for i, col in enumerate(row):
+                            widths_on[i] = max(widths_on[i], len(col))
+                    print(skills.sanitize_text("  ".join(h.ljust(widths_on[i]) for i, h in enumerate(headers_on))))
+                    for row in rows_on:
+                        print(skills.sanitize_text("  ".join(col.ljust(widths_on[i]) for i, col in enumerate(row))))
+                    for r in online_results:
+                        name_clean = skills.sanitize_text(str(r.get("name", "")))
+                        print(skills.sanitize_text(f"hefesto skill fetch {name_clean}"))
+            print(skills.sanitize_text(
+                "Nada se ha descargado: revisa y, si te convence, ejecuta tú fetch y luego promote."
+            ))
+        return EXIT_OK
+
     if subcmd == "find":
         if len(tokens) < 2:
             raise HefestoError("Indica el término a buscar: `hefesto skill find TÉRMINO`.", EXIT_INPUT)
@@ -1304,8 +1372,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.set_defaults(func=cmd_prompt)
 
     p = sub.add_parser("skill", help="busca y gestiona skills locales y del registro público")
-    p.add_argument("args", nargs="*", help="subcomando (find, fetch, update) o término de búsqueda")
+    p.add_argument("args", nargs="*", help="subcomando (find, fetch, update, suggest) o término de búsqueda")
     p.add_argument("--owner", help="filtra por propietario en `skill find`")
+    p.add_argument("--online", action="store_true", help="con suggest, busca también en skills.sh; nunca descarga")
     p.set_defaults(func=cmd_skill)
 
     p = sub.add_parser("promote", help="promueve una propuesta de skill a promovidas")

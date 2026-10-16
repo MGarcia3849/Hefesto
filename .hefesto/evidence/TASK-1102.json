@@ -1,0 +1,80 @@
+{
+  "attempts": 2,
+  "base_commit": "1ade85fe821e89d38caff0f6cf72e7c5629539fa",
+  "branch": "hefesto/fase-11-skills-en-el-paquete-de-tarea",
+  "commit": "c81f7025348877c9ab6d8e0546c56e628466a371",
+  "contract": [],
+  "created_at": "2026-10-16T08:18:55+00:00",
+  "files": [
+    {
+      "path": "hefesto.toml",
+      "sha256": "3ba6532973d3292ef0c26bb983f5edf6012372508a6d216dd84049392e385b42"
+    },
+    {
+      "path": "hefesto/config.py",
+      "sha256": "824157661f87629572b3821ba7ad00aa1236c15b2eaeecd34bd52f4ee6f88c68"
+    },
+    {
+      "path": "hefesto/skill_select.py",
+      "sha256": "a7b4525efd84ec78855b8402645496c37e0c83e87d06994c29cbe9cfd643c610"
+    }
+  ],
+  "phase": "Fase 11 — Skills en el paquete de tarea",
+  "prev_sha256": "b1eabfab32be595f036143c518f517a53141dac3c451ad5fa61f083d27989ad2",
+  "prev_task_id": "TASK-1101",
+  "providers": [
+    "codex:default",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-16T08:18:49+00:00",
+    "attempt": 1,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "Confinamiento, tope y exclusiones resueltos.",
+    "reviewer": "codex:default",
+    "run_id": "d70ac2e1d701",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "7668130431db",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "88ae8c13d78e",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "532c8cce038b",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "d70ac2e1d701",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 37,
+  "task_id": "TASK-1102",
+  "title": "Descubrimiento y puntuación determinista de skills",
+  "verify": {
+    "command": "python -m unittest tests.test_skill_select.DiscoveryTests tests.test_skill_select.SelectionTests && python tools/dev.py lint",
+    "duration_seconds": 4.745,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1102-a2-2026-10-16T081854+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (74 ficheros Python)\n...........\n----------------------------------------------------------------------\nRan 11 tests in 3.731s\n\nOK",
+    "sha256": "16b3331d55dde134dd9e87f33736ff3625cffeda406b4f432d1d6e04412dbade",
+    "trust": "auto"
+  }
+}

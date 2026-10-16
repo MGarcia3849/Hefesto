@@ -1,0 +1,60 @@
+{
+  "attempts": 1,
+  "base_commit": "6bfeea0e17c7b5625cef32137590632f5d64efdb",
+  "branch": "hefesto/fase-11-skills-en-el-paquete-de-tarea",
+  "commit": "e43e82625b8f80ecc977e36775ac09acbea570ec",
+  "contract": [],
+  "created_at": "2026-10-16T08:23:52+00:00",
+  "files": [
+    {
+      "path": "hefesto/roadmap.py",
+      "sha256": "786b1bcae5bd7e88a6ac92f4a524a0c77585977460ad13875110a35906477113"
+    }
+  ],
+  "phase": "Fase 11 — Skills en el paquete de tarea",
+  "prev_sha256": "8562489eaf928e93394949373069e02c0eb89dea5511bad28d30289228a535a0",
+  "prev_task_id": "TASK-1102",
+  "providers": [
+    "codex:default",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-16T08:23:45+00:00",
+    "attempt": 0,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "OK",
+    "reviewer": "codex:default",
+    "run_id": "ff4d61a9c2f0",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "c209620f3bea",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "ff4d61a9c2f0",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 38,
+  "task_id": "TASK-1103",
+  "title": "Campo `skills` en las tareas del ROADMAP",
+  "verify": {
+    "command": "python -m unittest tests.test_skill_select.RoadmapSkillsTests && python -m unittest tests.test_foundation && python tools/dev.py lint",
+    "duration_seconds": 5.474,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1103-a1-2026-10-16T082352+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (74 ficheros Python)\n..\n----------------------------------------------------------------------\nRan 2 tests in 0.581s\n\nOK\n......................\n----------------------------------------------------------------------\nRan 22 tests in 3.584s\n\nOK",
+    "sha256": "1eb4788fe4a7bcbdcb463b1408446038a131bb729b660616645310c1cdc1db69",
+    "trust": "auto"
+  }
+}
