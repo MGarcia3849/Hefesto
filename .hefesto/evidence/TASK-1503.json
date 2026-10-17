@@ -1,0 +1,76 @@
+{
+  "attempts": 2,
+  "base_commit": "3ccd4bee8d1397eb5397641623426d4fb271f123",
+  "branch": "hefesto/fase-15-catalogo-de-skills-por-rol-y-modo",
+  "commit": "f7e3f85c8e243f4fa2a8d02d30a19a146195470c",
+  "contract": [],
+  "created_at": "2026-10-17T18:34:45+00:00",
+  "files": [
+    {
+      "path": "catalog/skills.toml",
+      "sha256": "ad4805886686492b1f3aad1f3a4ddc78b8a467dc677b3070826776fd8010acb7"
+    },
+    {
+      "path": "hefesto/skill_catalog.py",
+      "sha256": "7456d98d3d861909459fd256d5e64ab7b09b807ed18fd408bc8d6fd2d617bbd9"
+    }
+  ],
+  "phase": "Fase 15 — Catálogo de skills por rol y modo",
+  "prev_sha256": "52b89c0823116e29d031317e0e1c9f3f5a416f4ac8eb0b09a908c640ea5674cf",
+  "prev_task_id": "TASK-1502",
+  "providers": [
+    "codex:default",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-17T18:34:42+00:00",
+    "attempt": 1,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "catálogo y validación corregidos",
+    "reviewer": "codex:default",
+    "run_id": "6af606e18cb1",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "4e4620f88a5d",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "d158a7645aa3",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "aa268015a1e8",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "6af606e18cb1",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 62,
+  "task_id": "TASK-1503",
+  "title": "Catálogo único de skills y herramientas, sin dueño",
+  "verify": {
+    "command": "python -m unittest tests.test_skill_catalog.CatalogTests && python tools/dev.py lint",
+    "duration_seconds": 1.205,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1503-a2-2026-10-17T183444+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (83 ficheros Python)\n.......\n----------------------------------------------------------------------\nRan 7 tests in 0.044s\n\nOK",
+    "sha256": "f6ae17158f956f64a931ad1d1dcc8186769cb1936c937d2f7a4ed6846123e0d1",
+    "trust": "auto"
+  }
+}

@@ -202,6 +202,26 @@ def ensure(
             })
             continue
 
+        findings = skills.agentshield_scan(proposal)
+        if findings and skills.agentshield_blocks(findings):
+            try:
+                skills.check_confinement(proposal, util.hefesto_home())
+                shutil.rmtree(proposal, ignore_errors=True)
+            except (HefestoError, OSError):
+                pass
+            reason = "agentshield: hallazgos high/critical"
+            result.rejected.append((spec, reason))
+            _log_event({
+                "event": "rejected",
+                "at": util.now_iso(),
+                "spec": spec,
+                "skill": skill_name,
+                "reason": reason,
+                "findings": findings,
+                "task": task_id,
+            })
+            continue
+
         try:
             with contextlib.redirect_stdout(io.StringIO()):
                 skills.promote(proposal.name, yes=True)

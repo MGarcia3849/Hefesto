@@ -69,3 +69,7 @@ Pedido por el usuario en el chat (2026-10-17) tras analizar ECC (affaan-m/ECC, M
 ## 2026-10-17 — Desbloqueo de TASK-1408
 
 Contrato defectuoso corregido por el Core dentro de la tarea; se separa en TASK-1410 (autorizado por el usuario en el chat 2026-10-17)
+
+## 2026-10-17 — Descarte de TASK-1504
+
+Descarte de la tarea en curso TASK-1504.

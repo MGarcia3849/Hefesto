@@ -1,0 +1,67 @@
+{
+  "attempts": 2,
+  "base_commit": "d9dadcc0a85a0d608345381dc61970bde5e294a7",
+  "branch": "hefesto/fase-15-catalogo-de-skills-por-rol-y-modo",
+  "commit": "ed5e7bc2ef794e8ac9f6d5b109f22ebbb0035275",
+  "contract": [
+    "tests/test_skill_catalog.py"
+  ],
+  "created_at": "2026-10-17T18:17:59+00:00",
+  "files": [
+    {
+      "path": "tests/test_skill_catalog.py",
+      "sha256": "0f1e7913d70df9661b1e15b9571d90e7cbbcfc953c6bef56c3307ab393151d47"
+    }
+  ],
+  "phase": "Fase 15 — Catálogo de skills por rol y modo",
+  "prev_sha256": "3e63578bec3c65179405279aa8c4740c03d1874b2707ef47c7fa26f6af946253",
+  "prev_task_id": "TASK-1409",
+  "providers": [
+    "codex:default"
+  ],
+  "review": {
+    "at": "2026-10-17T18:17:54+00:00",
+    "attempt": 1,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Contrato aprobado en la tercera ronda",
+    "reviewer": "codex:default",
+    "run_id": "8787eede1fcc",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "88ef33903205",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "9d979094f20b",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "8787eede1fcc",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 60,
+  "task_id": "TASK-1501",
+  "title": "Contratos del catálogo de skills",
+  "verify": {
+    "command": "python -m py_compile tests/test_skill_catalog.py && python -m unittest tests.test_skill_catalog 2>&1 | grep -q \"FAILED\"",
+    "duration_seconds": 3.417,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1501-a2-2026-10-17T181758+0000.log",
+    "output_summary": "",
+    "sha256": "74c8604f9b4b2f64ccd93e776b1f494848e50d8ccd79dd827ac93fa7701d6102",
+    "trust": "auto"
+  }
+}

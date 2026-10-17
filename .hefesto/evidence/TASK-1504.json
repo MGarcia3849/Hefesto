@@ -1,0 +1,74 @@
+{
+  "attempts": 2,
+  "base_commit": "dca9daabe704d6a46362faef0c2c31e398e50992",
+  "branch": "hefesto/fase-15-catalogo-de-skills-por-rol-y-modo",
+  "commit": "18bae858273da28b4fa0f13329c0526df89c9abb",
+  "contract": [],
+  "created_at": "2026-10-17T18:52:48+00:00",
+  "files": [
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "95ccc896914c8031797bc113c7ddc0dfc9f816d20a94cf5d7fd018e0bd48ed16"
+    },
+    {
+      "path": "hefesto/packet.py",
+      "sha256": "94b0062476debe669b8d7deb3783e43a69e011aed889b542999f3b7dca43d155"
+    },
+    {
+      "path": "hefesto/skill_select.py",
+      "sha256": "f0bfe1012e63d083eacd8f3ec3254f4f758b1f8834c1965d00b7393063d0abca"
+    }
+  ],
+  "phase": "Fase 15 — Catálogo de skills por rol y modo",
+  "prev_sha256": "6e4314d736521abb05184d2bc6aa6d1bdd2ed6e5173ec4631c5b907c7a2c8644",
+  "prev_task_id": "TASK-1508",
+  "providers": [
+    "claude:sonnet",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-17T18:52:36+00:00",
+    "attempt": 1,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "modos del catálogo, prohibidos y forbidden resueltos",
+    "reviewer": "claude:sonnet",
+    "run_id": "cd0c83589e52",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "dabb389bb37e",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "forge",
+      "run_id": "63220189cd3c",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "cd0c83589e52",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 64,
+  "task_id": "TASK-1504",
+  "title": "El orquestador reparte skills por rol, modo, tipo y proveedor",
+  "verify": {
+    "command": "python -m unittest tests.test_skill_catalog.SelectionTests tests.test_skill_select && python tools/dev.py lint",
+    "duration_seconds": 10.968,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1504-a2-2026-10-17T185248+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (83 ficheros Python)\n............................\n----------------------------------------------------------------------\nRan 28 tests in 9.777s\n\nOK",
+    "sha256": "b2a24033dd5f449635a289ee53839070867f1120fde905b08471e9f223d6624e",
+    "trust": "auto"
+  }
+}

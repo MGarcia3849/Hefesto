@@ -1,0 +1,72 @@
+{
+  "attempts": 2,
+  "base_commit": "b89e3b1b0c83806e2bd5680b3a193cc7d623b667",
+  "branch": "hefesto/fase-15-catalogo-de-skills-por-rol-y-modo",
+  "commit": "cc7e6aaf0f48a03b93824625b5f6b34df384cb54",
+  "contract": [],
+  "created_at": "2026-10-17T18:24:00+00:00",
+  "files": [
+    {
+      "path": "hefesto/roadmap.py",
+      "sha256": "83d03affb27d248fa16fdd9f0dd74905779960987a1b42b49b4de1405c0b11e2"
+    }
+  ],
+  "phase": "Fase 15 — Catálogo de skills por rol y modo",
+  "prev_sha256": "c8f39bbb357e2306a14c02156d98f591d522d6af87c4d63c49a408c837cb3b72",
+  "prev_task_id": "TASK-1501",
+  "providers": [
+    "codex:default",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-17T18:23:53+00:00",
+    "attempt": 1,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "kind con normalización corregida",
+    "reviewer": "codex:default",
+    "run_id": "260aee6058ad",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "ea5796eaca92",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "4cc19c8f1de2",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "3d77a05141ff",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "260aee6058ad",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 61,
+  "task_id": "TASK-1502",
+  "title": "Campo `kind` de las tareas",
+  "verify": {
+    "command": "python -m unittest tests.test_skill_catalog.TaskKindTests tests.test_foundation && python tools/dev.py lint",
+    "duration_seconds": 5.67,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1502-a2-2026-10-17T182359+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (82 ficheros Python)\n............................\n----------------------------------------------------------------------\nRan 28 tests in 4.542s\n\nOK",
+    "sha256": "f40de4e3a8f2ff7bd7f912adfd26d2f788dc340183d60281c597a7b5c6d0c603",
+    "trust": "auto"
+  }
+}

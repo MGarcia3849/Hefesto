@@ -16,9 +16,11 @@ VALID_ID = re.compile(r"^TASK-\d{3,}$")
 
 MARKERS = {" ": "pending", "~": "in_progress", "x": "done", "!": "blocked"}
 TASK_ROLES = ("core", "runner", "forge", "visual")
+TASK_KINDS = ("app", "web", "backend", "docs", "infra")
+_KIND_PRIORITY = ("app", "web", "backend", "infra", "docs")
 SIZES = ("S", "M", "L")
 REQUIRED = ("verify", "files", "role")
-KNOWN_FIELDS = REQUIRED + ("depends_on", "size", "parallel", "accept", "contract", "skills")
+KNOWN_FIELDS = REQUIRED + ("depends_on", "size", "parallel", "accept", "contract", "skills", "kind")
 
 
 @dataclass
@@ -71,6 +73,11 @@ class Task:
         return _split_list(self.fields.get("skills", ""))
 
     @property
+    def kind(self) -> str:
+        explicit = self.fields.get("kind", "").strip().lower()
+        return explicit or infer_kind(self.files)
+
+    @property
     def phase_slug(self) -> str:
         return slugify(self.phase)
 
@@ -119,6 +126,34 @@ def _split_list(value: str) -> list[str]:
     if not value:
         return []
     return [part.strip().strip("`") for part in re.split(r"[,\s]+", value) if part.strip().strip("`")]
+
+
+def _file_kind(path: str) -> str:
+    clean = path.strip().replace("\\", "/").lower()
+    while clean.startswith("./"):
+        clean = clean[2:]
+    name = clean.rsplit("/", 1)[-1]
+    if ".component." in name or name.endswith((".tsx", ".jsx", ".vue", ".svelte")):
+        return "app"
+    if name.endswith((".html", ".css", ".scss")):
+        return "web"
+    if name.endswith(".md") or clean == "docs" or clean.startswith("docs/") or "/docs/" in clean:
+        return "docs"
+    if (name == "dockerfile" or name.startswith("dockerfile.")
+            or clean == ".github" or clean.startswith(".github/") or "/.github/" in clean
+            or name.endswith((".yml", ".yaml"))):
+        return "infra"
+    return "backend"
+
+
+def infer_kind(files: list[str]) -> str:
+    clean_files = [f.strip() for f in files if f and f.strip()]
+    if not clean_files:
+        return "backend"
+    counts = {k: 0 for k in _KIND_PRIORITY}
+    for f in clean_files:
+        counts[_file_kind(f)] += 1
+    return max(_KIND_PRIORITY, key=lambda k: counts[k])
 
 
 def slugify(text: str) -> str:
@@ -196,6 +231,8 @@ def validate(rm: Roadmap, project: Path) -> list[str]:
                 errors.append(f"{where}: campo desconocido `{key}`")
         if task.fields.get("role") and task.role not in TASK_ROLES:
             errors.append(f"{where}: rol `{task.role}` inválido ({', '.join(TASK_ROLES)})")
+        if task.fields.get("kind", "").strip() and task.kind not in TASK_KINDS:
+            errors.append(f"{where}: kind `{task.kind}` inválido ({', '.join(TASK_KINDS)})")
         if task.size not in SIZES:
             errors.append(f"{where}: size `{task.size}` inválido (S, M, L)")
         for rel in task.files + task.contract:

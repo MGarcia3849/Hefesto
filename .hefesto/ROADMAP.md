@@ -505,7 +505,7 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - accept: README explica extractor (confianza y alcance), promoción a global, borradores de skills, lecciones y reglas del stack en el paquete, `[routing]` con pass@k, `--challenge`, `[notify]` y `autopilot`; el paso `retro` pide `hefesto learn extract`; CHANGELOG con la entrada
 
 ## Fase 15 — Catálogo de skills por rol y modo
-- [ ] TASK-1501: Contratos del catálogo de skills
+- [x] TASK-1501: Contratos del catálogo de skills
   - verify: `python -m py_compile tests/test_skill_catalog.py && python -m unittest tests.test_skill_catalog 2>&1 | grep -q "FAILED"`
   - files: tests/test_skill_catalog.py
   - role: core
@@ -514,7 +514,7 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - parallel: false
   - contract: tests/test_skill_catalog.py
   - accept: los tests compilan y fallan porque aún no existen `catalog/skills.toml`, el campo `kind` de las tareas, la selección por rol y modo, `hefesto skill sync` ni el paso de AgentShield
-- [ ] TASK-1502: Campo `kind` de las tareas
+- [x] TASK-1502: Campo `kind` de las tareas
   - verify: `python -m unittest tests.test_skill_catalog.TaskKindTests tests.test_foundation && python tools/dev.py lint`
   - files: hefesto/roadmap.py
   - role: runner
@@ -522,7 +522,7 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - size: S
   - parallel: false
   - accept: el ROADMAP acepta `kind: app | web | backend | docs | infra` opcional por tarea; sin él se deduce de forma determinista de `files` (p. ej. `.component.ts`/`.css` → app); un valor desconocido es error de validación
-- [ ] TASK-1503: Catálogo único de skills y herramientas, sin dueño
+- [x] TASK-1503: Catálogo único de skills y herramientas, sin dueño
   - verify: `python -m unittest tests.test_skill_catalog.CatalogTests && python tools/dev.py lint`
   - files: catalog/skills.toml, hefesto/skill_catalog.py
   - role: runner
@@ -530,23 +530,32 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - size: M
   - parallel: false
   - accept: `catalog/skills.toml` describe cada skill o herramienta con `source` (repo y commit fijado), `license`, `roles` (core, runner, forge, visual, reviewer, verify), `modes` por rol, `kinds`, `interactive` (puertas que exigen humano) y `providers` opcional (p. ej. full-output-enforcement preferente con gemini); incluye ECC (skills elegidas), taste-skill con nombres verificados contra el repo, impeccable, web-design-guidelines, playwright-cli y AgentShield; impeccable se describe según su uso correcto (v4): `init` y `shape` interactivos (solo Core con humano), `document` delegable, diagnóstico `critique`/`audit`, comandos de oficio y robustez (`typeset`, `layout`, `colorize`, `harden`, `optimize`, `adapt`, `clarify`, `bolder`, `quieter`, `distill`, `animate`…), `polish` como pase final y `detect` con rol `verify`; `craft` (deprecado en v4) y las maquetas que piden `OPENAI_API_KEY` quedan excluidos; `skill_catalog.load()` valida licencias permitidas y que ninguna entrada esté atada a un único proveedor
-- [ ] TASK-1504: El orquestador reparte skills por rol, modo, tipo y proveedor
-  - verify: `python -m unittest tests.test_skill_catalog.SelectionTests tests.test_skill_select && python tools/dev.py lint`
-  - files: hefesto/skill_select.py, hefesto/packet.py
-  - role: forge
+- [x] TASK-1508: Aislar del catálogo real el contrato antiguo de la sección de skills
+  - verify: `python -m unittest tests.test_skill_select && python tools/dev.py lint`
+  - files: tests/test_skill_select.py
+  - role: core
   - depends_on: TASK-1503
+  - size: S
+  - parallel: false
+  - contract: tests/test_skill_select.py
+  - accept: `test_no_section_without_selected_skills` sustituye `skill_catalog.load` por un catálogo vacío, porque desde la Fase 15 el catálogo real aporta entradas a las tareas visuales; el resto del fichero no cambia
+- [x] TASK-1504: El orquestador reparte skills por rol, modo, tipo y proveedor
+  - verify: `python -m unittest tests.test_skill_catalog.SelectionTests tests.test_skill_select && python tools/dev.py lint`
+  - files: hefesto/skill_select.py, hefesto/packet.py, hefesto/cli.py
+  - role: forge
+  - depends_on: TASK-1503, TASK-1508
   - size: M
   - parallel: false
   - accept: la selección filtra por el rol de la delegación, el `kind` de la tarea y el proveedor elegido por el router; el paquete indica qué modo de cada skill usar (p. ej. impeccable `critique` al reviewer, `polish`/`harden` al visual); las skills o modos `interactive` nunca van a un trabajador delegado, solo al Core; las herramientas con rol `verify` nunca entran en un paquete; la explicación sale en `hefesto route TASK --dry-run`
-- [ ] TASK-1505: `hefesto skill sync` desde fuentes fijadas
+- [x] TASK-1505: `hefesto skill sync` desde fuentes fijadas
   - verify: `python -m unittest tests.test_skill_catalog.SyncTests tests.test_skills_security && python tools/dev.py lint`
-  - files: hefesto/skill_catalog.py, hefesto/cli.py, catalog/packs.toml
+  - files: hefesto/skill_catalog.py, hefesto/skills.py, hefesto/cli.py, catalog/packs.toml
   - role: runner
   - depends_on: TASK-1503
   - size: M
   - parallel: false
   - accept: `hefesto skill sync` trae las skills del catálogo en su commit fijado con `skills.fetch` (informe de riesgos incluido) y las promueve si no hay riesgos; nunca ejecuta `npx skills add`, instaladores ni código de la skill; el pack `design` de packs.toml usa los nombres reales de taste-skill; un commit que cambie exige actualizar el catálogo
-- [ ] TASK-1506: AgentShield opcional antes de promover y en doctor
+- [x] TASK-1506: AgentShield opcional antes de promover y en doctor
   - verify: `python -m unittest tests.test_skill_catalog.AgentShieldTests && python tools/dev.py lint`
   - files: hefesto/skill_auto.py, hefesto/skills.py, hefesto/doctor.py
   - role: runner
@@ -554,7 +563,7 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - size: S
   - parallel: false
   - accept: si el binario `agentshield` está en el PATH (nunca vía npx), `promote` automático y `skill sync` lo pasan sobre la skill descargada y la descartan con cualquier hallazgo alto; `doctor` ofrece `agentshield scan` de la configuración de agentes del proyecto; sin binario, todo sigue como hoy y `doctor` lo avisa sin error
-- [ ] TASK-1507: Documentación del catálogo
+- [x] TASK-1507: Documentación del catálogo
   - verify: `grep -q "catalog/skills.toml" README.md && grep -q "Catálogo de skills" CHANGELOG.md`
   - files: README.md, CHANGELOG.md, prompts/protocol/plan.md
   - role: runner

@@ -1,0 +1,68 @@
+{
+  "attempts": 1,
+  "base_commit": "867a0bb50f1eb4397500682b8fcb0a636fc1a745",
+  "branch": "hefesto/fase-15-catalogo-de-skills-por-rol-y-modo",
+  "commit": "ecf94e86a369165ac9695dfb1a0c499f17414ac9",
+  "contract": [],
+  "created_at": "2026-10-17T19:04:07+00:00",
+  "files": [
+    {
+      "path": "hefesto/doctor.py",
+      "sha256": "28874dedf31ffdab35ab906609ea4c5f519d9dc49ebd02cad7c39a1343787e85"
+    },
+    {
+      "path": "hefesto/skill_auto.py",
+      "sha256": "b7a184a0720e9a74e2d9e6a9f70e5218325e3462cadc729576c1d7b0104eac4f"
+    },
+    {
+      "path": "hefesto/skills.py",
+      "sha256": "16c3d445ba0a616f5fca39dcb81b7e396697437fcfd951d2d5357e937d6a324e"
+    }
+  ],
+  "phase": "Fase 15 — Catálogo de skills por rol y modo",
+  "prev_sha256": "8cc9c907e70b9b652f4212690934b85a1182871b6a7975318e75a39839330d5a",
+  "prev_task_id": "TASK-1505",
+  "providers": [
+    "claude:sonnet",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-17T19:04:03+00:00",
+    "attempt": 0,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "agentshield opcional, fallo cerrado",
+    "reviewer": "claude:sonnet",
+    "run_id": "30afd07117ca",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "764bbaaaae41",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "30afd07117ca",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 66,
+  "task_id": "TASK-1506",
+  "title": "AgentShield opcional antes de promover y en doctor",
+  "verify": {
+    "command": "python -m unittest tests.test_skill_catalog.AgentShieldTests && python tools/dev.py lint",
+    "duration_seconds": 2.533,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1506-a1-2026-10-17T190406+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (83 ficheros Python)\n...........\n----------------------------------------------------------------------\nRan 11 tests in 1.372s\n\nOK",
+    "sha256": "39a2206021dba668ec22503d90d5291aaff0b1b7076b2d04bfcb8453de1ef58b",
+    "trust": "auto"
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "attempts": 1,
+  "base_commit": "54e68978bb6cff6a6484647eb1c67f0802ab577a",
+  "branch": "hefesto/fase-15-catalogo-de-skills-por-rol-y-modo",
+  "commit": "0e9e686677f6d64c892955f1c3d8bb15881076b9",
+  "contract": [],
+  "created_at": "2026-10-17T19:29:34+00:00",
+  "files": [
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "25e3877614307b5d2427854ed405e40487d77c02111ae5c4ca8411575fe2ca22"
+    },
+    {
+      "path": "README.md",
+      "sha256": "ddba1ff098b86f83326ad640cf205c9b0fb0998fdf4ef1c247974fbb531e6abc"
+    },
+    {
+      "path": "prompts/protocol/plan.md",
+      "sha256": "699504d7b1b0ead2e7871842451a5e2313bbcdb722db4c99cc5a64aba1573c3b"
+    }
+  ],
+  "phase": "Fase 15 — Catálogo de skills por rol y modo",
+  "prev_sha256": "c31a69ba3bb9c5ac1a62f2108d5e92d483266954612071004d5e7285f2068fc2",
+  "prev_task_id": "TASK-1506",
+  "providers": [
+    "claude:sonnet",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-17T19:10:01+00:00",
+    "attempt": 0,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "documentación alineada con el código",
+    "reviewer": "claude:sonnet",
+    "run_id": "b8c1d11ff8a7",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "f1c5863dc8c3",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "88e0969e76e3",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "d29863c91863",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "b8c1d11ff8a7",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 67,
+  "task_id": "TASK-1507",
+  "title": "Documentación del catálogo",
+  "verify": {
+    "command": "grep -q \"catalog/skills.toml\" README.md && grep -q \"Catálogo de skills\" CHANGELOG.md",
+    "duration_seconds": 0.052,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1507-a1-2026-10-17T192933+0000.log",
+    "output_summary": "",
+    "sha256": "8e14d99722efa726b547768b4fe2823dfcfd5b7b948ab84033c861b839393c1b",
+    "trust": "human"
+  }
+}

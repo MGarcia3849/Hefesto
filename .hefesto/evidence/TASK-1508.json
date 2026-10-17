@@ -1,0 +1,55 @@
+{
+  "attempts": 1,
+  "base_commit": "c55fcd7a1e3773c14f84cdb15506d596c1e4dc04",
+  "branch": "hefesto/fase-15-catalogo-de-skills-por-rol-y-modo",
+  "commit": "b6a2b842462fc7971c82678ca86c1ad91191255b",
+  "contract": [
+    "tests/test_skill_select.py"
+  ],
+  "created_at": "2026-10-17T18:38:57+00:00",
+  "files": [
+    {
+      "path": "tests/test_skill_select.py",
+      "sha256": "9d490880c242ac2ab65aece4329b528d45abefefc747a35abdaacdf11fb9f0c8"
+    }
+  ],
+  "phase": "Fase 15 — Catálogo de skills por rol y modo",
+  "prev_sha256": "f762473289fbcee2e741490a864a567a05c0b45f23af72f5c360017bdcb4b50f",
+  "prev_task_id": "TASK-1503",
+  "providers": [
+    "codex:default"
+  ],
+  "review": {
+    "at": "2026-10-17T18:38:46+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "contrato antiguo aislado del catálogo real",
+    "reviewer": "codex:default",
+    "run_id": "6ee0f3afbc6e",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "6ee0f3afbc6e",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 63,
+  "task_id": "TASK-1508",
+  "title": "Aislar del catálogo real el contrato antiguo de la sección de skills",
+  "verify": {
+    "command": "python -m unittest tests.test_skill_select && python tools/dev.py lint",
+    "duration_seconds": 9.557,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1508-a1-2026-10-17T183857+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (83 ficheros Python)\n.....................\n----------------------------------------------------------------------\nRan 21 tests in 8.421s\n\nOK",
+    "sha256": "6669cfaf54f4dbe4f862a5cda43d01725e05933baf67a3fabee6990d92d7722c",
+    "trust": "auto"
+  }
+}

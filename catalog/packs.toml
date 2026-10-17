@@ -64,6 +64,7 @@ binary = "rtk"
 version = "0.1.0"
 install = "cargo install rtk"
 
+# Los nombres en `skills` coinciden exactamente con las entradas de `Leonxlnx/taste-skill` en `catalog/skills.toml`.
 [packs.design]
 kind = "skills"
 source = "Leonxlnx/taste-skill"

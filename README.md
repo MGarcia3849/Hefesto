@@ -188,7 +188,7 @@ hefesto memory prune                                         # limpia notas dupl
 | `sync [--check]` / `prompt plan\|next\|retro` | Materializa el protocolo para las tres CLIs / imprime un paso. |
 | `note "…"` / `resume [--json]` / `handoff` | Progreso continuo y relevo entre orquestadores. |
 | `loop [--orchestrator …] [--max-tasks N] [--wait]` / `stop` | Ciclo headless con topes, relevo automático y parada limpia. |
-| `skill [find\|fetch\|update\|suggest\|auto\|TÉRMINO]` | Busca y gestiona skills locales y del registro público con informe de riesgos; sugiere (`skill suggest TASK`) o instala automáticamente (`skill auto TASK`) skills para una tarea. |
+| `skill [find\|fetch\|update\|suggest\|auto\|sync\|TÉRMINO]` | Busca y gestiona skills locales y del registro público con informe de riesgos; sincroniza el catálogo en sus commits fijados (`hefesto skill sync`), sugiere (`skill suggest TASK`) o instala automáticamente (`skill auto TASK`) skills para una tarea. |
 | `promote NAME [--yes]` | Promueve una propuesta de skill a promovidas. |
 | `pack list\|enable\|disable\|update` | Catálogo y gestión de packs externos curados. |
 | `limits [--json]` | Uso real de ventanas de 5 h y semanal de cada proveedor. |
@@ -270,6 +270,41 @@ Cuando las skills instaladas no bastan para cubrir una tarea, Hefesto puede busc
 
 ```bash
 hefesto skill auto TASK-001               # ejecuta bajo demanda la búsqueda e instalación automática para la tarea
+```
+
+### Catálogo de skills por rol y modo (`catalog/skills.toml`)
+
+El catálogo único [`catalog/skills.toml`](catalog/skills.toml) declara las skills y herramientas curadas de Hefesto y cómo se reparten entre roles, modos y tipos de tarea (`hefesto/skill_catalog.py`, `hefesto/skill_select.py`):
+
+- **Las skills no pertenecen a ningún proveedor:** el orquestador decide qué agente o subagente usa cada skill o herramienta, en qué modo y para qué; dónde esté instalada una skill en disco (`.claude/skills`, `.agents/skills`, etc.) no decide quién la usa. El campo `providers` es únicamente una preferencia de orden cuando el router elige ese proveedor (p. ej. `full-output-enforcement` con `gemini` o `gpt-taste` con `codex`), nunca propiedad ni exclusividad (`provider_only` y `exclusive` están prohibidos).
+- **Campos de una entrada (`[skills.<nombre>]`):**
+  - `kind`: `"skill"` (documento `SKILL.md` descargable) o `"tool"` (binario externo).
+  - `source`: repositorio `"owner/repo"`, acompañado en toda `skill` de un `commit` fijado (hash SHA-1 de 40 hex en minúsculas; nunca `main` ni ramas móviles) y un `path` relativo portable opcional.
+  - `license`: licencia permisiva obligatoria (`MIT`, `Apache-2.0`, `BSD-2-Clause`, `BSD-3-Clause`, `ISC`, `0BSD`, `CC0-1.0`; se rechazan `AGPL`, `GPL` y propietarias).
+  - `roles`: subconjunto de `core`, `runner`, `forge`, `visual`, `reviewer` y `verify`.
+  - `modes`: tabla opcional `[skills.<nombre>.modes]` que asigna a cada rol la lista de modos concretos que debe aplicar (un rol sin entrada en `modes` aplica la skill entera).
+  - `kinds`: tipos de tarea a los que aplica (`app`, `web`, `backend`, `docs`, `infra`); si se omite o va vacía, aplica a todos.
+  - `interactive`: modos que exigen conversación directa con un humano.
+  - `providers`: lista opcional de proveedores que priorizan la entrada en el orden del paquete sin excluir al resto.
+  - `binary`: nombre del ejecutable requerido en el `PATH` (obligatorio en `kind = "tool"`, prohibido `npx`).
+- **Campo `kind` en las tareas del ROADMAP:** cada tarea puede declarar opcionalmente `- kind: app | web | backend | docs | infra` (un valor fuera de esos cinco es error de validación en `roadmap.validate`). Si se omite, `roadmap.infer_kind(files)` lo deduce de forma determinista clasificando cada fichero de `files` (`.component.*`, `.tsx`, `.jsx`, `.vue`, `.svelte` → `app`; `.html`, `.css`, `.scss` sueltos → `web`; `.md` o rutas en `docs/` → `docs`; `Dockerfile`, `.github/`, `*.yml`/`*.yaml` → `infra`; el resto → `backend`) por mayoría simple y desempate en orden `app > web > backend > infra > docs` (sin ficheros → `backend`).
+- **Puertas interactivas y aislamiento de `verify`:** los modos declarados en `interactive` (`init`, `shape`, `live` y `generate` de `impeccable`) están reservados en exclusiva al rol `core` trabajando con un humano. A los trabajadores delegados (`runner`, `forge`, `visual`, `reviewer`) `skill_select.from_catalog` les filtra siempre esos modos interactivos y los modos de `verify`, y el paquete de contexto les indica explícitamente qué modos tienen asignados (`modos: …`) y, cuando la skill está instalada o el rol la recibe entera, emite el aviso `modos prohibidos para este rol (exigen un humano o son de verify): X — no los ejecutes`. Las herramientas y modos del rol `verify` (como `detect` en `impeccable` o el binario `agentshield`) nunca entran en un paquete de tarea. En `impeccable` (flujo v4), `craft` (deprecado en v4), `overdrive` y los hooks quedan fuera del catálogo.
+- **Visibilidad en el enrutado (`hefesto route TASK --dry-run`):** explica para cada rol de la ruta prevista (tanto el rol de implementación de la tarea como el `reviewer`) qué entradas del catálogo y qué modos concretos viajarán en su paquete (mostrando `toda la skill (prohibidos: …)` cuando el rol recibe la skill entera con modos prohibidos).
+- **Sincronización desde commits fijados (`hefesto skill sync`):** recorre las entradas `kind = "skill"` de `catalog/skills.toml`, descarga cada una en su commit exacto mediante `skills.fetch("<source>@<name>", commit=commit)` a `~/hefesto/skills/_proposals/` junto con su informe de riesgos (`SOURCE.json` y verificación de identidad de `SKILL.md`), y la promueve automáticamente a `~/hefesto/skills/promoted` (`skills.promote(..., yes=True)`) **solo si** el commit descargado coincide con el fijado en el catálogo, no hay riesgos y AgentShield (si está disponible) no reporta hallazgos altos. Si el commit no coincide o aparece cualquier riesgo, borra la propuesta y rechaza la skill (cambiar de versión exige actualizar el hash en `catalog/skills.toml`). Nunca ejecuta `npx skills add`, instaladores externos ni código incluido en la skill; las entradas `kind = "tool"` se instalan aparte y `skill sync` las omite. El pack `design` de `catalog/packs.toml` referencia exactamente los seis nombres verificados de `Leonxlnx/taste-skill`.
+- **AgentShield opcional (`agentshield`):** si el binario `agentshield` está instalado en el `PATH` (nunca se invoca vía `npx`), tanto `hefesto skill sync` como la instalación automática (`skill_auto.ensure`) ejecutan `[agentshield, "scan", "--path", <ruta>, "--format", "json"]` con `shell=False` antes de promover una skill y la descartan si aparece cualquier hallazgo con severidad `high` o `critical` (incluso si el binario devuelve código distinto de `0`). El análisis **falla cerrado**: una salida no JSON, sin lista `findings`, un error sin salida, `OSError` o un timeout se tratan como un hallazgo `high` y bloquean la promoción. `hefesto doctor` incluye el check opcional `agentshield` (no bloqueante si falta) y, cuando está instalado, sugiere auditar la configuración del proyecto con `agentshield scan --path .claude`.
+
+| Entrada (`catalog/skills.toml`) | Tipo y origen | `kinds` | Roles y modos (`rol: modos` o skill entera) | Notas / preferencia |
+|---|---|---|---|---|
+| `impeccable` | `skill` · `pbakaus/impeccable` | `app`, `web` | `core`: `init`, `shape`, `document`, `critique`, `audit`, `live`, `generate`<br>`visual`: `document`, `extract`, `typeset`, `layout`, `colorize`, `harden`, `optimize`, `adapt`, `clarify`, `onboard`, `distill`, `quieter`, `bolder`, `animate`, `delight`, `polish`<br>`reviewer`: `critique`, `audit`<br>`verify`: `detect` | `interactive`: `init`, `shape`, `live`, `generate` (solo `core`); `craft` fuera (v4). |
+| `web-design-guidelines` | `skill` · `vercel-labs/agent-skills` | `app`, `web` | `reviewer`, `visual` (skill entera) | Guías de interfaz web. |
+| `playwright-cli` | `skill` · `microsoft/playwright-cli` | `app`, `web` | `visual`, `reviewer`, `verify` (skill entera) | `binary = "playwright-cli"`. |
+| `design-taste-frontend`<br>`redesign-existing-projects`<br>`minimalist-ui`<br>`high-end-visual-design`<br>`gpt-taste`<br>`full-output-enforcement` | `skill` · `Leonxlnx/taste-skill` (6) | `app`, `web` (las 5 primeras); todos en `full-output-enforcement` | `design-taste-frontend`: `core`, `visual`<br>`redesign-existing-projects`, `minimalist-ui`, `high-end-visual-design`, `gpt-taste`: `visual`<br>`full-output-enforcement`: `runner`, `forge`, `visual` | Preferencia no exclusiva: `gpt-taste` (`codex`), `full-output-enforcement` (`gemini`). Pack `design`. |
+| `angular-developer`<br>`frontend-a11y`<br>`security-review`<br>`tdd-workflow`<br>`python-patterns`<br>`python-testing`<br>`e2e-testing`<br>`verification-loop` | `skill` · `affaan-m/ECC` (8) | `angular-developer`: `app`<br>`frontend-a11y`, `e2e-testing`: `app`, `web`<br>`python-patterns`, `python-testing`: `backend`<br>`security-review`, `tdd-workflow`, `verification-loop`: todos | `angular-developer`: `runner`, `forge`, `visual`<br>`frontend-a11y`: `visual`, `reviewer`<br>`security-review`: `reviewer`, `forge`<br>`tdd-workflow`: `core`, `runner`, `forge`<br>`python-patterns`: `runner`, `forge`<br>`python-testing`: `core`, `runner`, `forge`<br>`e2e-testing`: `runner`, `visual`<br>`verification-loop`: `runner`, `forge` | Skills de ingeniería y pruebas de ECC en commit fijado. |
+| `agentshield` | `tool` · `affaan-m/agentshield` | todos | `verify` | `binary = "agentshield"` (nunca entra en paquetes; nunca vía `npx`). |
+
+```bash
+hefesto skill sync                        # descarga y promueve las skills del catálogo en su commit fijado
+hefesto route TASK-001 --dry-run          # explica por rol qué skills y modos del catálogo irán en el paquete
 ```
 
 ## Aprendizaje

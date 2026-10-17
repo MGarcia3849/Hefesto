@@ -94,6 +94,22 @@ def _graphify_check() -> Check:
     return Check(OK, "graphify", f"{path} (versión fijada {ver})")
 
 
+def _agentshield_check() -> Check:
+    path = which("agentshield")
+    if not path:
+        return Check(
+            MISSING,
+            "agentshield",
+            "no encontrado — opcional: análisis de skills y de la configuración de agentes (nunca vía npx)",
+            False,
+        )
+    return Check(
+        OK,
+        "agentshield",
+        f"{_version(path)}  ({path}) — sugerencia: `agentshield scan --path .claude`",
+        False,
+    )
+
 
 def auth_status(provider: str) -> str:
     """Autenticación comprobable sin gastar llamadas: `yes`, `no` o `unknown`."""
@@ -270,6 +286,7 @@ def run_checks(project: Path | None) -> list[Check]:
     checks.append(Check(INFO, "skills (npm)", f"versión fijada {npm_ver}"))
     checks.append(_binary("shellcheck", purpose="opcional: lint de install.sh"))
     checks.append(_graphify_check())
+    checks.append(_agentshield_check())
     keys = present_api_keys()
     if keys:
         checks.append(Check(WARN, "API keys", "en el entorno: " + ", ".join(keys)

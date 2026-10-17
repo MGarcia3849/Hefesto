@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from hefesto import config, roadmap, skills
+from hefesto import config, roadmap, skill_catalog, skills
 from hefesto.util import FRAMEWORK_ROOT, hefesto_home
 
 PROTOCOL_SKILLS: frozenset[str] = frozenset({
@@ -69,6 +69,49 @@ class SkillChoice:
     score: int
     reasons: list[str] = field(default_factory=list)
     body: str = field(default="", compare=False)
+
+
+@dataclass(frozen=True)
+class CatalogChoice:
+    name: str
+    modes: tuple[str, ...]
+    reasons: list[str] = field(default_factory=list, compare=False)
+    forbidden: tuple[str, ...] = ()
+
+
+def from_catalog(
+    catalog: dict[str, skill_catalog.CatalogEntry],
+    role: str,
+    task: roadmap.Task,
+    provider: str | None = None,
+) -> list[CatalogChoice]:
+    """Selecciona por rol y tipo; el proveedor solo cambia la prioridad estable."""
+    if role == "verify":
+        return []
+    entries = list(catalog.values())
+    if provider:
+        entries.sort(key=lambda entry: provider not in entry.providers)
+    choices: list[CatalogChoice] = []
+    for entry in entries:
+        if role not in entry.roles or (entry.kinds and task.kind not in entry.kinds):
+            continue
+        role_modes = entry.modes.get(role, ())
+        modes = role_modes
+        forbidden: tuple[str, ...] = ()
+        if role != "core":
+            forb_list: list[str] = []
+            for mode in (*entry.interactive, *entry.modes.get("verify", ())):
+                if mode not in forb_list:
+                    forb_list.append(mode)
+            forbidden = tuple(forb_list)
+            modes = tuple(mode for mode in role_modes if mode not in forbidden)
+            if role_modes and not modes:
+                continue
+        reasons = [f"rol: {role}", f"kind: {task.kind}"]
+        if provider and provider in entry.providers:
+            reasons.append(f"preferida por {provider}")
+        choices.append(CatalogChoice(entry.name, modes, reasons, forbidden))
+    return choices
 
 
 def _normalize(text: str) -> str:
@@ -266,10 +309,17 @@ def select(
     if not enabled:
         return pinned_choices
 
+    try:
+        cat = skill_catalog.load()
+        chosen_cat = {c.name.casefold() for c in from_catalog(cat, role, task)} if task is not None else set()
+        disallowed_cat = {name.casefold() for name in cat} - chosen_cat
+    except Exception:
+        disallowed_cat = set()
+
     scored: list[SkillChoice] = []
     for info in installed:
         key = info.name.casefold()
-        if key in pinned_seen or key in excluded:
+        if key in pinned_seen or key in excluded or key in disallowed_cat:
             continue
         score, reasons = _score_skill(info, words)
         if score > 0 and score >= min_score:

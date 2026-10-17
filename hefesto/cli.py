@@ -342,7 +342,7 @@ def cmd_packet(args: argparse.Namespace) -> int:
 
 
 def cmd_route(args: argparse.Namespace) -> int:
-    from hefesto import config, providers, roadmap, router, scheduler, skill_select, skills
+    from hefesto import config, providers, roadmap, router, scheduler, skill_catalog, skill_select, skills
 
     proj = _project(args)
     cfg = config.load(proj)
@@ -357,6 +357,10 @@ def cmd_route(args: argparse.Namespace) -> int:
         else:
             steps = [(task.role, "implementación"), ("reviewer", "revisión"), ("forge", "si fallan dos intentos")]
         print(f"Ruta de {task.id} (size {task.size}) — sin llamadas a proveedores:")
+        try:
+            catalog = skill_catalog.load()
+        except HefestoError:
+            catalog = {}
         for role, why in steps:
             hops = router.plan_route(cfg, role, project=proj)
             chosen = next((h for h in hops if h.outcome.startswith("elegido")), None)
@@ -368,9 +372,25 @@ def cmd_route(args: argparse.Namespace) -> int:
                 chosen_label = "NINGUNO disponible"
             print(f"  {role:<9} {why:<34} → {chosen_label}"
                   + (f"   saltados: {'; '.join(skipped)}" if skipped else ""))
+            provider = chosen.model_id.split(":", 1)[0] if chosen else None
+            catalog_choices = skill_select.from_catalog(catalog, role, task, provider)
+            # Con modos explícitos por rol se listan solo los permitidos (test_route_dry_run_explains_catalog_choice
+            # comprueba assertNotIn sobre los interactivos); cuando el rol entra con toda la skill se excluyen
+            # explícitamente los prohibidos.
+            catalog_labels: list[str] = []
+            for c in catalog_choices:
+                if c.modes:
+                    mode_desc = ", ".join(c.modes)
+                elif c.forbidden:
+                    mode_desc = f"toda la skill (prohibidos: {', '.join(c.forbidden)})"
+                else:
+                    mode_desc = "toda la skill"
+                catalog_labels.append(f"{c.name} [{mode_desc}]")
+            catalog_names = "; ".join(catalog_labels) or "ninguna"
+            print(skills.sanitize_text(f"  catálogo {role}: {catalog_names}"))
         choices = skill_select.select(proj, cfg, task.role, task)
         names = ", ".join(skills.sanitize_text(c.name) for c in choices) if choices else "ninguna"
-        print(f"skills del paquete: {names}")
+        print(skills.sanitize_text(f"skills del paquete: {names}"))
         return EXIT_OK
 
     rm = roadmap.load_valid(proj)
@@ -570,6 +590,25 @@ def cmd_skill(args: argparse.Namespace) -> int:
         )
 
     subcmd = tokens[0].lower()
+    if subcmd == "sync":
+        from hefesto import skill_catalog
+
+        res = skill_catalog.sync()
+        for name in res.promoted:
+            print(skills.sanitize_text(f"promovida: {name}"))
+        for name, reason in res.rejected:
+            print(skills.sanitize_text(f"descartada: {name} — {reason}"))
+        for name, reason in res.skipped:
+            print(skills.sanitize_text(f"omitida: {name} — {reason}"))
+        print(
+            skills.sanitize_text(
+                f"Resumen: {len(res.promoted)} promovidas, "
+                f"{len(res.rejected)} descartadas, "
+                f"{len(res.skipped)} omitidas."
+            )
+        )
+        return EXIT_OK
+
     if subcmd == "auto":
         if len(tokens) < 2:
             raise HefestoError("Indica el ID de la tarea: `hefesto skill auto TASK-NNN`.", EXIT_INPUT)
@@ -1474,7 +1513,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.set_defaults(func=cmd_prompt)
 
     p = sub.add_parser("skill", help="busca y gestiona skills locales y del registro público")
-    p.add_argument("args", nargs="*", help="subcomando (find, fetch, update, suggest, auto) o término de búsqueda")
+    p.add_argument("args", nargs="*", help="subcomando (find, fetch, update, suggest, auto, sync) o término de búsqueda")
     p.add_argument("--owner", help="filtra por propietario en `skill find`")
     p.add_argument("--online", action="store_true", help="con suggest, busca también en skills.sh; nunca descarga")
     p.set_defaults(func=cmd_skill)

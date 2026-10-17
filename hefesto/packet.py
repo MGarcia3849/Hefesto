@@ -14,8 +14,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from hefesto import config, distribution, guard, packs, roadmap, skill_select, skills
-from hefesto.util import FRAMEWORK_ROOT
+from hefesto import config, distribution, guard, packs, roadmap, skill_catalog, skill_select, skills
+from hefesto.util import FRAMEWORK_ROOT, HefestoError
 
 CHARS_PER_TOKEN = 4
 MAX_FILE_BYTES = 200_000
@@ -333,9 +333,25 @@ def stack_rules(project: Path, cfg: config.Config) -> list[tuple[str, str]]:
     return out
 
 
-def _skill_parts(project: Path, cfg: config.Config, role: str, task: roadmap.Task) -> list[tuple[str, str]]:
-    choices = skill_select.select(project, cfg, role, task)
-    if not choices:
+def _skill_parts(project: Path, cfg: config.Config, role: str, task: roadmap.Task,
+                 provider: str | None = None) -> list[tuple[str, str]]:
+    raw_choices = skill_select.select(project, cfg, role, task)
+    try:
+        catalog = skill_catalog.load()
+        catalog_choices = skill_select.from_catalog(catalog, role, task, provider)
+    except HefestoError:
+        catalog = {}
+        catalog_choices = []
+    pinned_names = {name.casefold() for name in skill_select._pinned_names(task)}
+    catalog_names = {name.casefold() for name in catalog}
+    chosen_catalog_names = {c.name.casefold() for c in catalog_choices}
+    selected_by_name = {c.name.casefold(): c for c in raw_choices}
+    choices = [
+        c for c in raw_choices
+        if c.name.casefold() not in chosen_catalog_names
+        and (c.name.casefold() not in catalog_names or c.name.casefold() in pinned_names)
+    ]
+    if not choices and not catalog_choices:
         return []
     max_chars = int(cfg.get("skills_selection", "max_chars_per_skill", default=6000))
     parts: list[tuple[str, str]] = [("", SKILL_INTRO)]
@@ -352,6 +368,38 @@ def _skill_parts(project: Path, cfg: config.Config, role: str, task: roadmap.Tas
         if clean_body:
             lines.append(clean_body)
         parts.append((f"### {clean_name} ({clean_source})", "\n".join(lines)))
+    if catalog_choices:
+        installed = {info.name.casefold(): info for info in
+                     skill_select.discover(skill_select.default_roots(project, cfg))}
+        for choice in catalog_choices:
+            key = choice.name.casefold()
+            modes = ", ".join(choice.modes) if choice.modes else "toda la skill"
+            lines = [_clean(f"modos: {modes}")]
+            info = installed.get(key) or selected_by_name.get(key)
+            # Se añade el aviso de modos prohibidos cuando hay cuerpo instalado (que describe todos
+            # los modos) o cuando el rol entra con toda la skill; sin cuerpo instalado y con modos
+            # explícitos se omiten del texto (contrato SelectionTests: assertNotIn sobre pulidor).
+            if choice.forbidden and (info is not None or not choice.modes):
+                forb = ", ".join(choice.forbidden)
+                lines.append(
+                    _clean(
+                        f"modos prohibidos para este rol (exigen un humano o son de verify): {forb} — no los ejecutes"
+                    )
+                )
+            reasons = list(choice.reasons)
+            prev = selected_by_name.get(key)
+            if prev is not None:
+                for r in prev.reasons:
+                    if r not in reasons:
+                        reasons.append(r)
+            lines.append(_clean("Motivo: " + "; ".join(reasons)))
+            if info is not None:
+                clean_body = _clean(info.body)
+                if len(clean_body) > max_chars:
+                    clean_body = clean_body[:max_chars] + "\n[skill recortada]"
+                if clean_body:
+                    lines.append(clean_body)
+            parts.append((_clean(f"### {choice.name} (catálogo)"), "\n".join(lines)))
     return parts
 
 
@@ -389,7 +437,7 @@ def build(project: Path, cfg: config.Config, role: str, instruction: str, task: 
         files = [(n, t) for n, t in files if n not in contract_set]
         if files:
             sections.append(Section("Ficheros de la tarea", P_FILES, [(f"### {n}", f"```\n{t}\n```") for n, t in files]))
-        skill_parts = _skill_parts(project, cfg, role, task)
+        skill_parts = _skill_parts(project, cfg, role, task, model_id.split(":", 1)[0])
         if skill_parts:
             sections.append(Section("Skills que aplican (síguelas)", P_SKILLS, skill_parts))
         rules = stack_rules(project, cfg)

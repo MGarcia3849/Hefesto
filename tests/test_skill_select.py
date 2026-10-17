@@ -289,7 +289,9 @@ class PacketSkillsTests(_Base):
         self.prepare()
         settings = config.project_settings_path(self.project)
         config.set_setting(settings, ("skills_selection", "min_score"), 999)
-        self.assertNotIn("Skills que aplican", self.build().text)
+        # Desde la Fase 15 el catálogo real aporta entradas a las tareas visuales: aquí se aísla de él.
+        with mock.patch("hefesto.skill_catalog.load", return_value={}):
+            self.assertNotIn("Skills que aplican", self.build().text)
 
     def test_skills_are_trimmed_after_memory_and_before_task_files(self) -> None:
         self.assertGreater(packet.P_SKILLS, packet.P_FILES)

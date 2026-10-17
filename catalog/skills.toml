@@ -1,0 +1,195 @@
+# Catálogo único de skills y herramientas de Hefesto.
+# Las skills no tienen dueño: el orquestador decide qué rol y qué modo usa cada entrada.
+# Todos los commits están fijados (SHA-1 de 40 hex) y se traen con `hefesto skill sync`,
+# nunca con npx ni instaladores externos.
+
+# Impeccable v4: craft está deprecado en v4 y overdrive y hooks quedan fuera a propósito;
+# init/shape/live/generate exigen un humano; detect solo como verify;
+# telemetría siempre desactivada con DO_NOT_TRACK=1.
+[skills.impeccable]
+kind = "skill"
+source = "pbakaus/impeccable"
+commit = "08d5b470495d242ca0470f4aeae1956c3a074f83"
+path = ".agents/skills/impeccable"
+license = "Apache-2.0"
+roles = ["core", "visual", "reviewer", "verify"]
+kinds = ["app", "web"]
+interactive = ["init", "shape", "live", "generate"]
+
+[skills.impeccable.modes]
+core = ["init", "shape", "document", "critique", "audit", "live", "generate"]
+visual = [
+    "document",
+    "extract",
+    "typeset",
+    "layout",
+    "colorize",
+    "harden",
+    "optimize",
+    "adapt",
+    "clarify",
+    "onboard",
+    "distill",
+    "quieter",
+    "bolder",
+    "animate",
+    "delight",
+    "polish",
+]
+reviewer = ["critique", "audit"]
+verify = ["detect"]
+
+[skills.web-design-guidelines]
+kind = "skill"
+source = "vercel-labs/agent-skills"
+commit = "063bee94c3f4df8453406c830b0a7df0f2860278"
+path = "skills/web-design-guidelines"
+license = "MIT"
+roles = ["reviewer", "visual"]
+kinds = ["app", "web"]
+
+[skills.playwright-cli]
+kind = "skill"
+source = "microsoft/playwright-cli"
+commit = "b85c7a736bb473bf55b584e54a09ffa698d6d871"
+path = "skills/playwright-cli"
+license = "Apache-2.0"
+roles = ["visual", "reviewer", "verify"]
+kinds = ["app", "web"]
+binary = "playwright-cli"
+
+[skills.agentshield]
+kind = "tool"
+source = "affaan-m/agentshield"
+commit = "b0891303bdcd6037376a94263d45cfd2ff3dfb98"
+license = "MIT"
+roles = ["verify"]
+binary = "agentshield"
+
+# --- Leonxlnx/taste-skill (nombres del frontmatter SKILL.md) ---
+
+[skills.design-taste-frontend]
+kind = "skill"
+source = "Leonxlnx/taste-skill"
+commit = "f624f37a8c650b9cc550253104925efe4c8de246"
+path = "skills/taste-skill"
+license = "MIT"
+roles = ["core", "visual"]
+kinds = ["app", "web"]
+
+[skills.redesign-existing-projects]
+kind = "skill"
+source = "Leonxlnx/taste-skill"
+commit = "f624f37a8c650b9cc550253104925efe4c8de246"
+path = "skills/redesign-skill"
+license = "MIT"
+roles = ["visual"]
+kinds = ["app", "web"]
+
+[skills.minimalist-ui]
+kind = "skill"
+source = "Leonxlnx/taste-skill"
+commit = "f624f37a8c650b9cc550253104925efe4c8de246"
+path = "skills/minimalist-skill"
+license = "MIT"
+roles = ["visual"]
+kinds = ["app", "web"]
+
+[skills.high-end-visual-design]
+kind = "skill"
+source = "Leonxlnx/taste-skill"
+commit = "f624f37a8c650b9cc550253104925efe4c8de246"
+path = "skills/soft-skill"
+license = "MIT"
+roles = ["visual"]
+kinds = ["app", "web"]
+
+[skills.gpt-taste]
+kind = "skill"
+source = "Leonxlnx/taste-skill"
+commit = "f624f37a8c650b9cc550253104925efe4c8de246"
+path = "skills/gpt-tasteskill"
+license = "MIT"
+roles = ["visual"]
+kinds = ["app", "web"]
+providers = ["codex"]
+
+[skills.full-output-enforcement]
+kind = "skill"
+source = "Leonxlnx/taste-skill"
+commit = "f624f37a8c650b9cc550253104925efe4c8de246"
+path = "skills/output-skill"
+license = "MIT"
+roles = ["runner", "forge", "visual"]
+providers = ["gemini"]
+
+# --- affaan-m/ECC ---
+
+[skills.angular-developer]
+kind = "skill"
+source = "affaan-m/ECC"
+commit = "76aaa77df6adc5b889e689007bf99b9a4f74af34"
+path = "skills/angular-developer"
+license = "MIT"
+roles = ["runner", "forge", "visual"]
+kinds = ["app"]
+
+[skills.frontend-a11y]
+kind = "skill"
+source = "affaan-m/ECC"
+commit = "76aaa77df6adc5b889e689007bf99b9a4f74af34"
+path = "skills/frontend-a11y"
+license = "MIT"
+roles = ["visual", "reviewer"]
+kinds = ["app", "web"]
+
+[skills.security-review]
+kind = "skill"
+source = "affaan-m/ECC"
+commit = "76aaa77df6adc5b889e689007bf99b9a4f74af34"
+path = "skills/security-review"
+license = "MIT"
+roles = ["reviewer", "forge"]
+
+[skills.tdd-workflow]
+kind = "skill"
+source = "affaan-m/ECC"
+commit = "76aaa77df6adc5b889e689007bf99b9a4f74af34"
+path = "skills/tdd-workflow"
+license = "MIT"
+roles = ["core", "runner", "forge"]
+
+[skills.python-patterns]
+kind = "skill"
+source = "affaan-m/ECC"
+commit = "76aaa77df6adc5b889e689007bf99b9a4f74af34"
+path = "skills/python-patterns"
+license = "MIT"
+roles = ["runner", "forge"]
+kinds = ["backend"]
+
+[skills.python-testing]
+kind = "skill"
+source = "affaan-m/ECC"
+commit = "76aaa77df6adc5b889e689007bf99b9a4f74af34"
+path = "skills/python-testing"
+license = "MIT"
+roles = ["core", "runner", "forge"]
+kinds = ["backend"]
+
+[skills.e2e-testing]
+kind = "skill"
+source = "affaan-m/ECC"
+commit = "76aaa77df6adc5b889e689007bf99b9a4f74af34"
+path = "skills/e2e-testing"
+license = "MIT"
+roles = ["runner", "visual"]
+kinds = ["app", "web"]
+
+[skills.verification-loop]
+kind = "skill"
+source = "affaan-m/ECC"
+commit = "76aaa77df6adc5b889e689007bf99b9a4f74af34"
+path = "skills/verification-loop"
+license = "MIT"
+roles = ["runner", "forge"]

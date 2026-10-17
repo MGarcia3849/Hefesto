@@ -97,6 +97,7 @@ def sanitize_text(text: str) -> str:
 ANSI_RE = re.compile(r"\x1b(?:\[[0-?]*[ -/]*[@-~]|\].*?(?:\x07|\x1b\\))")
 SPEC_RE = re.compile(r"^([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)@([A-Za-z0-9_.-]+)$")
 NAME_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
+COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 
 SCRIPT_EXTENSIONS = {".sh", ".bash", ".ps1", ".bat", ".cmd", ".py", ".js", ".ts", ".exe"}
 
@@ -626,8 +627,14 @@ def _analyze_file_risks(rel_str: str, blob_bytes: bytes, mode: str) -> list[dict
     return risks
 
 
-def fetch(spec: str) -> Path:
+def fetch(spec: str, commit: str | None = None) -> Path:
     """Descarga una skill desde su repositorio git a la carpeta de propuestas."""
+    if commit is not None:
+        if not isinstance(commit, str) or not COMMIT_RE.fullmatch(commit):
+            raise HefestoError(
+                f"Commit inválido ({commit!r}): debe ser un hash SHA-1 de 40 hex en minúsculas.",
+                EXIT_INPUT,
+            )
     match = SPEC_RE.fullmatch(spec)
     if not match:
         raise HefestoError(
@@ -670,13 +677,16 @@ def fetch(spec: str) -> Path:
         git_env["GIT_LFS_SKIP_SMUDGE"] = "1"
         git_env["GIT_TERMINAL_PROMPT"] = "0"
 
-        clone_dir = tmp_path / "repo"
-        clone_cmd = [
-            git_bin,
+        git_c_opts = [
             "-c", f"core.hooksPath={empty_hooks.as_posix()}",
             "-c", "protocol.allow=never",
             "-c", "protocol.file.allow=always",
             "-c", "protocol.https.allow=always",
+        ]
+        clone_dir = tmp_path / "repo"
+        clone_cmd = [
+            git_bin,
+            *git_c_opts,
             "clone",
             "--no-checkout",
             "--depth", "1",
@@ -698,25 +708,73 @@ def fetch(spec: str) -> Path:
             raise HefestoError(f"Error al clonar el repositorio de skills: {exc}", EXIT_UNAVAILABLE) from exc
         if res.returncode != 0:
             raise HefestoError(
-                f"Error al clonar {repo_url} (código {res.returncode}): {res.stderr.strip() or result.stdout.strip() if 'result' in locals() else res.stderr.strip() or res.stdout.strip()}",
+                f"Error al clonar {repo_url} (código {res.returncode}): {res.stderr.strip() or res.stdout.strip()}",
                 EXIT_INPUT,
             )
 
-        rev_res = subprocess.run(
-            [git_bin, "rev-parse", "HEAD"],
-            cwd=clone_dir,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            env=git_env,
-        )
-        if rev_res.returncode != 0:
-            raise HefestoError("Error al obtener el commit del clon de la skill.", EXIT_INPUT)
-        commit = rev_res.stdout.strip()
+        if commit is None:
+            rev_res = subprocess.run(
+                [git_bin, "rev-parse", "HEAD"],
+                cwd=clone_dir,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                env=git_env,
+            )
+            if rev_res.returncode != 0:
+                raise HefestoError("Error al obtener el commit del clon de la skill.", EXIT_INPUT)
+            commit = rev_res.stdout.strip()
+            tree_ref = "HEAD"
+        else:
+            fetch_res = subprocess.run(
+                [git_bin, *git_c_opts, "fetch", "--depth", "1", "--no-tags", "origin", commit],
+                cwd=clone_dir,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                env=git_env,
+            )
+            if fetch_res.returncode != 0:
+                unshallow_res = subprocess.run(
+                    [git_bin, *git_c_opts, "fetch", "--unshallow", "--no-tags", "origin"],
+                    cwd=clone_dir,
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                    errors="replace",
+                    env=git_env,
+                )
+                if unshallow_res.returncode != 0:
+                    subprocess.run(
+                        [git_bin, *git_c_opts, "fetch", "--no-tags", "origin"],
+                        cwd=clone_dir,
+                        capture_output=True,
+                        text=True,
+                        encoding="utf-8",
+                        errors="replace",
+                        env=git_env,
+                    )
+            rev_res = subprocess.run(
+                [git_bin, "rev-parse", "--verify", f"{commit}^{{commit}}"],
+                cwd=clone_dir,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                env=git_env,
+            )
+            if rev_res.returncode != 0:
+                raise HefestoError(
+                    f"No se encontró el commit '{commit}' en {repo_url}.",
+                    EXIT_INPUT,
+                )
+            commit = rev_res.stdout.strip()
+            tree_ref = commit
 
         tree_res = subprocess.run(
-            [git_bin, "ls-tree", "-r", "-z", "HEAD"],
+            [git_bin, "ls-tree", "-r", "-z", tree_ref],
             cwd=clone_dir,
             capture_output=True,
             env=git_env,
@@ -1095,3 +1153,62 @@ def update(skill: str) -> Path:
         raise HefestoError(f"SOURCE.json de '{skill}' no contiene 'spec'.", EXIT_INPUT)
 
     return fetch(source_data["spec"])
+
+
+def agentshield_blocks(findings: list[dict[str, str]] | None) -> bool:
+    """True si algún hallazgo tiene severidad high o critical (sin distinguir mayúsculas)."""
+    if not isinstance(findings, list):
+        return False
+    return any(
+        isinstance(f, dict) and str(f.get("severity", "")).strip().lower() in ("high", "critical")
+        for f in findings
+    )
+
+
+def agentshield_scan(path: Path) -> list[dict[str, str]] | None:
+    """Analiza una carpeta con el binario local `agentshield` (nunca vía npx). Falla cerrado."""
+    binary = util.which("agentshield")
+    if not binary:
+        return None
+    try:
+        res = subprocess.run(
+            [binary, "scan", "--path", str(path), "--format", "json"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=120,
+            env=util.filtered_env(),
+        )
+    except subprocess.TimeoutExpired:
+        return [{"severity": "high", "title": "agentshield: tiempo de espera agotado", "file": ""}]
+    except OSError as exc:
+        return [{"severity": "high", "title": f"agentshield: {sanitize_text(str(exc))}", "file": ""}]
+
+    raw_out = (res.stdout or "").strip()
+    if not raw_out:
+        return [{"severity": "high", "title": f"agentshield: salida vacía (código {res.returncode})", "file": ""}]
+
+    try:
+        data = json.loads(raw_out)
+    except (json.JSONDecodeError, ValueError):
+        return [{"severity": "high", "title": "agentshield: salida no es JSON válido", "file": ""}]
+
+    if not isinstance(data, dict) or not isinstance(data.get("findings"), list):
+        return [{"severity": "high", "title": "agentshield: informe JSON sin lista findings", "file": ""}]
+
+    findings: list[dict[str, str]] = []
+    for item in data["findings"]:
+        if not isinstance(item, dict):
+            return [{"severity": "high", "title": "agentshield: hallazgo inválido en findings", "file": ""}]
+        cleaned: dict[str, str] = {
+            sanitize_text(str(k)): sanitize_text(str(v))
+            for k, v in item.items()
+            if v is not None
+        }
+        cleaned["severity"] = sanitize_text(str(item.get("severity", ""))).strip().lower()
+        cleaned.setdefault("title", "")
+        cleaned.setdefault("file", "")
+        findings.append(cleaned)
+    return findings
+
