@@ -1,0 +1,67 @@
+{
+  "attempts": 3,
+  "base_commit": "bead5300b5614b43cb07282f9cfcc1d13aed28e6",
+  "branch": "hefesto/fase-14-aprendizaje",
+  "commit": "397bec294c89783af0403bef517dd45c3648d5bc",
+  "contract": [
+    "tests/test_learning.py"
+  ],
+  "created_at": "2026-10-17T12:52:06+00:00",
+  "files": [
+    {
+      "path": "tests/test_learning.py",
+      "sha256": "168b865851280fc1d8c7b9de13aa5e0ab384c805435309d0fb4f3f5c04f7c02c"
+    }
+  ],
+  "phase": "Fase 14 — Aprendizaje",
+  "prev_sha256": "f92d5391b3dfdab1891805ee537cd903e02744c9a5f688c24951369821dc4ace",
+  "prev_task_id": "TASK-1304",
+  "providers": [
+    "codex:default"
+  ],
+  "review": {
+    "at": "2026-10-17T12:50:50+00:00",
+    "attempt": 2,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Contrato completo tras ampliar cobertura (59 tests).",
+    "reviewer": "codex:default",
+    "run_id": "9c3dd5a2570b",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "a6ade0a3145d",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "defd562a1e2f",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "9c3dd5a2570b",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 50,
+  "task_id": "TASK-1401",
+  "title": "Contratos del aprendizaje",
+  "verify": {
+    "command": "python -m py_compile tests/test_learning.py && python -m unittest tests.test_learning 2>&1 | grep -q \"FAILED\"",
+    "duration_seconds": 31.807,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1401-a3-2026-10-17T125205+0000.log",
+    "output_summary": "",
+    "sha256": "426dc4a8a51ae1aa4017fc04d2643d21d4e932fe0a0f37872e60fd86104377fc",
+    "trust": "auto"
+  }
+}

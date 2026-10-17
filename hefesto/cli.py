@@ -303,7 +303,14 @@ def cmd_discard(args: argparse.Namespace) -> int:
 def cmd_run(args: argparse.Namespace) -> int:
     from hefesto import router
 
-    outcome = router.run(_project(args), args.role, args.prompt, args.task, args.dry_run)
+    outcome = router.run(
+        _project(args),
+        args.role,
+        args.prompt,
+        args.task,
+        args.dry_run,
+        challenge=getattr(args, "challenge", False),
+    )
     if args.dry_run:
         for hop in outcome.hops:
             print(f"{hop.entry:<16} {hop.model_id:<22} {hop.outcome}")
@@ -351,10 +358,15 @@ def cmd_route(args: argparse.Namespace) -> int:
             steps = [(task.role, "implementación"), ("reviewer", "revisión"), ("forge", "si fallan dos intentos")]
         print(f"Ruta de {task.id} (size {task.size}) — sin llamadas a proveedores:")
         for role, why in steps:
-            hops = router.plan_route(cfg, role)
-            chosen = next((h for h in hops if h.outcome == "elegido"), None)
-            skipped = [f"{h.entry} ({h.outcome})" for h in hops if h.outcome != "elegido"]
-            print(f"  {role:<9} {why:<34} → {chosen.model_id if chosen else 'NINGUNO disponible'}"
+            hops = router.plan_route(cfg, role, project=proj)
+            chosen = next((h for h in hops if h.outcome.startswith("elegido")), None)
+            skipped = [f"{h.entry} ({h.outcome})" for h in hops if not h.outcome.startswith("elegido")]
+            if chosen:
+                extra = chosen.outcome[len("elegido"):]
+                chosen_label = f"{chosen.model_id}{extra}"
+            else:
+                chosen_label = "NINGUNO disponible"
+            print(f"  {role:<9} {why:<34} → {chosen_label}"
                   + (f"   saltados: {'; '.join(skipped)}" if skipped else ""))
         choices = skill_select.select(proj, cfg, task.role, task)
         names = ", ".join(skills.sanitize_text(c.name) for c in choices) if choices else "ninguna"
@@ -1218,6 +1230,69 @@ def cmd_memory_search(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def cmd_learn_extract(args: argparse.Namespace) -> int:
+    from hefesto import learning
+
+    created = learning.extract(_project(args))
+    print(f"Lecciones candidatas creadas o actualizadas: {len(created)}.")
+    return EXIT_OK
+
+
+def cmd_learn_skills(args: argparse.Namespace) -> int:
+    from hefesto import learning, skills
+
+    globals_created = learning.global_candidates()
+    drafts_created = learning.skill_drafts()
+    for path in globals_created:
+        print(skills.sanitize_text(f"Candidata global: {path}"))
+    for path in drafts_created:
+        print(skills.sanitize_text(f"Borrador de skill: {path}"))
+    print(
+        f"Candidatas globales: {len(globals_created)}. "
+        f"Borradores de skills: {len(drafts_created)}."
+    )
+    return EXIT_OK
+
+
+def cmd_notify_test(args: argparse.Namespace) -> int:
+    from hefesto import notify
+
+    try:
+        proj: Path | None = _project(args)
+    except HefestoError:
+        proj = None
+    cfg = config.load(proj)
+    if not cfg.get("notify", "enabled", default=False):
+        print("avisos desactivados: activa [notify] enabled = true")
+        return EXIT_OK
+    if notify.send(cfg, "Hefesto · test", "Aviso de prueba de Hefesto."):
+        print("Aviso de prueba enviado.")
+    else:
+        print("No se pudo enviar el aviso de prueba.")
+    return EXIT_OK
+
+
+def cmd_autopilot_schedule(args: argparse.Namespace) -> int:
+    from hefesto import autopilot
+
+    print(autopilot.schedule(_project(args)))
+    return EXIT_OK
+
+
+def cmd_autopilot_status(args: argparse.Namespace) -> int:
+    from hefesto import autopilot
+
+    print(autopilot.status(_project(args)))
+    return EXIT_OK
+
+
+def cmd_autopilot_cancel(args: argparse.Namespace) -> int:
+    from hefesto import autopilot
+
+    print(autopilot.cancel(_project(args)))
+    return EXIT_OK
+
+
 # ---------------------------------------------------------------------------
 
 
@@ -1330,6 +1405,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("prompt", help="instrucción del orquestador (viaja dentro del paquete de la tarea)")
     p.add_argument("--task", help="tarea (por defecto, la que está en curso)")
     p.add_argument("--dry-run", action="store_true", help="dice a qué proveedor iría, sin llamar a nada")
+    p.add_argument("--challenge", action="store_true",
+                   help="pide antes a otro proveedor que critique la instrucción frente a los criterios")
     p.set_defaults(func=cmd_run)
 
     p = sub.add_parser("packet", help="genera y muestra el paquete de contexto de una tarea")
@@ -1467,6 +1544,33 @@ def build_parser() -> argparse.ArgumentParser:
     c.add_argument("term", help="término a buscar")
     c.add_argument("--limit", type=int, default=10, help="máximo de resultados")
     c.set_defaults(func=cmd_memory_search)
+
+    p = sub.add_parser("learn", help="extracción determinista de lecciones y borradores de skills")
+    lsub = p.add_subparsers(dest="learn_cmd", metavar="ACCIÓN", required=True)
+
+    c = lsub.add_parser("extract", help="extrae lecciones candidatas desde evidencias, revisiones y fallos")
+    c.set_defaults(func=cmd_learn_extract)
+
+    c = lsub.add_parser("skills", help="propone lecciones globales y borradores de skills en _proposals")
+    c.set_defaults(func=cmd_learn_skills)
+
+    p = sub.add_parser("notify", help="avisos de escritorio cuando algo necesita a un humano")
+    nsub = p.add_subparsers(dest="notify_cmd", metavar="ACCIÓN", required=True)
+
+    c = nsub.add_parser("test", help="envía un aviso de prueba")
+    c.set_defaults(func=cmd_notify_test)
+
+    p = sub.add_parser("autopilot", help="programa una ejecución única de `hefesto loop` al fin del cooldown")
+    asub = p.add_subparsers(dest="autopilot_cmd", metavar="ACCIÓN", required=True)
+
+    c = asub.add_parser("schedule", help="programa `hefesto loop` a la hora de `earliest_cooldown`")
+    c.set_defaults(func=cmd_autopilot_schedule)
+
+    c = asub.add_parser("status", help="muestra la programación vigente del proyecto")
+    c.set_defaults(func=cmd_autopilot_status)
+
+    c = asub.add_parser("cancel", help="cancela la programación vigente del proyecto")
+    c.set_defaults(func=cmd_autopilot_cancel)
 
     return parser
 

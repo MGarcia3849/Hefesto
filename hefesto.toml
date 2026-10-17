@@ -121,3 +121,14 @@ max_per_task = 1
 good_score = 6
 search_ttl_hours = 24
 
+[packet]
+rules_roots = []                        # carpetas con reglas por stack (p. ej. rules/common, rules/angular)
+rules_max_chars = 4000                  # tope de caracteres en total de las reglas del stack
+
+[routing]
+history = false                         # reordena la cadena del rol por pass@1 y pass@k del historial de runs
+min_samples = 5                         # mínimo de tareas distintas por modelo × rol para reordenar
+
+[notify]
+enabled = false                         # avisos de escritorio cuando algo necesita a un humano
+

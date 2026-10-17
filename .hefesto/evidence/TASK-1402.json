@@ -1,0 +1,98 @@
+{
+  "attempts": 3,
+  "base_commit": "ebd1bdddc27a8fa7dec97a0a3462ea73f9bf8db9",
+  "branch": "hefesto/fase-14-aprendizaje",
+  "commit": "869cbc3814a6a70559081b1422fac96822aa7bbf",
+  "contract": [],
+  "created_at": "2026-10-17T13:15:15+00:00",
+  "files": [
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "d66f48703a3ae65b60035848d2480256615d11a2c5df75ef2c6e4a6649e3e858"
+    },
+    {
+      "path": "hefesto/learning.py",
+      "sha256": "2449f9be29321411e729df848600b34b4e6aa559a54b2d1627bbcbf6c1697448"
+    },
+    {
+      "path": "hefesto/memory.py",
+      "sha256": "e76e868ac4f5b0abac9905386a507f017285ee0246b8bc5ffa9e7f83553a4d94"
+    },
+    {
+      "path": "hefesto/workflow.py",
+      "sha256": "2ea630ee393359d4eabba480ec33420a5e5a0b83bfb12df634870153c3d904d5"
+    }
+  ],
+  "phase": "Fase 14 — Aprendizaje",
+  "prev_sha256": "ac3dbeef740a31a57b813b9314c35bbba1370ee7e3497ec67dbb1b76202107af",
+  "prev_task_id": "TASK-1401",
+  "providers": [
+    "claude:sonnet",
+    "codex:default",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-17T13:14:54+00:00",
+    "attempt": 2,
+    "authors": [
+      "codex:default",
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "Extractor determinista correcto: fuentes sin colisiones, idempotente, confinado y con secretos redactados.",
+    "reviewer": "claude:sonnet",
+    "run_id": "fed643fbbdf3",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "6d3e1c921673",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "1049c6ab44e7",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "01263b11a894",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "ab9d5bee4b75",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "forge",
+      "run_id": "e4b968d1ec5c",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "fed643fbbdf3",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 51,
+  "task_id": "TASK-1402",
+  "title": "Extractor determinista de lecciones con confianza y alcance",
+  "verify": {
+    "command": "python -m unittest tests.test_learning.ExtractTests && python tools/dev.py lint",
+    "duration_seconds": 17.545,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1402-a3-2026-10-17T131515+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (79 ficheros Python)\n...........\n----------------------------------------------------------------------\nRan 11 tests in 16.513s\n\nOK",
+    "sha256": "7db0d7fab706a317bc06f85df3b898cb16d0fe4d5a57e24215eb581eb01c8c47",
+    "trust": "auto"
+  }
+}

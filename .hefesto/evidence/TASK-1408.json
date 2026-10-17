@@ -1,0 +1,64 @@
+{
+  "attempts": 1,
+  "base_commit": "6a839ec51ef209075b5e94c29b2b44313f45dc62",
+  "branch": "hefesto/fase-14-aprendizaje",
+  "commit": "d80699cac59b7b72013b9f086b8c56d5600a0168",
+  "contract": [],
+  "created_at": "2026-10-17T15:12:31+00:00",
+  "files": [
+    {
+      "path": "hefesto/autopilot.py",
+      "sha256": "d9af1c72a010da001b83b00b9c196b739157dabd4efc0598ec66b9978a356a10"
+    },
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "1e5776619d0b4c5a7d0a0a3115d9763b8b541a5d266fa50d21adb1c6de5690a2"
+    }
+  ],
+  "phase": "Fase 14 — Aprendizaje",
+  "prev_sha256": "7f7aa6e305a08313b341cba283a2438c3b35d83a801151412df6cca4237e0859",
+  "prev_task_id": "TASK-1407",
+  "providers": [
+    "claude:sonnet",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-17T15:12:23+00:00",
+    "attempt": 0,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "Autopilot correcto tras el desbloqueo; contrato intacto.",
+    "reviewer": "claude:sonnet",
+    "run_id": "fa190485c95d",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "reviewer",
+      "run_id": "fa5b783a0e58",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "fa190485c95d",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 57,
+  "task_id": "TASK-1408",
+  "title": "Piloto automático con el planificador del sistema",
+  "verify": {
+    "command": "python -m unittest tests.test_learning.AutopilotTests.test_windows_command_is_an_argument_list tests.test_learning.AutopilotTests.test_windows_command_runs_once_at_local_time tests.test_learning.AutopilotTests.test_windows_command_rejects_quotes_in_the_path tests.test_learning.AutopilotTests.test_crontab_line_is_marked_quoted_and_runs_once tests.test_learning.AutopilotTests.test_refuses_with_untrusted_verify tests.test_learning.AutopilotTests.test_schedules_once_without_shell tests.test_learning.AutopilotTests.test_without_cooldown_nothing_is_scheduled tests.test_learning.AutopilotTests.test_cli_status tests.test_learning.AutopilotTests.test_cli_schedule_status_and_cancel tests.test_learning.AutopilotTests.test_schedule_twice_keeps_a_single_entry tests.test_learning.AutopilotTests.test_crontab_schedule_replaces_the_previous_line && python tools/dev.py lint",
+    "duration_seconds": 6.762,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1408-a1-2026-10-17T151231+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (81 ficheros Python)\n...........\n----------------------------------------------------------------------\nRan 11 tests in 5.685s\n\nOK",
+    "sha256": "ea9aefd6874d7d2584663b95d8dcecab0356cb7d498109b552954e88da38d754",
+    "trust": "auto"
+  }
+}

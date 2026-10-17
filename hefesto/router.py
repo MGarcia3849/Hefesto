@@ -8,14 +8,16 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
+import sys
 from typing import Any
 
 from hefesto import acceptance, adapters, config, guard, log, packet, preflight, providers, quota, roadmap, state
 from hefesto.adapters.base import AdapterResult, Call
-from hefesto.util import EXIT_BLOCKED, EXIT_INPUT, EXIT_OK, EXIT_UNAVAILABLE, HefestoError
+from hefesto.util import EXIT_BLOCKED, EXIT_INPUT, EXIT_OK, EXIT_UNAVAILABLE, HefestoError, read_jsonl
 from hefesto.workflow import new_run_id
 
 ROLES = config.ROLES
+CHALLENGE_ROLE_ORDER = ("reviewer", "core", "forge", "runner", "visual")
 
 
 @dataclass
@@ -33,10 +35,11 @@ class RunOutcome:
     hops: list[Hop] = field(default_factory=list)
     packet_path: str | None = None
     next_available: str | None = None
+    challenge: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         data: dict[str, Any] = {"run_id": self.run_id, "hops": [h.__dict__ for h in self.hops],
-                                "packet": self.packet_path}
+                                "packet": self.packet_path, "challenge": self.challenge}
         if self.result:
             data.update(self.result.to_dict())
         else:
@@ -47,11 +50,87 @@ class RunOutcome:
         return data
 
 
-def plan_route(cfg: config.Config, role: str, author_providers: set[str] | None = None) -> list[Hop]:
+def success_stats(project: Path, role: str) -> dict[str, dict[str, Any]]:
+    """Por model_id, desde logs/runs.jsonl del rol: tasks, pass1 y passk."""
+    grouped: dict[str, dict[str, list[dict[str, Any]]]] = {}
+    for row in read_jsonl(log.logs_dir(project) / "runs.jsonl"):
+        if row.get("role") != role:
+            continue
+        task_id = row.get("task_id")
+        model_id = row.get("model_id")
+        if not task_id or not model_id:
+            continue
+        grouped.setdefault(str(model_id), {}).setdefault(str(task_id), []).append(row)
+    out: dict[str, dict[str, Any]] = {}
+    for mid, by_task in grouped.items():
+        total = len(by_task)
+        if total == 0:
+            continue
+        first_ok = 0
+        any_ok = 0
+        for runs in by_task.values():
+            ordered = sorted(runs, key=lambda r: str(r.get("at") or ""))
+            if bool(ordered[0].get("success")):
+                first_ok += 1
+            if any(bool(r.get("success")) for r in ordered):
+                any_ok += 1
+        out[mid] = {
+            "tasks": total,
+            "pass1": first_ok / total,
+            "passk": any_ok / total,
+        }
+    return out
+
+
+def _ordered_chain(
+    cfg: config.Config,
+    role: str,
+    project: Path | None,
+    chain: list[str] | None = None,
+) -> tuple[list[str], dict[str, dict[str, Any]]]:
+    entries = list(chain if chain is not None else cfg.role_chain(role))
+    if project is None or not bool(cfg.get("routing", "history", default=False)):
+        return entries, {}
+    min_samples = int(cfg.get("routing", "min_samples", default=5))
+    raw_stats = success_stats(project, role)
+    qualified = {
+        mid: st for mid, st in raw_stats.items() if int(st.get("tasks", 0)) >= min_samples
+    }
+    if not qualified:
+        return entries, {}
+    positions = [i for i, e in enumerate(entries) if providers.model_id(cfg, e) in qualified]
+    ranked = sorted(
+        (entries[i] for i in positions),
+        key=lambda e: (
+            qualified[providers.model_id(cfg, e)]["passk"],
+            qualified[providers.model_id(cfg, e)]["pass1"],
+        ),
+        reverse=True,
+    )
+    for pos, entry in zip(positions, ranked):
+        entries[pos] = entry
+    return entries, qualified
+
+
+def _hop_suffix(mid: str, qualified: dict[str, dict[str, Any]]) -> str:
+    st = qualified.get(mid)
+    if not st:
+        return ""
+    p1 = round(float(st["pass1"]) * 100)
+    pk = round(float(st["passk"]) * 100)
+    return f" (pass@1 {p1}%, pass@k {pk}%, {st['tasks']} tareas)"
+
+
+def plan_route(
+    cfg: config.Config,
+    role: str,
+    author_providers: set[str] | None = None,
+    project: Path | None = None,
+) -> list[Hop]:
     """Qué haría el enrutador ahora mismo, sin llamar a nada."""
     hops: list[Hop] = []
     authors = author_providers or set()
-    chain = cfg.role_chain(role)
+    chain, qualified = _ordered_chain(cfg, role, project)
     other_available = any(
         providers.split_entry(e)[0] not in authors and providers.available(cfg, providers.split_entry(e)[0])[0]
         for e in chain
@@ -60,19 +139,23 @@ def plan_route(cfg: config.Config, role: str, author_providers: set[str] | None 
     for entry in chain:
         provider = providers.split_entry(entry)[0]
         mid = providers.model_id(cfg, entry)
+        suffix = _hop_suffix(mid, qualified)
         if role == "reviewer" and provider in authors and other_available:
-            hops.append(Hop(entry, mid, "saltado: autor del cambio"))
+            hops.append(Hop(entry, mid, f"saltado: autor del cambio{suffix}"))
             deferred_authors.append(entry)
             continue
         ok, reason = providers.available(cfg, provider)
-        hops.append(Hop(entry, mid, "elegido" if ok else f"saltado: {reason}"))
+        base = "elegido" if ok else f"saltado: {reason}"
+        hops.append(Hop(entry, mid, f"{base}{suffix}"))
         if ok:
             return hops
     for entry in deferred_authors:
         provider = providers.split_entry(entry)[0]
         mid = providers.model_id(cfg, entry)
+        suffix = _hop_suffix(mid, qualified)
         ok, reason = providers.available(cfg, provider)
-        hops.append(Hop(entry, mid, "elegido" if ok else f"saltado: {reason}"))
+        base = "elegido" if ok else f"saltado: {reason}"
+        hops.append(Hop(entry, mid, f"{base}{suffix}"))
         if ok:
             return hops
     return hops
@@ -113,9 +196,46 @@ def _other_provider_available(project: Path, cfg: config.Config, entries: list[s
     return False
 
 
+def _pick_challenger(
+    project: Path, cfg: config.Config, target_provider: str | None, role: str | None = None
+) -> str | None:
+    if not target_provider:
+        return None
+    seen: set[str] = set()
+    role_order = (role, *CHALLENGE_ROLE_ORDER) if role else CHALLENGE_ROLE_ORDER
+    for r in role_order:
+        for entry in cfg.role_chain(r):
+            if entry in seen:
+                continue
+            seen.add(entry)
+            provider = providers.split_entry(entry)[0]
+            if provider == target_provider:
+                continue
+            ok, _ = preflight.ensure(project, cfg, provider)
+            if ok:
+                return entry
+    return None
+
+
+def _challenge_prompt(task: roadmap.Task | None, instruction: str) -> str:
+    lines = [
+        "Revisión adversarial de la instrucción antes de delegar (rol: challenge).",
+        "Señala ambigüedades, lagunas y riesgos de la instrucción frente a los criterios de la tarea. "
+        "No modifiques ni escribas ficheros.",
+    ]
+    if task is not None:
+        lines.append(f"- id: {task.id}")
+        lines.append(f"- título: {task.title}")
+        if task.accept:
+            lines.append(f"- accept: {task.accept}")
+        lines.append(f"- ficheros: {', '.join(task.files)}")
+    lines.append(f"\nInstrucción:\n{guard.redact(instruction.strip())}")
+    return "\n".join(lines) + "\n"
+
+
 def run(project: Path, role: str, instruction: str, task_id: str | None = None, dry_run: bool = False,
         workdir: Path | None = None, entries: list[str] | None = None,
-        task_run_id: str | None = None) -> RunOutcome:
+        task_run_id: str | None = None, challenge: bool = False) -> RunOutcome:
     if role not in ROLES:
         raise HefestoError(f"Rol desconocido `{role}` ({', '.join(ROLES)}).", EXIT_INPUT)
     cfg = config.load(project)
@@ -129,8 +249,8 @@ def run(project: Path, role: str, instruction: str, task_id: str | None = None, 
                 authors = _author_providers(project, role, eff_task_run_id)
         except Exception:
             authors = set()
-        hops = plan_route(cfg, role, authors)
-        chosen = any(h.outcome == "elegido" for h in hops)
+        hops = plan_route(cfg, role, authors, project=project)
+        chosen = any(h.outcome.startswith("elegido") for h in hops)
         return RunOutcome(EXIT_OK if chosen else EXIT_UNAVAILABLE, run_id, None, hops)
     if guard.find_secrets(instruction):
         raise HefestoError("La instrucción contiene un secreto; no se envía a ningún proveedor.", EXIT_BLOCKED)
@@ -142,7 +262,63 @@ def run(project: Path, role: str, instruction: str, task_id: str | None = None, 
     timeout = int(cfg.get("limits", "timeout_seconds"))
     default_cooldown = int(cfg.get("quota", "cooldown_default_minutes"))
     packet_path: Path | None = None
-    chain = entries if entries is not None else cfg.role_chain(role)
+    challenge_info: dict[str, Any] | None = None
+
+    if challenge:
+        planned = plan_route(cfg, role, authors, project=project)
+        chosen_hop = next((h for h in planned if h.outcome.startswith("elegido")), None)
+        target_provider = providers.split_entry(chosen_hop.entry)[0] if chosen_hop else None
+        critic_entry = _pick_challenger(project, cfg, target_provider, role=role)
+        if critic_entry is None:
+            print(
+                "aviso: --challenge sin otro proveedor disponible; se delega con la instrucción original.",
+                file=sys.stderr,
+            )
+        else:
+            c_provider, c_model = providers.split_entry(critic_entry)
+            c_mid = providers.model_id(cfg, critic_entry)
+            c_call = Call(
+                role="challenge",
+                prompt=_challenge_prompt(task, instruction),
+                task_id=task.id if task else None,
+                run_id=run_id,
+                model=c_model or str(cfg.get("adapters", c_provider, "model", default="") or ""),
+                model_id=c_mid,
+                workdir=eff_workdir,
+                project=project,
+                packet_path=None,
+                timeout=timeout,
+            )
+            c_result = adapters.get(cfg, c_provider).run(c_call)
+            quota.record_call(c_provider)
+            _record(project, "challenge", task, eff_task_run_id, run_id, c_mid, c_result, None)
+            if c_result.error_type in ("quota", "rate_limit"):
+                until = quota.cooldown_until(c_result.reset_hint or c_result.summary, default_cooldown)
+                quota.mark_cooldown(c_provider, until, c_result.error_type, c_result.summary)
+            if c_result.success and c_result.summary.strip():
+                quota.mark_ok(c_provider)
+                critique = guard.redact(c_result.summary.strip())
+                ch_path = log.write_text(project, f"challenges/{run_id}-{c_provider}.md", critique)
+                ch_rel = _rel(project, ch_path)
+                print(f"== Crítica previa ({c_provider}) ==\n{critique}", file=sys.stderr)
+                expanded = f"{instruction.rstrip()}\n\n## Crítica previa (otro proveedor)\n\n{critique}"
+                if guard.find_secrets(expanded):
+                    print(
+                        "aviso: la instrucción ampliada con la crítica contiene un secreto; "
+                        "se delega con la instrucción original.",
+                        file=sys.stderr,
+                    )
+                else:
+                    instruction = expanded
+                challenge_info = {"provider": c_provider, "path": ch_rel, "summary": critique}
+            else:
+                print(
+                    f"aviso: la revisión adversarial ({c_provider}) falló: {c_result.summary}; "
+                    "se delega con la instrucción original.",
+                    file=sys.stderr,
+                )
+
+    chain = entries if entries is not None else _ordered_chain(cfg, role, project)[0]
     other_available = _other_provider_available(project, cfg, chain, authors) if authors else False
 
     def try_entry(entry: str) -> RunOutcome | None:
@@ -176,10 +352,12 @@ def run(project: Path, role: str, instruction: str, task_id: str | None = None, 
             return None
         hops.append(Hop(entry, mid, "respondió"))
         if result.error_type == "denied_by_policy":
-            return RunOutcome(EXIT_BLOCKED, run_id, result, hops, _rel(project, packet_path))
+            return RunOutcome(EXIT_BLOCKED, run_id, result, hops, _rel(project, packet_path),
+                              challenge=challenge_info)
         if result.success:
             quota.mark_ok(provider)
-        return RunOutcome(EXIT_OK if result.success else EXIT_INPUT, run_id, result, hops, _rel(project, packet_path))
+        return RunOutcome(EXIT_OK if result.success else EXIT_INPUT, run_id, result, hops,
+                          _rel(project, packet_path), challenge=challenge_info)
 
     deferred_authors: list[str] = []
     for entry in chain:
@@ -198,8 +376,19 @@ def run(project: Path, role: str, instruction: str, task_id: str | None = None, 
         if outcome is not None:
             return outcome
 
+    next_avail = earliest_cooldown(cfg, role)
+    try:
+        from hefesto import notify
+
+        notify.event(
+            project,
+            "quota",
+            f"Sin proveedor disponible para {role}" + (f" (hasta {next_avail})" if next_avail else ""),
+        )
+    except Exception:
+        pass
     return RunOutcome(EXIT_UNAVAILABLE, run_id, None, hops, _rel(project, packet_path) if packet_path else None,
-                      next_available=earliest_cooldown(cfg, role))
+                      next_available=next_avail, challenge=challenge_info)
 
 
 def earliest_cooldown(cfg: config.Config, role: str) -> str | None:
@@ -212,7 +401,7 @@ def earliest_cooldown(cfg: config.Config, role: str) -> str | None:
 
 
 def _record(project: Path, role: str, task: roadmap.Task | None, task_run_id: str | None, run_id: str, mid: str,
-            result: AdapterResult, packet_path: Path) -> None:
+            result: AdapterResult, packet_path: Path | None) -> None:
     usage = result.usage if isinstance(result.usage, dict) else {}
     log.record(project, "usage", {
         "run_id": run_id, "provider": result.provider, "model": mid, "role": role, "duration": result.duration,
@@ -222,7 +411,8 @@ def _record(project: Path, role: str, task: roadmap.Task | None, task_run_id: st
     log.record(project, "runs", {
         "run_id": run_id, "task_id": task.id if task else None, "task_run_id": task_run_id, "role": role,
         "provider": result.provider, "model_id": mid, "success": result.success, "error_type": result.error_type,
-        "summary": result.summary[:500], "log_path": result.log_path, "packet": _rel(project, packet_path),
+        "summary": result.summary[:500], "log_path": result.log_path,
+        "packet": _rel(project, packet_path) if packet_path else None,
     })
 
 

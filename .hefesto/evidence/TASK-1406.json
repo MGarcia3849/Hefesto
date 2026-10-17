@@ -1,0 +1,86 @@
+{
+  "attempts": 1,
+  "base_commit": "a397bd91f8a8106f10b40326764531f1c903d55d",
+  "branch": "hefesto/fase-14-aprendizaje",
+  "commit": "445335ceab7c7aeee6b09234a55d526c91b195e4",
+  "contract": [],
+  "created_at": "2026-10-17T14:21:28+00:00",
+  "files": [
+    {
+      "path": "hefesto/adapters/base.py",
+      "sha256": "516dc1536ef9d7ec25aae8d7b2f0393fa1b61690de95c55c34bf1dc02bf463f1"
+    },
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "40eab79c8814e7343ae9ec043d2f7cca13fae16d9b0d470a56213978ee96cdbb"
+    },
+    {
+      "path": "hefesto/router.py",
+      "sha256": "bc95c7cc0cc36da0c75f0713233c8c5b6347369656a4ac32aa2d954b0a6e6fd0"
+    }
+  ],
+  "phase": "Fase 14 — Aprendizaje",
+  "prev_sha256": "9d0d1dbdc12a068437210fd0a606d235889e609e109c6c4b3cfec3f7bea93892",
+  "prev_task_id": "TASK-1405",
+  "providers": [
+    "claude:sonnet",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-17T14:21:22+00:00",
+    "attempt": 0,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "--challenge correcto: crítico de otro proveedor en solo lectura, crítica redactada y añadida, nunca suma intentos.",
+    "reviewer": "claude:sonnet",
+    "run_id": "e5e566849209",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "0d35320edfd4",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "8c5d2f1c44b4",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "528b4c22585a",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "2ab13d71f735",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "e5e566849209",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 55,
+  "task_id": "TASK-1406",
+  "title": "Revisión adversarial de la instrucción antes de delegar",
+  "verify": {
+    "command": "python -m unittest tests.test_learning.ChallengeTests && python tools/dev.py lint",
+    "duration_seconds": 5.586,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1406-a1-2026-10-17T142128+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (79 ficheros Python)\n....\n----------------------------------------------------------------------\nRan 4 tests in 4.524s\n\nOK",
+    "sha256": "0085302830326e88e53c321dac054ab0865f7065bce6931f9d3a856ce7f111e2",
+    "trust": "auto"
+  }
+}

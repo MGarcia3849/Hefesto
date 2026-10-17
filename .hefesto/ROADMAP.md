@@ -419,3 +419,307 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - size: S
   - parallel: false
   - accept: README explica para qué sirve `execution.worktree_links` (p. ej. `["sentinel-app/node_modules"]`), que solo enlaza carpetas ignoradas por git y que los enlaces se quitan antes de borrar un worktree; CHANGELOG con la entrada «Dependencias compartidas en los worktrees»
+
+## Fase 14 — Aprendizaje
+- [x] TASK-1401: Contratos del aprendizaje
+  - verify: `python -m py_compile tests/test_learning.py && python -m unittest tests.test_learning 2>&1 | grep -q "FAILED"`
+  - files: tests/test_learning.py
+  - role: core
+  - depends_on: none
+  - size: S
+  - parallel: false
+  - contract: tests/test_learning.py
+  - accept: los tests compilan y fallan porque aún no existen hefesto/learning.py, hefesto/notify.py, hefesto/autopilot.py, `[routing]`, `[notify]` ni los comandos `learn`, `notify` y `autopilot`
+- [x] TASK-1402: Extractor determinista de lecciones con confianza y alcance
+  - verify: `python -m unittest tests.test_learning.ExtractTests && python tools/dev.py lint`
+  - files: hefesto/learning.py, hefesto/memory.py, hefesto/workflow.py, hefesto/cli.py
+  - role: runner
+  - depends_on: TASK-1401
+  - size: M
+  - parallel: false
+  - accept: `workflow.register_failure` registra cada fallo (tarea, intento, origen, rol y error redactado) en `logs/failures.jsonl`; `learning.extract(project)` recorre la evidencia, las revisiones y esos fallos y, sin LLM, genera candidatas en `memory/_pendientes/` para tareas con más de un intento, verify fallido o revisión `fail`, con motivo y solución resumidos; cada nota lleva `confianza` (0.3 al nacer), `alcance: proyecto | global`, `proyecto`, `stack`, `tipo` y `tarea`; si la misma lección (hash de términos clave) reaparece, sube la confianza de la existente en vez de duplicarla; nunca modifica el cuerpo de notas aprobadas; redacta secretos; `hefesto learn extract` lo ejecuta (inspirado en continuous-learning-v2 de ECC, MIT)
+- [x] TASK-1403: Promoción a global y borradores de skills desde patrones repetidos
+  - verify: `python -m unittest tests.test_learning.SkillDraftTests && python tools/dev.py lint`
+  - files: hefesto/learning.py, hefesto/cli.py
+  - role: runner
+  - depends_on: TASK-1402
+  - size: M
+  - parallel: false
+  - accept: una lección de alcance proyecto aprobada en 2 o más proyectos se propone como global (candidata, nunca automática); `learning.skill_drafts(min_repeats=3)` agrupa lecciones aprobadas con confianza ≥ 0.7 del mismo stack y escribe un borrador `SKILL.md` con frontmatter válido en `skills/_proposals/<nombre>/`; nunca promueve (sigue siendo `skill promote`) y no reescribe un borrador existente; `hefesto learn skills` lo ejecuta
+- [x] TASK-1404: Lecciones relevantes y reglas del stack en el paquete
+  - verify: `python -m unittest tests.test_learning.PacketLessonTests tests.test_context_pack && python tools/dev.py lint`
+  - files: hefesto/packet.py, hefesto.toml
+  - role: runner
+  - depends_on: TASK-1401
+  - size: S
+  - parallel: true
+  - accept: `_memory_entries` selecciona bloques de DECISIONS/LEARNINGS por rutas, términos del título y etiquetas `#etiqueta`, ordenados por puntuación y dentro de `memory.max_chars`; si `[packet] rules_roots` apunta a carpetas de reglas por lenguaje (p. ej. `rules/angular`, `rules/common` de ECC), el paquete incluye las del stack detectado dentro de un presupuesto propio
+- [x] TASK-1405: Enrutado por historial con pass@k
+  - verify: `python -m unittest tests.test_learning.RoutingTests tests.test_reviewer_routing && python tools/dev.py lint`
+  - files: hefesto/router.py, hefesto/config.py, hefesto.toml, hefesto/cli.py
+  - role: forge
+  - depends_on: TASK-1401
+  - size: M
+  - parallel: false
+  - accept: con `[routing] history = true` (por defecto false) `plan_route` reordena la cadena del rol por pass@1 y pass@k (k = intentos por tarea) de `runs` por modelo × rol con al menos `min_samples` tareas, sin saltarse cooldowns, autorización ni la regla de independencia del revisor; `hefesto route TASK --dry-run` muestra las cifras usadas
+- [x] TASK-1406: Revisión adversarial de la instrucción antes de delegar
+  - verify: `python -m unittest tests.test_learning.ChallengeTests && python tools/dev.py lint`
+  - files: hefesto/router.py, hefesto/cli.py, hefesto/adapters/base.py
+  - role: runner
+  - depends_on: TASK-1405
+  - size: M
+  - parallel: false
+  - accept: `hefesto run ROL "…" --challenge` pide a un proveedor distinto del destino que señale ambigüedades y riesgos de la instrucción frente a los criterios de la tarea, guarda la crítica en `logs/challenges/`, la muestra y la añade a la instrucción del trabajador antes de delegar; sin proveedor disponible avisa y delega igual; nunca cuenta como intento
+- [x] TASK-1407: Avisos cuando algo necesita a un humano
+  - verify: `python -m unittest tests.test_learning.NotifyTests && python tools/dev.py lint`
+  - files: hefesto/notify.py, hefesto/cli.py, hefesto/config.py, hefesto.toml, hefesto/workflow.py, hefesto/acceptance.py, hefesto/router.py
+  - role: runner
+  - depends_on: TASK-1406
+  - size: S
+  - parallel: false
+  - accept: `[notify] enabled = false` por defecto; si está activo, un verify sin confiar, el circuit breaker, una fase lista para `finish` y la pausa por cuota lanzan una notificación de escritorio (toast en Windows, `notify-send`, `osascript`) sin bloquear ni fallar si no hay mecanismo; `hefesto notify test` la prueba
+- [x] TASK-1408: Piloto automático con el planificador del sistema
+  - verify: `python -m unittest tests.test_learning.AutopilotTests.test_windows_command_is_an_argument_list tests.test_learning.AutopilotTests.test_windows_command_runs_once_at_local_time tests.test_learning.AutopilotTests.test_windows_command_rejects_quotes_in_the_path tests.test_learning.AutopilotTests.test_crontab_line_is_marked_quoted_and_runs_once tests.test_learning.AutopilotTests.test_refuses_with_untrusted_verify tests.test_learning.AutopilotTests.test_schedules_once_without_shell tests.test_learning.AutopilotTests.test_without_cooldown_nothing_is_scheduled tests.test_learning.AutopilotTests.test_cli_status tests.test_learning.AutopilotTests.test_cli_schedule_status_and_cancel tests.test_learning.AutopilotTests.test_schedule_twice_keeps_a_single_entry tests.test_learning.AutopilotTests.test_crontab_schedule_replaces_the_previous_line && python tools/dev.py lint`
+  - files: hefesto/autopilot.py, hefesto/cli.py
+  - role: forge
+  - depends_on: TASK-1407
+  - size: M
+  - parallel: false
+  - accept: `hefesto autopilot schedule` programa una única ejecución de `hefesto loop` en el proyecto a la hora del próximo reinicio de cuota (`earliest_cooldown`) con `schtasks` en Windows o `crontab` en el resto, sin daemon; `autopilot status` y `autopilot cancel`; nunca programa con una tarea bloqueada o un verify sin confiar; la orden se construye como lista de argumentos, sin interpolar texto del usuario en un shell
+- [x] TASK-1410: Corregir el contrato `test_refuses_with_blocked_task`
+  - verify: `python -m unittest tests.test_learning.AutopilotTests && python tools/dev.py lint`
+  - files: tests/test_learning.py
+  - role: core
+  - depends_on: TASK-1408
+  - size: S
+  - parallel: false
+  - contract: tests/test_learning.py
+  - accept: el test llega al bloqueo por el camino real (`start` y tres `fail`) en vez de escribir a mano un estado `BLOCKED` sin tarea en curso, que `state.save` rechaza; AutopilotTests pasa completo
+- [x] TASK-1409: Documentación del aprendizaje
+  - verify: `grep -q "learn extract" README.md && grep -q "autopilot" README.md && grep -q "Aprendizaje" CHANGELOG.md`
+  - files: README.md, CHANGELOG.md, prompts/protocol/retro.md
+  - role: runner
+  - depends_on: TASK-1403, TASK-1404, TASK-1408, TASK-1410
+  - size: S
+  - parallel: false
+  - accept: README explica extractor (confianza y alcance), promoción a global, borradores de skills, lecciones y reglas del stack en el paquete, `[routing]` con pass@k, `--challenge`, `[notify]` y `autopilot`; el paso `retro` pide `hefesto learn extract`; CHANGELOG con la entrada
+
+## Fase 15 — Catálogo de skills por rol y modo
+- [ ] TASK-1501: Contratos del catálogo de skills
+  - verify: `python -m py_compile tests/test_skill_catalog.py && python -m unittest tests.test_skill_catalog 2>&1 | grep -q "FAILED"`
+  - files: tests/test_skill_catalog.py
+  - role: core
+  - depends_on: TASK-1409
+  - size: S
+  - parallel: false
+  - contract: tests/test_skill_catalog.py
+  - accept: los tests compilan y fallan porque aún no existen `catalog/skills.toml`, el campo `kind` de las tareas, la selección por rol y modo, `hefesto skill sync` ni el paso de AgentShield
+- [ ] TASK-1502: Campo `kind` de las tareas
+  - verify: `python -m unittest tests.test_skill_catalog.TaskKindTests tests.test_foundation && python tools/dev.py lint`
+  - files: hefesto/roadmap.py
+  - role: runner
+  - depends_on: TASK-1501
+  - size: S
+  - parallel: false
+  - accept: el ROADMAP acepta `kind: app | web | backend | docs | infra` opcional por tarea; sin él se deduce de forma determinista de `files` (p. ej. `.component.ts`/`.css` → app); un valor desconocido es error de validación
+- [ ] TASK-1503: Catálogo único de skills y herramientas, sin dueño
+  - verify: `python -m unittest tests.test_skill_catalog.CatalogTests && python tools/dev.py lint`
+  - files: catalog/skills.toml, hefesto/skill_catalog.py
+  - role: runner
+  - depends_on: TASK-1502
+  - size: M
+  - parallel: false
+  - accept: `catalog/skills.toml` describe cada skill o herramienta con `source` (repo y commit fijado), `license`, `roles` (core, runner, forge, visual, reviewer, verify), `modes` por rol, `kinds`, `interactive` (puertas que exigen humano) y `providers` opcional (p. ej. full-output-enforcement preferente con gemini); incluye ECC (skills elegidas), taste-skill con nombres verificados contra el repo, impeccable, web-design-guidelines, playwright-cli y AgentShield; impeccable se describe según su uso correcto (v4): `init` y `shape` interactivos (solo Core con humano), `document` delegable, diagnóstico `critique`/`audit`, comandos de oficio y robustez (`typeset`, `layout`, `colorize`, `harden`, `optimize`, `adapt`, `clarify`, `bolder`, `quieter`, `distill`, `animate`…), `polish` como pase final y `detect` con rol `verify`; `craft` (deprecado en v4) y las maquetas que piden `OPENAI_API_KEY` quedan excluidos; `skill_catalog.load()` valida licencias permitidas y que ninguna entrada esté atada a un único proveedor
+- [ ] TASK-1504: El orquestador reparte skills por rol, modo, tipo y proveedor
+  - verify: `python -m unittest tests.test_skill_catalog.SelectionTests tests.test_skill_select && python tools/dev.py lint`
+  - files: hefesto/skill_select.py, hefesto/packet.py
+  - role: forge
+  - depends_on: TASK-1503
+  - size: M
+  - parallel: false
+  - accept: la selección filtra por el rol de la delegación, el `kind` de la tarea y el proveedor elegido por el router; el paquete indica qué modo de cada skill usar (p. ej. impeccable `critique` al reviewer, `polish`/`harden` al visual); las skills o modos `interactive` nunca van a un trabajador delegado, solo al Core; las herramientas con rol `verify` nunca entran en un paquete; la explicación sale en `hefesto route TASK --dry-run`
+- [ ] TASK-1505: `hefesto skill sync` desde fuentes fijadas
+  - verify: `python -m unittest tests.test_skill_catalog.SyncTests tests.test_skills_security && python tools/dev.py lint`
+  - files: hefesto/skill_catalog.py, hefesto/cli.py, catalog/packs.toml
+  - role: runner
+  - depends_on: TASK-1503
+  - size: M
+  - parallel: false
+  - accept: `hefesto skill sync` trae las skills del catálogo en su commit fijado con `skills.fetch` (informe de riesgos incluido) y las promueve si no hay riesgos; nunca ejecuta `npx skills add`, instaladores ni código de la skill; el pack `design` de packs.toml usa los nombres reales de taste-skill; un commit que cambie exige actualizar el catálogo
+- [ ] TASK-1506: AgentShield opcional antes de promover y en doctor
+  - verify: `python -m unittest tests.test_skill_catalog.AgentShieldTests && python tools/dev.py lint`
+  - files: hefesto/skill_auto.py, hefesto/skills.py, hefesto/doctor.py
+  - role: runner
+  - depends_on: TASK-1505
+  - size: S
+  - parallel: false
+  - accept: si el binario `agentshield` está en el PATH (nunca vía npx), `promote` automático y `skill sync` lo pasan sobre la skill descargada y la descartan con cualquier hallazgo alto; `doctor` ofrece `agentshield scan` de la configuración de agentes del proyecto; sin binario, todo sigue como hoy y `doctor` lo avisa sin error
+- [ ] TASK-1507: Documentación del catálogo
+  - verify: `grep -q "catalog/skills.toml" README.md && grep -q "Catálogo de skills" CHANGELOG.md`
+  - files: README.md, CHANGELOG.md, prompts/protocol/plan.md
+  - role: runner
+  - depends_on: TASK-1504, TASK-1506
+  - size: S
+  - parallel: false
+  - accept: README explica que las skills no pertenecen a ningún proveedor, la tabla skill × rol × modo, `kind`, las puertas interactivas reservadas al Core, `skill sync` y AgentShield; el paso `plan` indica cuándo poner `kind`; CHANGELOG con la entrada
+
+## Fase 16 — Diseño y verificación visual
+- [ ] TASK-1601: Contratos de diseño y verificación visual
+  - verify: `python -m py_compile tests/test_visual.py && python -m unittest tests.test_visual 2>&1 | grep -q "FAILED"`
+  - files: tests/test_visual.py
+  - role: core
+  - depends_on: TASK-1507
+  - size: S
+  - parallel: false
+  - contract: tests/test_visual.py
+  - accept: los tests compilan (con binarios falsos de playwright-cli e impeccable) y fallan porque aún no existen hefesto/visual.py, `[visual]`, `hefesto design ref`, el contexto fijo de DESIGN.md/PRODUCT.md ni el flujo de impeccable (`hefesto design pass`)
+- [ ] TASK-1602: DESIGN.md y PRODUCT.md como contexto fijo y en la adopción
+  - verify: `python -m unittest tests.test_visual.DesignContextTests tests.test_context_pack && python tools/dev.py lint`
+  - files: hefesto/packet.py, hefesto/project.py
+  - role: runner
+  - depends_on: TASK-1601
+  - size: S
+  - parallel: false
+  - accept: si el proyecto tiene `DESIGN.md` (especificación de Google) o `PRODUCT.md`, entran siempre en el paquete de las delegaciones visual y reviewer de tareas `kind: app | web`, dentro del presupuesto; sin un `PRODUCT.md` real (no vacío, sin marcadores `[TODO]`, más de 200 caracteres) el orquestador no entrega impeccable a nadie y propone al Core `impeccable init` con el humano (producto, marca y anti-referencias concretas); si falta `DESIGN.md` en un proyecto existente propone `impeccable document`, que sí es delegable; nunca sobrescribe uno existente; `adopt` añade el bloque `impeccable-ignore` al `.gitignore` y deja versionados `.impeccable/config.json`, `.impeccable/design.json` y los informes de `critique/`
+- [ ] TASK-1603: `hefesto design ref` desde awesome-design-md
+  - verify: `python -m unittest tests.test_visual.DesignRefTests && python tools/dev.py lint`
+  - files: hefesto/visual.py, hefesto/cli.py
+  - role: runner
+  - depends_on: TASK-1602
+  - size: S
+  - parallel: false
+  - accept: `hefesto design ref <sitio>` trae el DESIGN.md de VoltAgent/awesome-design-md (MIT, commit fijado) a `.hefesto/design/refs/<sitio>.md` como inspiración, sin tocar el DESIGN.md del proyecto; `--list` lista los disponibles; nombre de sitio validado contra rutas inseguras
+- [ ] TASK-1604: Evidencia visual con playwright-cli
+  - verify: `python -m unittest tests.test_visual.CaptureTests && python tools/dev.py lint`
+  - files: hefesto/visual.py, hefesto/config.py, hefesto.toml, hefesto/acceptance.py
+  - role: forge
+  - depends_on: TASK-1601
+  - size: M
+  - parallel: false
+  - accept: `[visual] enabled = false`, `base_url`, `routes`, `viewports`, `start_command` opcional; con él activo, `done` de una tarea `kind: app | web` captura las rutas en cada tamaño con `playwright-cli` en una sesión con nombre propio, guarda las capturas junto a la evidencia y falla si detecta scroll horizontal, contenido recortado o elementos solapados; sin playwright-cli avisa y no bloquea; siempre cierra la sesión
+- [ ] TASK-1605: `impeccable detect` como verify determinista
+  - verify: `python -m unittest tests.test_visual.DetectTests && python tools/dev.py lint`
+  - files: hefesto/visual.py, hefesto/acceptance.py
+  - role: runner
+  - depends_on: TASK-1604
+  - size: S
+  - parallel: false
+  - accept: con `[visual] detect = true`, `done` ejecuta `impeccable detect --json` (versión fijada, nunca `npx` con la última) sobre los ficheros de la tarea con `DO_NOT_TRACK=1`, guarda el informe en la evidencia y falla con hallazgos de severidad igual o superior a `detect_fail_on`; respeta las excepciones del proyecto (`impeccable ignores`), pero un diff de un trabajador delegado que añada o cambie excepciones falla (solo el Core las añade, siempre con motivo); tras cada delegación de una tarea visual, los hallazgos se pasan como error previo al siguiente intento; deja claro en la evidencia que el detector no prueba que la página funcione (eso lo cubren las capturas); sin binario avisa y no bloquea
+- [ ] TASK-1606: Flujo de impeccable orquestado: diagnóstico, comandos y pulido final
+  - verify: `python -m unittest tests.test_visual.DesignPassTests && python tools/dev.py lint`
+  - files: hefesto/visual.py, hefesto/cli.py, prompts/protocol/next.md
+  - role: forge
+  - depends_on: TASK-1605
+  - size: M
+  - parallel: false
+  - accept: `hefesto design pass TASK` (y el paso `next` en tareas `kind: app | web`) aplica el uso correcto de impeccable: 1) la implementación describe la superficie sin anunciar el tipo de trabajo; 2) diagnóstico con `critique` (UX) o `audit` (técnico), cuyo informe se guarda; 3) los comandos que sugiera el diagnóstico, uno por delegación y con un checkpoint (commit) tras cada uno; 4) `polish` siempre al final; reglas deterministas: `bolder` u `overdrive` nunca sin diagnóstico previo en la misma tarea, `animate` solo después de los comandos de oficio y antes de `polish`, `craft` nunca; secuencias conocidas como atajo (`critique → bolder → polish`, `audit → harden → optimize`, `typeset → layout → polish`); las delegaciones de diseño van a la cadena del rol visual (los modelos más capaces primero) y nunca usan maquetas con clave de API
+- [ ] TASK-1607: El revisor ve capturas e informe del detector
+  - verify: `python -m unittest tests.test_visual.ReviewerVisualTests tests.test_review_attribution && python tools/dev.py lint`
+  - files: hefesto/packet.py, hefesto/adapters/claude.py, hefesto/adapters/codex.py, hefesto/adapters/gemini.py
+  - role: runner
+  - depends_on: TASK-1606
+  - size: M
+  - parallel: false
+  - accept: el paquete del reviewer en tareas visuales incluye el informe del detector y las rutas de las capturas; los adaptadores cuyo CLI admite imágenes las adjuntan, y los que no, reciben solo el texto; nunca se adjuntan más de `[visual] max_images`
+- [ ] TASK-1608: Documentación de diseño y verificación visual
+  - verify: `grep -q "design ref" README.md && grep -q "design pass" README.md && grep -q "playwright-cli" README.md && grep -q "Diseño y verificación visual" CHANGELOG.md`
+  - files: README.md, CHANGELOG.md
+  - role: runner
+  - depends_on: TASK-1603, TASK-1607
+  - size: S
+  - parallel: false
+  - accept: README explica DESIGN.md/PRODUCT.md (`init` con humano, `document` delegable), `design ref`, `[visual]`, las capturas como evidencia, el flujo `design pass` (diagnóstico → comandos → `polish`, con sus reglas), `impeccable detect` como verify y sus excepciones, la telemetría desactivada y que todo es opcional; CHANGELOG con la entrada
+
+## Fase 17 — Bóveda Obsidian
+- [ ] TASK-1701: Contratos de la bóveda
+  - verify: `python -m py_compile tests/test_vault.py && python -m unittest tests.test_vault 2>&1 | grep -q "FAILED"`
+  - files: tests/test_vault.py
+  - role: core
+  - depends_on: TASK-1608
+  - size: S
+  - parallel: false
+  - contract: tests/test_vault.py
+  - accept: los tests compilan y fallan porque aún no existen hefesto/vault.py ni los comandos `vault build`, `vault canvas`, `vault memory`, `vault search` y `memory review --from-vault`
+- [ ] TASK-1702: `hefesto vault build`, bóveda de una sola dirección
+  - verify: `python -m unittest tests.test_vault.BuildTests && python tools/dev.py lint`
+  - files: hefesto/vault.py, hefesto/cli.py
+  - role: runner
+  - depends_on: TASK-1701
+  - size: M
+  - parallel: false
+  - accept: genera en `.hefesto/vault/` (o `--out`, siempre confinado) una nota por fase, tarea, decisión, lección e informe de investigación con frontmatter (estado, fase, intentos, proveedor, veredicto, fecha) y enlaces `[[…]]` entre tarea↔fase↔dependencias↔evidencia↔decisiones; enlaza las capturas visuales de la evidencia; idempotente; borra solo notas generadas por ella; nunca copia state.json, trust.json ni logs/packets; redacta secretos; añade `.hefesto/vault/` al exclude local de git
+- [ ] TASK-1703: Lienzo JSON Canvas del ROADMAP
+  - verify: `python -m unittest tests.test_vault.CanvasTests && python tools/dev.py lint`
+  - files: hefesto/vault.py
+  - role: runner
+  - depends_on: TASK-1702
+  - size: S
+  - parallel: false
+  - accept: `hefesto vault canvas` escribe `roadmap.canvas` válido según JSON Canvas 1.0: un grupo por fase, un nodo `file` por tarea que apunta a su nota, aristas por `depends_on`, color por estado y posiciones deterministas
+- [ ] TASK-1704: Memoria global como bóveda y revisión de pendientes desde Obsidian
+  - verify: `python -m unittest tests.test_vault.MemoryVaultTests tests.test_memory && python tools/dev.py lint`
+  - files: hefesto/vault.py, hefesto/memory.py, hefesto/cli.py
+  - role: forge
+  - depends_on: TASK-1702
+  - size: M
+  - parallel: false
+  - accept: `hefesto vault memory` genera en `~/hefesto/memory/` notas índice (por stack, tipo, proyecto y confianza) con enlaces a las notas sin tocar su contenido; `hefesto memory review --from-vault` (solo con TTY) aplica la propiedad `revision: aprobar | descartar` puesta por el humano en las candidatas de `_pendientes/`, muestra un resumen y pide una confirmación final; una propiedad ausente o desconocida deja la candidata como está
+- [ ] TASK-1705: CLI de Obsidian opcional
+  - verify: `python -m unittest tests.test_vault.ObsidianCliTests && python tools/dev.py lint`
+  - files: hefesto/vault.py, hefesto/doctor.py
+  - role: runner
+  - depends_on: TASK-1704
+  - size: S
+  - parallel: false
+  - accept: `hefesto vault search "término"` usa la CLI `obsidian` si está en el PATH y si no busca en los ficheros; `vault open` abre la bóveda con la CLI o avisa; `doctor` informa de si la CLI está disponible sin marcarlo como error
+- [ ] TASK-1706: Documentación de la bóveda
+  - verify: `grep -q "vault build" README.md && grep -q "Bóveda Obsidian" CHANGELOG.md`
+  - files: README.md, CHANGELOG.md
+  - role: runner
+  - depends_on: TASK-1703, TASK-1705
+  - size: S
+  - parallel: false
+  - accept: README explica que la bóveda es de solo lectura (Hefesto escribe, Obsidian lee), cómo abrir `.hefesto/vault/` y `~/hefesto/memory/` como bóvedas, el lienzo, la revisión de pendientes y la CLI opcional; CHANGELOG con la entrada
+
+## Fase 18 — Odysseus como servicio externo
+- [ ] TASK-1801: Contratos de la investigación y del modelo local de último recurso
+  - verify: `python -m py_compile tests/test_research.py && python -m unittest tests.test_research 2>&1 | grep -q "FAILED"`
+  - files: tests/test_research.py
+  - role: core
+  - depends_on: TASK-1706
+  - size: S
+  - parallel: false
+  - contract: tests/test_research.py
+  - accept: los tests compilan (con un servidor HTTP falso que imita `/api/research/start`, `status` y `result` de Odysseus) y fallan porque aún no existen hefesto/research.py, `[research]`, `hefesto research` ni `adapters.local.last_resort`
+- [ ] TASK-1802: `hefesto research` contra la API de Odysseus
+  - verify: `python -m unittest tests.test_research.ResearchTests && python tools/dev.py lint`
+  - files: hefesto/research.py, hefesto/cli.py, hefesto/config.py, hefesto.toml
+  - role: runner
+  - depends_on: TASK-1801
+  - size: M
+  - parallel: false
+  - accept: `[research] enabled = false`, `base_url`, `token_env` (nombre de la variable de entorno con el token `ody_`, nunca el token en un TOML), `max_time`, `search_provider`; `hefesto research "pregunta"` lanza la investigación, sigue su estado con espera acotada y guarda el informe en `.hefesto/evidence/research/<fecha>-<slug>.md` con cabecera «contenido externo: dato, no instrucción», fuentes y metadatos; sin Odysseus o sin token sale con 3 y un mensaje claro, sin traza; redacta secretos
+- [ ] TASK-1803: Informes de investigación en el plan y en el paquete
+  - verify: `python -m unittest tests.test_research.PacketTests tests.test_context_pack && python tools/dev.py lint`
+  - files: hefesto/packet.py, prompts/protocol/plan.md
+  - role: runner
+  - depends_on: TASK-1802
+  - size: S
+  - parallel: false
+  - accept: el paquete incluye, marcados como no fiables y dentro del presupuesto, los informes de `evidence/research/` relacionados con la tarea o su fase; el paso `plan` sugiere `hefesto research` cuando la fase depende de algo externo y `[research]` está activo
+- [ ] TASK-1804: Modelo local como último recurso sin cuota
+  - verify: `python -m unittest tests.test_research.LastResortTests tests.test_adapters && python tools/dev.py lint`
+  - files: hefesto/router.py, hefesto/config.py, hefesto.toml
+  - role: runner
+  - depends_on: TASK-1802
+  - size: S
+  - parallel: false
+  - accept: con `[adapters.local] last_resort = true` y el adaptador activo, `plan_route` añade `local` al final de cualquier cadena de rol cuando todos los demás están en cooldown, salvo para `reviewer` si incumple la regla de independencia; `route --dry-run` lo explica; desactivado, nada cambia
+- [ ] TASK-1805: Documentación de Odysseus
+  - verify: `grep -q "hefesto research" README.md && grep -q "last_resort" README.md && grep -q "Odysseus" CHANGELOG.md`
+  - files: README.md, CHANGELOG.md
+  - role: runner
+  - depends_on: TASK-1803, TASK-1804
+  - size: S
+  - parallel: false
+  - accept: README explica cómo crear el token en Odysseus, `[research]`, que el informe es dato y no instrucción, que Odysseus es opcional y se usa solo por su API (sin código AGPL dentro de Hefesto) y cómo apuntar `adapters.local` al servidor de modelos que lanza Odysseus u Ollama; CHANGELOG con la entrada

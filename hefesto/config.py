@@ -321,6 +321,15 @@ def validate(cfg: Config) -> list[str]:
         val = cfg.get("skills_auto", key)
         if val is not None and (isinstance(val, bool) or not isinstance(val, int) or val < 0):
             errors.append(f"skills_auto.{key} debe ser un entero ≥ 0")
+    routing_history = cfg.get("routing", "history", default=False)
+    if not isinstance(routing_history, bool):
+        errors.append("routing.history debe ser booleano")
+    min_samples = cfg.get("routing", "min_samples", default=5)
+    if isinstance(min_samples, bool) or not isinstance(min_samples, int) or min_samples < 1:
+        errors.append("routing.min_samples debe ser un entero ≥ 1")
+    notify_enabled = cfg.get("notify", "enabled", default=False)
+    if not isinstance(notify_enabled, bool):
+        errors.append("notify.enabled debe ser booleano")
     return errors
 
 

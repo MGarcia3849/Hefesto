@@ -1,0 +1,77 @@
+{
+  "attempts": 2,
+  "base_commit": "a3417bbee2f2b92512ce5103c06a2e14d5858cbd",
+  "branch": "hefesto/fase-14-aprendizaje",
+  "commit": "ce79cd82f73655edc9e7cc1fff7e7f9c2babe333",
+  "contract": [],
+  "created_at": "2026-10-17T13:48:39+00:00",
+  "files": [
+    {
+      "path": "hefesto.toml",
+      "sha256": "9fb8209904f028d980949ecb447bbd72db8a4a713d24e04dda01d037a6a2af8e"
+    },
+    {
+      "path": "hefesto/packet.py",
+      "sha256": "7aeab03c8fbe0915d63144d064a6e00ba24fdd1619212bf2158097f6e37a3489"
+    }
+  ],
+  "phase": "Fase 14 — Aprendizaje",
+  "prev_sha256": "9859d5ac0b488115e287b44a174f00a2f5c9876309b8eb5fb3a7d5f470caca09",
+  "prev_task_id": "TASK-1403",
+  "providers": [
+    "claude:sonnet",
+    "codex:default",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-17T13:48:29+00:00",
+    "attempt": 1,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "Lecciones puntuadas y reglas del stack confinadas, protegidas y con presupuesto.",
+    "reviewer": "claude:sonnet",
+    "run_id": "98aee8c899aa",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "a361f779bd9d",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "a1ee94980eaf",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "0b7cfe0cfd2f",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "98aee8c899aa",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 53,
+  "task_id": "TASK-1404",
+  "title": "Lecciones relevantes y reglas del stack en el paquete",
+  "verify": {
+    "command": "python -m unittest tests.test_learning.PacketLessonTests tests.test_context_pack && python tools/dev.py lint",
+    "duration_seconds": 9.056,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1404-a2-2026-10-17T134839+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (79 ficheros Python)\n.................\n----------------------------------------------------------------------\nRan 17 tests in 7.945s\n\nOK",
+    "sha256": "972f3d9ed1bd336b1c8d77fb49720c6c367b71be25119126376a9a7ff5c63876",
+    "trust": "auto"
+  }
+}

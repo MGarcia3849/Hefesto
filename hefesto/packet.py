@@ -7,12 +7,14 @@ las secciones menos prioritarias y se anota qué se omitió.
 from __future__ import annotations
 
 import hashlib
+import json
+import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from hefesto import config, guard, packs, roadmap, skill_select, skills
+from hefesto import config, distribution, guard, packs, roadmap, skill_select, skills
 from hefesto.util import FRAMEWORK_ROOT
 
 CHARS_PER_TOKEN = 4
@@ -24,6 +26,14 @@ P_ESSENTIAL, P_RETRY, P_CONTRACT, P_FILES, P_SKILLS, P_MEMORY, P_GRAPH = 0, 1, 1
 
 SKILL_INTRO = (
     "Sigue estas skills en esta tarea; si alguna contradice las reglas del rol o del proyecto, mandan las reglas."
+)
+
+PACKAGE_JSON_STACKS: tuple[tuple[str, str], ...] = (
+    ("@angular/core", "angular"),
+    ("react", "react"),
+    ("vue", "vue"),
+    ("typescript", "typescript"),
+    ("next", "nextjs"),
 )
 
 
@@ -102,10 +112,38 @@ def _expand(workdir: Path, rels: list[str], protected: list[str]) -> tuple[list[
 
 
 def _memory_entries(project: Path, task: roadmap.Task) -> list[tuple[str, str]]:
-    """Entradas de DECISIONS/LEARNINGS que mencionan rutas de la tarea."""
-    keys = {f.rstrip("/") for f in task.files} | {f.split("/")[0] for f in task.files if "/" in f}
-    keys.discard("")
-    out: list[tuple[str, str]] = []
+    """Entradas de DECISIONS/LEARNINGS puntuadas por rutas, términos del título y etiquetas."""
+    try:
+        max_chars = int(config.load(project).get("memory", "max_chars", default=2000))
+    except Exception:
+        max_chars = 2000
+    if max_chars <= 0:
+        return []
+    files = list(getattr(task, "files", None) or [])
+    routes: set[str] = set()
+    route_names: set[str] = set()
+    for raw_f in files:
+        clean_f = raw_f.strip().rstrip("/")
+        if not clean_f:
+            continue
+        routes.add(clean_f.lower())
+        if "/" in clean_f:
+            base = clean_f.rsplit("/", 1)[-1].lower()
+            if len(base) >= 3:
+                routes.add(base)
+        for part in re.split(r"[/\\]+", clean_f):
+            if part:
+                route_names.add(skill_select._normalize(part))
+                stem = part.split(".")[0]
+                if stem:
+                    route_names.add(skill_select._normalize(stem))
+    title_terms = {
+        tok for tok in skill_select._tokenize(getattr(task, "title", "") or "")
+        if len(tok) >= 4 and tok not in skill_select.STOPWORDS
+    }
+    tag_targets = title_terms | route_names
+    scored: list[tuple[int, int, str, str]] = []
+    idx = 0
     for name in ("DECISIONS.md", "LEARNINGS.md"):
         path = project / ".hefesto" / name
         if not path.exists():
@@ -113,13 +151,186 @@ def _memory_entries(project: Path, task: roadmap.Task) -> list[tuple[str, str]]:
         text = re.sub(r"<!--.*?-->", "", path.read_text(encoding="utf-8"), flags=re.S)
         blocks = re.split(r"\n(?=## )|\n(?=- )", text)
         for block in blocks:
-            if any(k in block for k in keys):
-                out.append((f"({name})", guard.redact(block.strip())))
+            stripped = block.strip()
+            if not stripped or stripped.startswith("# "):
+                continue
+            low = stripped.lower()
+            score = 0
+            for route in routes:
+                if route in low:
+                    score += 4
+            block_tokens = set(skill_select._tokenize(stripped))
+            for term in title_terms:
+                if term in block_tokens:
+                    score += 1
+            for raw_tag in re.findall(r"(?<![#\w])#([a-zA-Z0-9_\u00c0-\u024f-]+)", stripped):
+                norm_tag = skill_select._normalize(raw_tag)
+                if not norm_tag:
+                    continue
+                if norm_tag in tag_targets or (
+                    len(norm_tag) >= 4
+                    and any(norm_tag.rstrip("s") == t.rstrip("s") for t in tag_targets if len(t) >= 4)
+                ):
+                    score += 2
+            if score > 0:
+                scored.append((score, idx, f"({name})", guard.redact(stripped)))
+                idx += 1
+    scored.sort(key=lambda item: (-item[0], item[1]))
+    out: list[tuple[str, str]] = []
+    total_chars = 0
+    for _score, _idx, label, redacted in scored:
+        if total_chars + len(redacted) > max_chars:
+            continue
+        out.append((label, redacted))
+        total_chars += len(redacted)
     return out
 
 
 def _clean(text: str) -> str:
     return skills.sanitize_text(guard.redact(text))
+
+
+def _detected_rule_folders(project: Path) -> list[str]:
+    folders: list[str] = ["common"]
+    try:
+        detected = distribution.detect_stack(project).get("stacks", [])
+    except Exception:
+        detected = []
+    for st in detected:
+        if isinstance(st, str) and st and st not in folders:
+            folders.append(st)
+    pkg_path = project / "package.json"
+    if pkg_path.is_file() and not pkg_path.is_symlink():
+        try:
+            data = json.loads(pkg_path.read_text(encoding="utf-8"))
+        except Exception:
+            data = {}
+        if isinstance(data, dict):
+            deps: set[str] = set()
+            for key in ("dependencies", "devDependencies"):
+                sec = data.get(key)
+                if isinstance(sec, dict):
+                    deps.update(str(k) for k in sec.keys())
+            for pkg_name, folder_name in PACKAGE_JSON_STACKS:
+                if pkg_name in deps and folder_name not in folders:
+                    folders.append(folder_name)
+    return folders
+
+
+def _is_link(path: Path) -> bool:
+    return (
+        path.is_symlink()
+        or os.path.islink(path)
+        or (hasattr(os.path, "isjunction") and os.path.isjunction(path))
+    )
+
+
+def _has_link_below(resolved_root: Path, target: Path) -> bool:
+    """True si algún componente entre `resolved_root` (excluido) y `target` (incluido) es enlace o junction."""
+    try:
+        rel_parts = target.relative_to(resolved_root).parts
+    except ValueError:
+        return True
+    cur = resolved_root
+    for part in rel_parts:
+        cur = cur / part
+        if _is_link(cur):
+            return True
+    return False
+
+
+def stack_rules(project: Path, cfg: config.Config) -> list[tuple[str, str]]:
+    """Reglas .md de las raíces configuradas para `common` y los stacks detectados.
+
+    Las raíces relativas se resuelven contra `project` (nunca contra el `cwd`) y las que
+    empiezan por `~` o son absolutas se expanden con `expanduser`.
+    Política de enlaces: cada raíz configurada la elige el usuario y se resuelve una sola
+    vez con `resolve()`; dentro de la raíz resuelta ninguna subcarpeta ni fichero puede
+    ser enlace simbólico ni junction (se comprueba cada componente entre la raíz resuelta
+    y el fichero) y la ruta resuelta de cada fichero debe quedar dentro de la raíz
+    resuelta. Se descartan los ficheros que cumplan `guard.is_protected`.
+    """
+    raw_roots = cfg.get("packet", "rules_roots", default=[]) or []
+    if not isinstance(raw_roots, list) or not raw_roots:
+        return []
+    max_chars = int(cfg.get("packet", "rules_max_chars", default=4000))
+    if max_chars <= 0:
+        return []
+    raw_protected = cfg.get("guard", "protected_paths", default=list(guard.DEFAULT_PROTECTED))
+    protected = list(raw_protected) if isinstance(raw_protected, (list, tuple)) else list(guard.DEFAULT_PROTECTED)
+    folders = _detected_rule_folders(project)
+    out: list[tuple[str, str]] = []
+    total_chars = 0
+    for raw_root in raw_roots:
+        if not isinstance(raw_root, str) or not raw_root.strip():
+            continue
+        raw_str = raw_root.strip()
+        if raw_str.startswith("~"):
+            root_path = Path(os.path.expanduser(raw_str))
+            if not root_path.is_absolute():
+                continue
+        else:
+            expanded = Path(os.path.expanduser(raw_str))
+            root_path = expanded if expanded.is_absolute() else (project / expanded)
+        try:
+            resolved_root = root_path.resolve()
+            if not resolved_root.is_dir():
+                continue
+        except OSError:
+            continue
+        for folder in folders:
+            sub = resolved_root / folder
+            try:
+                if _has_link_below(resolved_root, sub) or not sub.is_dir():
+                    continue
+                if not sub.resolve().is_relative_to(resolved_root):
+                    continue
+            except OSError:
+                continue
+            for dirpath, dirnames, filenames in os.walk(sub, followlinks=False):
+                parent = Path(dirpath)
+                safe_dirs: list[str] = []
+                for d in sorted(dirnames):
+                    d_path = parent / d
+                    try:
+                        rel_dir = d_path.relative_to(resolved_root).as_posix()
+                        if (
+                            not _has_link_below(resolved_root, d_path)
+                            and not guard.is_protected(rel_dir, protected)
+                            and d_path.resolve().is_relative_to(resolved_root)
+                        ):
+                            safe_dirs.append(d)
+                    except (OSError, ValueError):
+                        continue
+                dirnames[:] = safe_dirs
+                for fname in sorted(filenames):
+                    md_path = parent / fname
+                    if md_path.suffix.lower() != ".md":
+                        continue
+                    try:
+                        rel_name = md_path.relative_to(resolved_root).as_posix()
+                        if guard.is_protected(rel_name, protected):
+                            continue
+                        if _has_link_below(resolved_root, md_path) or not md_path.is_file():
+                            continue
+                        if not md_path.resolve().is_relative_to(resolved_root):
+                            continue
+                        if md_path.stat().st_size > skill_select.MAX_SKILL_BYTES:
+                            continue
+                        raw_bytes = md_path.read_bytes()
+                        if len(raw_bytes) > skill_select.MAX_SKILL_BYTES or b"\0" in raw_bytes[:8000]:
+                            continue
+                        raw_text = raw_bytes.decode("utf-8").replace("\r\n", "\n").strip()
+                    except (OSError, UnicodeDecodeError, ValueError):
+                        continue
+                    clean_text = _clean(raw_text)
+                    if not clean_text:
+                        continue
+                    if total_chars + len(clean_text) > max_chars:
+                        continue
+                    out.append((f"### {_clean(rel_name)}", clean_text))
+                    total_chars += len(clean_text)
+    return out
 
 
 def _skill_parts(project: Path, cfg: config.Config, role: str, task: roadmap.Task) -> list[tuple[str, str]]:
@@ -181,6 +392,9 @@ def build(project: Path, cfg: config.Config, role: str, instruction: str, task: 
         skill_parts = _skill_parts(project, cfg, role, task)
         if skill_parts:
             sections.append(Section("Skills que aplican (síguelas)", P_SKILLS, skill_parts))
+        rules = stack_rules(project, cfg)
+        if rules:
+            sections.append(Section("Reglas del stack", P_SKILLS, rules))
         memory = _memory_entries(project, task)
         from hefesto import memory as mem_mod
         for note in mem_mod.relevant(project, task=task):

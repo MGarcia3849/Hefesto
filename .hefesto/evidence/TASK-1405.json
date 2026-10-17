@@ -1,0 +1,72 @@
+{
+  "attempts": 1,
+  "base_commit": "caa6372fa8a8e9adffa1717023343e448fff9178",
+  "branch": "hefesto/fase-14-aprendizaje",
+  "commit": "52919664280a41f81576e7339dc2a8760a9d64dd",
+  "contract": [],
+  "created_at": "2026-10-17T14:06:17+00:00",
+  "files": [
+    {
+      "path": "hefesto.toml",
+      "sha256": "77f19f1650fd8cc526bd086c5d678649cd79fce39765ec088b417a88dca619a9"
+    },
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "b04d5bcdc8142e777c1bf030ef50276bde736fa1295e2ed7d097e26a28091338"
+    },
+    {
+      "path": "hefesto/config.py",
+      "sha256": "f2f6611473a24be4fffd8e371125c26a8031a0646a570b63f12bd9d4521372a5"
+    },
+    {
+      "path": "hefesto/router.py",
+      "sha256": "f60cce586c5d84637018fcd0d110a4178d5fc2a2e3ea10ca4c92189c8c6d3375"
+    }
+  ],
+  "phase": "Fase 14 — Aprendizaje",
+  "prev_sha256": "670cd068a7b6a1d18a7822c3916d39abdf9ade7d61a01bc48029538494bc7550",
+  "prev_task_id": "TASK-1404",
+  "providers": [
+    "claude:sonnet",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-17T14:06:06+00:00",
+    "attempt": 0,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "Enrutado por historial con pass@k correcto; cooldowns e independencia intactos.",
+    "reviewer": "claude:sonnet",
+    "run_id": "f71a4db4e9b0",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "forge",
+      "run_id": "f6ce76292910",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "f71a4db4e9b0",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 54,
+  "task_id": "TASK-1405",
+  "title": "Enrutado por historial con pass@k",
+  "verify": {
+    "command": "python -m unittest tests.test_learning.RoutingTests tests.test_reviewer_routing && python tools/dev.py lint",
+    "duration_seconds": 10.349,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1405-a1-2026-10-17T140617+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (79 ficheros Python)\n............\n----------------------------------------------------------------------\nRan 12 tests in 9.259s\n\nOK",
+    "sha256": "9ebb0178b2e1bcaf082991868817f0568b602caff102f4ba60bbe4a292ee0fe5",
+    "trust": "auto"
+  }
+}

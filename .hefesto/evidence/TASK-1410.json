@@ -1,0 +1,55 @@
+{
+  "attempts": 1,
+  "base_commit": "f1217058f587a24f72e5c06af9970c6b58649f6f",
+  "branch": "hefesto/fase-14-aprendizaje",
+  "commit": "e771bd87b842b51d2e37cb83b6c670a1b0fd790e",
+  "contract": [
+    "tests/test_learning.py"
+  ],
+  "created_at": "2026-10-17T15:14:48+00:00",
+  "files": [
+    {
+      "path": "tests/test_learning.py",
+      "sha256": "f90c72809173b2eff41bcdc7d69bd7d0852e7ad24727ccee2eb78dacd11bda23"
+    }
+  ],
+  "phase": "Fase 14 — Aprendizaje",
+  "prev_sha256": "67682cb108e944897b44dc40c6dd0fbadba6f0668a444bb9617ac22196fcaba4",
+  "prev_task_id": "TASK-1408",
+  "providers": [
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-17T15:14:39+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Contrato corregido por el camino real.",
+    "reviewer": "gemini:default",
+    "run_id": "8770d4ed7142",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "reviewer",
+      "run_id": "8770d4ed7142",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 58,
+  "task_id": "TASK-1410",
+  "title": "Corregir el contrato `test_refuses_with_blocked_task`",
+  "verify": {
+    "command": "python -m unittest tests.test_learning.AutopilotTests && python tools/dev.py lint",
+    "duration_seconds": 7.847,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1410-a1-2026-10-17T151448+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (81 ficheros Python)\n............\n----------------------------------------------------------------------\nRan 12 tests in 6.720s\n\nOK",
+    "sha256": "9a0b3e94a9fb06edfdefd673811ce45121bb64d9026fee2d0eeb86e8bc17c308",
+    "trust": "auto"
+  }
+}

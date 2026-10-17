@@ -7,7 +7,7 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-from hefesto import config, log, roadmap, state, util
+from hefesto import config, guard, log, roadmap, state, util
 from hefesto.lock import project_lock
 from hefesto.util import EXIT_BLOCKED, EXIT_CONFLICT, EXIT_INPUT, HefestoError, now_iso
 
@@ -126,18 +126,29 @@ def register_failure(project: Path, task_id: str, reason: str, source: str = "fa
     data = state.load(project)
     require_current(data, task_id)
     attempts = data["attempts"] + 1
-    history = list(data.get("error_history") or []) + [{"attempt": attempts, "role": data.get("active_role"),
-                                                         "error": reason[:2000], "at": now_iso()}]
+    active_role = data.get("active_role")
+    at = now_iso()
+    clean_error = guard.redact(reason)[:2000]
+    history = list(data.get("error_history") or []) + [{"attempt": attempts, "role": active_role,
+                                                         "error": clean_error, "at": at}]
+    log.record(project, "failures", {
+        "task_id": task_id,
+        "attempt": attempts,
+        "source": source,
+        "role": active_role,
+        "error": clean_error,
+        "at": at,
+    })
     author_runs = _author_runs(project, data.get("run_id"))
     data.update({
         "attempts": attempts,
-        "last_error": reason[:2000],
+        "last_error": clean_error,
         "error_history": history,
         "review": None,
         "last_failure": {
             "source": source,
             "attempt": attempts,
-            "at": now_iso(),
+            "at": at,
             "author_runs": len(author_runs),
             "author_run_ids": [r.get("run_id") for r in author_runs if r.get("run_id")],
         },
@@ -152,11 +163,15 @@ def register_failure(project: Path, task_id: str, reason: str, source: str = "fa
         report += [f"  intento {h['attempt']} ({h.get('role')}): {h['error']}" for h in history]
         log_path = project / ".hefesto" / "logs" / "circuit_breaker.log"
         log_path.parent.mkdir(parents=True, exist_ok=True)
-        from hefesto.guard import redact
-
         with open(log_path, "a", encoding="utf-8", newline="\n") as fh:
-            fh.write(redact("\n".join(report)) + "\n\n")
+            fh.write(guard.redact("\n".join(report)) + "\n\n")
         log.event(project, "circuit_breaker", f"{task_id} bloqueada tras {attempts} intentos")
+        try:
+            from hefesto import notify
+
+            notify.event(project, "blocked", f"{task_id} bloqueada tras {attempts} intentos")
+        except Exception:
+            pass
         return EXIT_BLOCKED, f"Circuit breaker: {task_id} bloqueada tras {attempts} intentos. Informe en logs/circuit_breaker.log"
     role = role_for_attempt(task.role, attempts + 1, max_attempts)
     data["active_role"] = role

@@ -1,0 +1,96 @@
+{
+  "attempts": 2,
+  "base_commit": "b8bcd10e810a1c743cb05778214938d13a870a38",
+  "branch": "hefesto/fase-14-aprendizaje",
+  "commit": "2570324d696859ab96b376a19562e79a431e4a97",
+  "contract": [],
+  "created_at": "2026-10-17T14:30:15+00:00",
+  "files": [
+    {
+      "path": "hefesto.toml",
+      "sha256": "781b62a45316f146dcac402ca514a90c5a2636ee323bb839cb19b889b8ad5e3f"
+    },
+    {
+      "path": "hefesto/acceptance.py",
+      "sha256": "2561dd62e6f7c4bd1c3f31b109baea6eadaa9034ae5a900c91d3ed568ea15887"
+    },
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "00339e68d68f019c0d085cc3b231cce774abcfc8962329b8dac96194c3fc6b21"
+    },
+    {
+      "path": "hefesto/config.py",
+      "sha256": "a5be899371355ada0a220a5c819365775847c736bb66deafbb6baa0f325264d6"
+    },
+    {
+      "path": "hefesto/notify.py",
+      "sha256": "7c6eab36c100b5d8f5e5bb25f6fdff2d4615fda997415314bd9363063f8e43cf"
+    },
+    {
+      "path": "hefesto/router.py",
+      "sha256": "f1ad581c6ea0e8c1e1fe77796e8cf2680a625bd443a7d2af3478da01b0d64d89"
+    },
+    {
+      "path": "hefesto/workflow.py",
+      "sha256": "01ba3156e8aee53068cc67084ffbcbd14a3f69fdc8f3543bb4460bad0c6d513a"
+    }
+  ],
+  "phase": "Fase 14 — Aprendizaje",
+  "prev_sha256": "7a4f0d6c73787be0828299efa1c463eb81cae0ccfb4da5de9ae552e3e47c0f3b",
+  "prev_task_id": "TASK-1406",
+  "providers": [
+    "claude:sonnet",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-17T14:30:07+00:00",
+    "attempt": 1,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "Avisos de escritorio opcionales, seguros y conectados en los cuatro puntos.",
+    "reviewer": "claude:sonnet",
+    "run_id": "78a49e8e5461",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "51561bbaf7c0",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "a1cc051d3ea7",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "173c47535a27",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "78a49e8e5461",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 56,
+  "task_id": "TASK-1407",
+  "title": "Avisos cuando algo necesita a un humano",
+  "verify": {
+    "command": "python -m unittest tests.test_learning.NotifyTests && python tools/dev.py lint",
+    "duration_seconds": 6.727,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1407-a2-2026-10-17T143014+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (80 ficheros Python)\n.......\n----------------------------------------------------------------------\nRan 7 tests in 5.651s\n\nOK",
+    "sha256": "1b55bd5e64aaa630a843ec7f422c3a7a97d4623f8a74bf391874b98dc1099547",
+    "trust": "auto"
+  }
+}

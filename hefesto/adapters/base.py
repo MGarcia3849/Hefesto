@@ -25,7 +25,7 @@ from hefesto.util import filtered_env
 ORCHESTRATOR_SHELL = ("hefesto", "graphify", "git status", "git diff", "git log")
 
 ERROR_TYPES = ("missing_binary", "auth", "quota", "rate_limit", "timeout", "invalid_output", "denied_by_policy")
-READ_ONLY_ROLES = ("reviewer",)
+READ_ONLY_ROLES = ("reviewer", "challenge")
 SUMMARY_CHARS = 1500
 
 BASE_PATTERNS = {

@@ -175,7 +175,7 @@ hefesto memory prune                                         # limpia notas dupl
 | `status [--protocol]` / `next` | Estado compacto y siguiente tarea disponible. |
 | `start TASK` / `fail TASK "motivo"` | Inicia una tarea (con lock y aislamiento git) o registra un intento fallido; al 3.º salta el circuit breaker. |
 | `trust [--yes]` / `unblock TASK "nota" [--yes]` | Solo humanos y con terminal: aprobar `verify` y desbloquear tareas. |
-| `run ROL "…" [--task] [--dry-run]` | Delegación con paquete de contexto, cadena de fallback y cooldowns. |
+| `run ROL "…" [--task] [--dry-run] [--challenge]` | Delegación con paquete de contexto, cadena de fallback, cooldowns y crítica previa opcional (`--challenge`). |
 | `packet TASK [--role] [--model]` / `route [TASK] --dry-run` | Paquete que recibiría el agente y ruta prevista con las skills del paquete (o lote paralelo sin tarea). |
 | `parallel [--max-parallel N]` | Ejecuta tareas en paralelo respetando concurrencia y límites por modelo. |
 | `review TASK --verdict pass\|fail` | Veredicto con regla de independencia (proveedor distinto, o modelo superior). |
@@ -197,6 +197,9 @@ hefesto memory prune                                         # limpia notas dupl
 | `watch [--once] [--interval N]` | Monitor de límites y actividad de agentes en directo. |
 | `remember "…" [--scope …]` | Guarda una nota en la memoria local o propuesta global. |
 | `memory review\|search\|prune` | Gestión y revisión humana de la memoria global entre proyectos. |
+| `learn extract\|skills` | Extrae lecciones candidatas desde evidencias, revisiones y fallos; propone globales y borradores de skills. |
+| `notify test` | Envía un aviso de escritorio de prueba si `[notify] enabled = true`. |
+| `autopilot schedule\|status\|cancel` | Programa, consulta o cancela una ejecución única de `hefesto loop` al fin del cooldown. |
 
 Códigos de salida: `0` correcto · `1` entrada inválida o `verify` en rojo con intentos restantes · `2` circuit breaker o barrera de seguridad · `3` dependencia o proveedor no disponible · `4` conflicto de estado o lock.
 
@@ -268,6 +271,44 @@ Cuando las skills instaladas no bastan para cubrir una tarea, Hefesto puede busc
 ```bash
 hefesto skill auto TASK-001               # ejecuta bajo demanda la búsqueda e instalación automática para la tarea
 ```
+
+## Aprendizaje
+
+Hefesto incorpora un circuito determinista de aprendizaje continuo (sin llamadas a LLM para extraer ni agrupar) donde **nada entra en la memoria aprobada ni se promueve a skill activa sin revisión humana**:
+
+```bash
+hefesto learn extract                         # extrae candidatas desde evidencias, revisiones y logs/failures.jsonl
+hefesto memory review                         # aprueba o descarta interactivamente las candidatas en memory/_pendientes/
+hefesto learn skills                          # propone candidatas globales (2+ proyectos) y borradores en skills/_proposals/
+hefesto promote <nombre-propuesta>            # promueve manualmente un borrador de skill tras revisarlo
+hefesto route TASK-001 --dry-run              # muestra la ruta y las tasas pass@1 / pass@k si [routing] history = true
+hefesto run runner "Implementa…" --challenge  # pide antes a otro proveedor una crítica en solo lectura de la instrucción
+hefesto notify test                           # comprueba los avisos de escritorio ([notify] enabled = true)
+hefesto autopilot schedule                    # programa una única ejecución de `hefesto loop` al fin del cooldown
+hefesto autopilot status                      # consulta la programación vigente del proyecto (hora local HH:MM)
+hefesto autopilot cancel                      # retira la tarea programada del sistema (schtasks / crontab) y del registro
+```
+
+- **Extractor determinista de lecciones (`hefesto learn extract`):** cada fallo de tarea (`fail`, `verify` o `review`) se registra con el error redactado en `.hefesto/logs/failures.jsonl` (`workflow.register_failure`). `hefesto learn extract` recorre `.hefesto/evidence/*.json`, `.hefesto/logs/reviews.jsonl` y `.hefesto/logs/failures.jsonl` y escribe o actualiza notas candidatas en `~/hefesto/memory/_pendientes/` para las tareas que requirieron más de un intento (`attempts > 1`), tuvieron algún `verify` fallido o recibieron una revisión `fail`. Cada candidata resume el `Motivo` (notas de revisión y errores registrados) y la `Solución` (título de la tarea que acabó en verde y «`N` intentos»), con secretos redactados, y lleva en el frontmatter `confianza` (`0.3` al nacer, `+0.1` por cada nueva fuente `<proyecto>:<TASK>` que comparta la misma `clave` —hash estable de los términos del motivo— hasta el tope `0.9`; una fuente ya contada no vuelve a subir la confianza), `alcance` (`proyecto` o `global`), `proyecto`, `stack`, `tipo` (`errores-resueltos`), `tarea`, `fuentes` y `clave`. Nunca modifica notas ya aprobadas y nada pasa a la memoria permanente sin `hefesto memory review`.
+- **Promoción a global y borradores de skills (`hefesto learn skills`):**
+  - *Propuestas globales (`learning.global_candidates`):* cuando una misma lección (`clave`) ya aprobada con `alcance: proyecto` aparece en **2 o más proyectos distintos**, genera una candidata con `alcance: global` en `~/hefesto/memory/_pendientes/` para su revisión humana con `hefesto memory review`.
+  - *Borradores de skills (`learning.skill_drafts`):* agrupa notas aprobadas del mismo `stack` con `confianza >= 0.7` que comparten un término clave en al menos 3 lecciones (`min_repeats = 3`, `min_confidence = 0.7`) y genera un borrador en `~/hefesto/skills/_proposals/<stack>-<termino>/SKILL.md` con frontmatter `name` y `description`. Ignora notas en `_pendientes/`, no reescribe borradores existentes y **nunca promueve automáticamente** (la promoción sigue siendo `hefesto promote`).
+- **Lecciones relevantes y reglas del stack en el paquete (`packet.py`):**
+  - *Puntuación de memoria local (`_memory_entries`):* puntúa cada bloque de `.hefesto/DECISIONS.md` y `.hefesto/LEARNINGS.md` por coincidencias con las rutas de `files` de la tarea (`+4`), etiquetas `#etiqueta` que casen con términos del título o nombres de ruta (`+2`) y términos del título (`+1`). Ordena de mayor a menor puntuación e inyecta los mejores en el paquete bajo `## Decisiones y lecciones relevantes` sin superar `memory.max_chars` (por defecto `2000`).
+  - *Reglas por lenguaje (`stack_rules`, `[packet]`):* si `packet.rules_roots` apunta a carpetas de reglas por lenguaje (p. ej. una carpeta `rules/` estilo ECC con subcarpetas `common/`, `angular/`, `react/`, `typescript/`…), el paquete incluye bajo `## Reglas del stack` los `.md` de `common` y de las subcarpetas que coincidan con el stack detectado del proyecto (`distribution.detect_stack` y dependencias de `package.json`: `@angular/core` → `angular`, `react` → `react`, `vue` → `vue`, `typescript` → `typescript`, `next` → `nextjs`), saneados, con secretos redactados, sin seguir enlaces simbólicos ni junctions internos y dentro del presupuesto `packet.rules_max_chars` (por defecto `4000`).
+- **Enrutado por historial con `pass@k` (`[routing]`, `router.py`):** con `routing.history = true` (por defecto `false`), `plan_route` calcula desde `.hefesto/logs/runs.jsonl` las estadísticas por `model_id` y rol (`router.success_stats`): tareas distintas (`tasks`), `pass@1` (fracción de tareas cuya primera ejecución del modelo tuvo éxito) y `pass@k` (fracción de tareas con alguna ejecución con éxito). Los modelos de la cadena del rol con `tasks >= routing.min_samples` (por defecto `5`) se reordenan entre las posiciones que ya ocupaban por `(pass@k, pass@1)` descendente; el resto conserva su sitio. Nunca se salta cooldowns, la allowlist del proyecto ni la regla de independencia del `reviewer` (el autor del cambio no puede revisarlo si hay otro proveedor disponible). `hefesto route TASK --dry-run` muestra las cifras junto a cada salto (`pass@1 X%, pass@k Y%, N tareas`).
+- **Revisión adversarial de la instrucción (`hefesto run ROL "…" --challenge`):** antes de delegar al proveedor elegido, un proveedor distinto disponible (ejecutado en solo lectura con `HEFESTO_ROLE=challenge`) señala ambigüedades, lagunas y riesgos de la instrucción frente a los criterios de la tarea. La crítica redactada se guarda en `.hefesto/logs/challenges/<run_id>-<proveedor>.md`, se imprime en `stderr`, se devuelve en el JSON de salida (`challenge: {provider, path, summary}`) y se añade a la instrucción del trabajador bajo `## Crítica previa (otro proveedor)` antes de construir su paquete. **Nunca cuenta como intento** de la tarea; si no hay otro proveedor disponible (`challenge: null`) o la crítica falla, avisa y delega igual con la instrucción original.
+- **Avisos de escritorio (`[notify]`, `notify.py`):** con `notify.enabled = true` (por defecto `false`), Hefesto lanza avisos de escritorio (globo `NotifyIcon` mediante PowerShell en Windows, `osascript` en macOS, `notify-send` en Linux; siempre con `shell=False` y sin bloquear ni lanzar excepción si falla) cuando ocurre un bloqueo por circuit breaker (`blocked`), un `verify` sin confiar en `done` (`trust`), una fase completada lista para `hefesto finish` (`finish`) o una pausa por agotamiento de cuota con código `3` (`quota`). `hefesto notify test` comprueba el envío.
+- **Piloto automático con el planificador del sistema (`hefesto autopilot`):** `hefesto autopilot schedule` toma la hora del próximo reinicio de cuota (`earliest_cooldown`) y programa **una única ejecución** de `hefesto loop` en la hora local correspondiente usando `schtasks` (`/SC ONCE` con `/TN hefesto-autopilot-<hash>` y `/F`) en Windows o `crontab` (línea marcada con `# hefesto-autopilot <nombre>` que ejecuta `hefesto -C <proyecto> loop` seguido de `hefesto -C <proyecto> autopilot cancel` para retirarse sola tras correr una vez, con rutas citadas con `shlex.quote`) en Linux/macOS, sin dejar ningún daemon residente y ejecutando siempre el planificador como lista de argumentos (`shell=False`). Se niega con código `2` (`EXIT_BLOCKED`) si el proyecto o alguna tarea están bloqueados o si el `verify` de la siguiente tarea no está confiado; si no hay cooldown activo, no programa nada. `hefesto autopilot status` muestra la programación vigente y `hefesto autopilot cancel` la retira del planificador del sistema y de `.hefesto/logs/autopilot.json`.
+
+| Sección y clave | Por defecto | Descripción |
+|---|---|---|
+| `memory.max_chars` | `2000` | Tope total de caracteres de las entradas de `DECISIONS.md` y `LEARNINGS.md` inyectadas en el paquete. |
+| `packet.rules_roots` | `[]` | Lista de carpetas con reglas por stack (p. ej. `["~/rules"]` con subcarpetas `common`, `angular`, `react`…). |
+| `packet.rules_max_chars` | `4000` | Presupuesto máximo de caracteres para la sección `## Reglas del stack` en el paquete. |
+| `routing.history` | `false` | Reordena los modelos cualificados de la cadena del rol por `(pass@k, pass@1)` según `logs/runs.jsonl`. |
+| `routing.min_samples` | `5` | Mínimo de tareas distintas por `model_id` y rol para reordenar por historial. |
+| `notify.enabled` | `false` | Activa los avisos de escritorio en eventos `blocked`, `trust`, `finish` y `quota`. |
 
 ## Desarrollo
 

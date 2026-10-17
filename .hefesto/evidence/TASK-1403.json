@@ -1,0 +1,90 @@
+{
+  "attempts": 3,
+  "base_commit": "f3be79259da667a52e44697ffb8a66fa27f90d23",
+  "branch": "hefesto/fase-14-aprendizaje",
+  "commit": "9c67fa7496ba94eafa2d0e1606836386df6d441e",
+  "contract": [],
+  "created_at": "2026-10-17T13:34:45+00:00",
+  "files": [
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "0f8670a07aed4e053e14a3b89dba7aa7c80c30ef6450fb9a6b60a824aff2a39e"
+    },
+    {
+      "path": "hefesto/learning.py",
+      "sha256": "cede5ec4cda7209510d68b5b4a8c64e243af396bc3b668589ac0584add050ac7"
+    }
+  ],
+  "phase": "Fase 14 — Aprendizaje",
+  "prev_sha256": "3359181de810ead4dfb2583917cd7ad1d4b9157f8b66b5b350ede434a8f73315",
+  "prev_task_id": "TASK-1402",
+  "providers": [
+    "claude:sonnet",
+    "codex:default",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-17T13:34:39+00:00",
+    "attempt": 2,
+    "authors": [
+      "codex:default",
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "Promoción a global y borradores correctos: YAML seguro, idempotente, confinado.",
+    "reviewer": "claude:sonnet",
+    "run_id": "8e5fdeaee5dc",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "796917381c89",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "de45d5b58faf",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "ddcc14b4228b",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "10211980afbe",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "forge",
+      "run_id": "e526df337e67",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "8e5fdeaee5dc",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 52,
+  "task_id": "TASK-1403",
+  "title": "Promoción a global y borradores de skills desde patrones repetidos",
+  "verify": {
+    "command": "python -m unittest tests.test_learning.SkillDraftTests && python tools/dev.py lint",
+    "duration_seconds": 5.084,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1403-a3-2026-10-17T133444+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (79 ficheros Python)\n........\n----------------------------------------------------------------------\nRan 8 tests in 4.030s\n\nOK",
+    "sha256": "8bb1e01e478abc4342e75d7780f93bd613f9b454d6c7946a7186eed76694673f",
+    "trust": "auto"
+  }
+}

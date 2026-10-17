@@ -305,12 +305,16 @@ def _approve_candidate(candidate: Path, project: Path | None, edited_body: str |
         dest = target_dir / candidate.name
         _check_memory_path(dest)
         target_dir.mkdir(parents=True, exist_ok=True)
-        content = format_note({
+        approved_meta = {
             "fecha": fecha,
             "proyecto": proj_name,
             "stack": stack,
             "tipo": tipo,
-        }, body)
+        }
+        for extra_key in ("tarea", "confianza", "alcance", "fuentes", "clave"):
+            if extra_key in meta:
+                approved_meta[extra_key] = meta[extra_key]
+        content = format_note(approved_meta, body)
         _check_memory_path(dest)
         dest.write_text(content, encoding="utf-8", newline="\n")
     else:

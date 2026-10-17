@@ -137,8 +137,17 @@ def done(project: Path, task_id: str) -> tuple[int, str]:
                 atomic_write_json(trust.trust_path(project), tdata)
                 trusted = "trusted"
             else:
-                return EXIT_BLOCKED, (f"El verify de {task_id} es {'nuevo' if trusted == 'new' else 'distinto del aprobado'}"
-                                      f": un humano debe ejecutar `hefesto trust`.")
+                msg_trust = (
+                    f"El verify de {task_id} es {'nuevo' if trusted == 'new' else 'distinto del aprobado'}"
+                    f": un humano debe ejecutar `hefesto trust`."
+                )
+                try:
+                    from hefesto import notify
+
+                    notify.event(project, "trust", msg_trust)
+                except Exception:
+                    pass
+                return EXIT_BLOCKED, msg_trust
         workdir = Path(data.get("workdir") or project)
         timeout = int(cfg.get("limits", "verify_timeout_seconds"))
         result = evidence.run_verify(project, workdir, task_id, task.verify, timeout, label=f"a{data['attempts'] + 1}")
@@ -193,12 +202,24 @@ def done(project: Path, task_id: str) -> tuple[int, str]:
                 log.event(project, "evidence", f"evidencia de {task_id} escrita pero sin commit: {exc}")
                 raise
         all_done = all(t.marker == "x" or t.id == task_id for t in rm.tasks)
+        phase_done = all(
+            t.marker == "x" or t.id == task_id
+            for t in rm.tasks
+            if t.phase_slug == task.phase_slug
+        )
         data = state.transition(data, "COMPLETED" if all_done else "IDLE")
         data.update({"current_task_id": None, "active_role": None, "started_role": None, "attempts": 0, "last_error": None,
                      "error_history": [], "review": None, "last_failure": None, "last_checkpoint": commit, "evidence_head": head,
                      "next_action": "hefesto finish" if all_done else "hefesto next"})
         state.save(project, data)
         log.event(project, "done", f"{task_id} completada", commit=commit)
+        if all_done or phase_done:
+            try:
+                from hefesto import notify
+
+                notify.event(project, "finish", f"{task.phase} lista para `hefesto finish`.")
+            except Exception:
+                pass
 
         graph_msg = ""
         from hefesto import packs

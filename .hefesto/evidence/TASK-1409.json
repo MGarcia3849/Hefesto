@@ -1,0 +1,68 @@
+{
+  "attempts": 1,
+  "base_commit": "8a0adf26143e43fa763f18087a1434849269f27f",
+  "branch": "hefesto/fase-14-aprendizaje",
+  "commit": "84ce4be717ea05d7b213f52ff6449b0e4b10f2d3",
+  "contract": [],
+  "created_at": "2026-10-17T15:19:35+00:00",
+  "files": [
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "e467c5d1a21a77fb8f52f2372aa6fbbda97ef660e0f0d2ab982b0917dfe32fb8"
+    },
+    {
+      "path": "README.md",
+      "sha256": "f5703e5dbfd93504e09c4940c3a2f6376ecefb97d05666b166937dfc50a4789d"
+    },
+    {
+      "path": "prompts/protocol/retro.md",
+      "sha256": "cf4182cf3e0ac36da108d18a3410e800dd8080fb505c027f66f8305927881c24"
+    }
+  ],
+  "phase": "Fase 14 — Aprendizaje",
+  "prev_sha256": "dd68f2c7d2715bef8d44e4320b2ef375f4cce83ed0e1456cf1c287f721390208",
+  "prev_task_id": "TASK-1410",
+  "providers": [
+    "claude:sonnet",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-17T15:19:34+00:00",
+    "attempt": 0,
+    "authors": [
+      "gemini:default"
+    ],
+    "exception": null,
+    "notes": "Documentación exacta frente al código.",
+    "reviewer": "claude:sonnet",
+    "run_id": "ed48ee6f0261",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "0c2aa0db7efd",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "ed48ee6f0261",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 59,
+  "task_id": "TASK-1409",
+  "title": "Documentación del aprendizaje",
+  "verify": {
+    "command": "grep -q \"learn extract\" README.md && grep -q \"autopilot\" README.md && grep -q \"Aprendizaje\" CHANGELOG.md",
+    "duration_seconds": 0.085,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1409-a1-2026-10-17T151934+0000.log",
+    "output_summary": "",
+    "sha256": "b7f74b7d43ad581e5f7984d256d4b4cc6aab7f3712bd336d21bde1e21983dc4e",
+    "trust": "auto"
+  }
+}
