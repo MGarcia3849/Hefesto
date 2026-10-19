@@ -283,6 +283,8 @@ def adopt(target: Path, providers: str | None = None) -> list[str]:
             pre_existing_rm_error = str(exc)
 
     report = list(project.init(target, providers=providers))
+    if (project_dir / ".impeccable").is_dir() and project.update_impeccable_gitignore(project_dir):
+        report.append(".gitignore: actualizado el bloque impeccable-ignore")
 
     stacks_desc = ", ".join(stack["stacks"]) if stack["stacks"] else "ninguno"
     doc_lines = [f"- {d}" for d in rel_docs] if rel_docs else ["- ninguno"]

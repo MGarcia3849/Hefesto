@@ -1,0 +1,64 @@
+{
+  "attempts": 1,
+  "base_commit": "78502a494b5ad6da71ed3f1d77023ac8c66475ac",
+  "branch": "hefesto/fase-16-diseno-y-verificacion-visual",
+  "commit": "30311b88ecea17ec62c4880399371f2d3e9972b1",
+  "contract": [],
+  "created_at": "2026-10-18T19:00:41+00:00",
+  "files": [
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "48ffdaeaf4d1bebb55b7d7207a99c82bf7fdc0f38f439c2b3aaa9b1ef2d70428"
+    },
+    {
+      "path": "hefesto/visual.py",
+      "sha256": "156a18035ea2e060a116bfb9bdec703c2eb80642414de21187dbbff3d928543a"
+    }
+  ],
+  "phase": "Fase 16 — Diseño y verificación visual",
+  "prev_sha256": "070fe56ce983da4894508eb4681cfefacc65be2364475fe9217b1aadbed8d90a",
+  "prev_task_id": "TASK-1604",
+  "providers": [
+    "claude:haiku",
+    "claude:sonnet"
+  ],
+  "review": {
+    "at": "2026-10-18T19:00:35+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:haiku"
+    ],
+    "exception": "mismo proveedor (claude) sin alternativa disponible; revisor claude:sonnet superior a claude:haiku",
+    "notes": "sonnet: endurecimiento de git equivalente o mejor, commit fijado, validación previa",
+    "reviewer": "claude:sonnet",
+    "run_id": "12fc94d1383f",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "claude:haiku",
+      "role": "runner",
+      "run_id": "6b3275e0fefc",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "12fc94d1383f",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 71,
+  "task_id": "TASK-1603",
+  "title": "`hefesto design ref` desde awesome-design-md",
+  "verify": {
+    "command": "python -m unittest tests.test_visual.DesignRefTests && python tools/dev.py lint",
+    "duration_seconds": 4.812,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1603-a1-2026-10-18T190040+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (85 ficheros Python)\n....\n----------------------------------------------------------------------\nRan 4 tests in 3.658s\n\nOK",
+    "sha256": "3b25f06621f4dda910f04cc3ba06222e1ad57846267d4e3c46f25ac11517c7fe",
+    "trust": "human"
+  }
+}

@@ -45,10 +45,12 @@ class AdapterResult:
     log_path: str
     reset_hint: str = ""
     duration: float = 0.0
+    text: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
         data.pop("reset_hint")
+        data.pop("text")
         return data
 
 
@@ -137,9 +139,10 @@ class Adapter:
 
     def result(self, call: Call, success: bool, summary: str, error_type: str | None,
                usage: dict[str, Any] | str, log_path: str, reset_hint: str = "") -> AdapterResult:
+        text = redact(summary.strip())
         return AdapterResult(success=success, provider=self.provider, model=call.model or "default",
-                             summary=redact(summary.strip())[:SUMMARY_CHARS], error_type=error_type, usage=usage,
-                             log_path=log_path, reset_hint=reset_hint)
+                             summary=text[:SUMMARY_CHARS], error_type=error_type, usage=usage,
+                             log_path=log_path, reset_hint=reset_hint, text=text)
 
     def run(self, call: Call) -> AdapterResult:
         rel_log = f"runs/{call.run_id}-{self.provider}.log"

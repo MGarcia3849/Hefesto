@@ -1,0 +1,53 @@
+{
+  "attempts": 1,
+  "base_commit": "86a5f37ee954a5f786f6fdbf66f99f3b640c6210",
+  "branch": "hefesto/fase-16-diseno-y-verificacion-visual",
+  "commit": "86380e0c88c4834b8671af327002f59f44ef921b",
+  "contract": [],
+  "created_at": "2026-10-19T09:37:52+00:00",
+  "files": [
+    {
+      "path": "tests/test_learning.py",
+      "sha256": "0ed6a750a552d5e53eca3e9966cb7da2c75e5a483bf756bef31c6af6dce87c31"
+    }
+  ],
+  "phase": "Fase 16 — Diseño y verificación visual",
+  "prev_sha256": "774d0c376108a5b807bdc0cf5bdf97e62676d1352583e01cbc7ae22eb3552f7f",
+  "prev_task_id": "TASK-1608",
+  "providers": [
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-10-19T09:37:43+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "gemini flash: WHEN relativo conserva la intención de los tests; autopilot.py intacto.",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "37a7e2237edb",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "37a7e2237edb",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 76,
+  "task_id": "TASK-1609",
+  "title": "Quitar la bomba de tiempo de AutopilotTests",
+  "verify": {
+    "command": "python -m unittest tests.test_learning.AutopilotTests && python tools/dev.py lint",
+    "duration_seconds": 8.521,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1609-a1-2026-10-19T093752+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (86 ficheros Python)\n............\n----------------------------------------------------------------------\nRan 12 tests in 7.307s\n\nOK",
+    "sha256": "9a0b3e94a9fb06edfdefd673811ce45121bb64d9026fee2d0eeb86e8bc17c308",
+    "trust": "auto"
+  }
+}

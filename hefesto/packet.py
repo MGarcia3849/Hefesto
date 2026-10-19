@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 from hefesto import config, distribution, guard, packs, roadmap, skill_catalog, skill_select, skills
+from hefesto.project import design_context
 from hefesto.util import FRAMEWORK_ROOT, HefestoError
 
 CHARS_PER_TOKEN = 4
@@ -342,6 +343,9 @@ def _skill_parts(project: Path, cfg: config.Config, role: str, task: roadmap.Tas
     except HefestoError:
         catalog = {}
         catalog_choices = []
+    if not design_context(project).product_ready:
+        raw_choices = [c for c in raw_choices if c.name.casefold() != "impeccable"]
+        catalog_choices = [c for c in catalog_choices if c.name.casefold() != "impeccable"]
     pinned_names = {name.casefold() for name in skill_select._pinned_names(task)}
     catalog_names = {name.casefold() for name in catalog}
     chosen_catalog_names = {c.name.casefold() for c in catalog_choices}
@@ -418,6 +422,43 @@ def build(project: Path, cfg: config.Config, role: str, instruction: str, task: 
         sections.append(Section("Tarea", P_ESSENTIAL, [("", "\n".join(meta))]))
     sections.append(Section("Instrucción del orquestador", P_ESSENTIAL, [("", guard.redact(instruction.strip()))]))
     sections.append(Section("Reglas del rol", P_ESSENTIAL, [("", role_rules(role))]))
+    context = design_context(project)
+    if role == "core" and context.suggestions:
+        sections.append(Section("Sugerencias de diseño", P_ESSENTIAL,
+                                [("", "\n".join(context.suggestions))]))
+    if task is not None and task.kind in ("app", "web") and role in ("visual", "reviewer"):
+        design_parts = [(f"### {name}", _clean(body)) for name, body in
+                        (("DESIGN.md", context.design), ("PRODUCT.md", context.product)) if body is not None]
+        if design_parts:
+            sections.append(Section("Contexto de diseño", P_ESSENTIAL, design_parts))
+    if task is not None and task.kind in ("app", "web") and role == "reviewer":
+        from hefesto import visual
+
+        visual_folder = visual.artifacts_dir(project, task.id)
+        evidence_parts: list[tuple[str, str]] = []
+        detect_text = _read_text(visual_folder / "detect.json")
+        if detect_text is not None:
+            try:
+                report = json.loads(detect_text)
+            except ValueError:
+                report = None
+            if isinstance(report, dict):
+                details: list[str] = []
+                findings = report.get("findings")
+                if isinstance(findings, list):
+                    details.extend(guard.redact(json.dumps(f, ensure_ascii=False, sort_keys=True))
+                                   for f in findings if isinstance(f, dict))
+                note = report.get("note")
+                if isinstance(note, str) and note.strip():
+                    details.append(guard.redact(note.strip()))
+                if details:
+                    evidence_parts.append(("### Informe del detector", "\n".join(details)))
+        image_paths = visual.reviewer_images(project, cfg, task)
+        if image_paths:
+            routes = [path.relative_to(project).as_posix() for path in image_paths]
+            evidence_parts.append(("### Capturas", "\n".join(f"- {guard.redact(route)}" for route in routes)))
+        if evidence_parts:
+            sections.append(Section("Evidencia visual", P_ESSENTIAL, evidence_parts))
     skipped: list[str] = []
     if task is not None and data and data.get("current_task_id") == task.id and data.get("attempts"):
         history = data.get("error_history") or []
@@ -455,8 +496,7 @@ def build(project: Path, cfg: config.Config, role: str, instruction: str, task: 
                 clean_graph = skills.sanitize_text(guard.redact(graph_extract))
                 sections.append(Section("Grafo de código", P_GRAPH, [("", clean_graph)]))
     max_tokens = max_tokens_for(cfg, model_id)
-    omitted = _fit(sections, max_tokens * CHARS_PER_TOKEN)
-    omitted += [f"{s} — omitido" for s in skipped]
+    omitted = _fit(sections, max_tokens * CHARS_PER_TOKEN, [f"{s} — omitido" for s in skipped])
     text = "# Paquete de tarea Hefesto\n\n" + "\n".join(s.render() for s in sections if s.parts)
     if omitted:
         text += "\n## Omitido del paquete\n\n" + "\n".join(f"- {o}" for o in omitted) + "\n"
@@ -468,22 +508,45 @@ def _size(sections: list[Section]) -> int:
     return sum(len(s.render()) for s in sections if s.parts) + 200
 
 
-def _fit(sections: list[Section], budget: int) -> list[str]:
-    omitted: list[str] = []
+def _fit(sections: list[Section], budget: int, skipped: list[str] | None = None) -> list[str]:
+    omitted = list(skipped or [])
+
+    def size() -> int:
+        # La lista de omisiones también consume presupuesto del paquete.
+        return _size(sections) + sum(len(item) + 3 for item in omitted)
+
     for priority in sorted({s.priority for s in sections if s.priority > 0}, reverse=True):
         for section in reversed([s for s in sections if s.priority == priority]):
-            while section.parts and _size(sections) > budget:
+            while section.parts and size() > budget:
                 label, _text = section.parts.pop()
                 omitted.append(f"{section.title}: {label.lstrip('# ').strip() or 'contenido'} (por tamaño)")
                 if len(section.parts) == 1 and not section.parts[0][0]:
                     section.parts.clear()
-            if _size(sections) <= budget:
+            if size() <= budget:
                 return omitted
-    if _size(sections) > budget:
+    if size() > budget:
+        # El contexto fijo conserva ambos documentos, con extractos si no caben completos.
+        for section in sections:
+            if section.title == "Contexto de diseño" and section.parts:
+                overhead = size() - sum(len(text) for _, text in section.parts)
+                available = max(0, budget - overhead)
+                remaining = len(section.parts)
+                clipped = []
+                for label, text in section.parts:
+                    limit = available // remaining
+                    marker = "\n[documento recortado por tamaño]"
+                    body = text if len(text) <= limit else (
+                        text[:limit - len(marker)] + marker if limit >= len(marker) else text[:limit]
+                    )
+                    clipped.append((label, body))
+                    available -= len(body)
+                    remaining -= 1
+                section.parts = clipped
+    if size() > budget:
         for section in sections:
             if section.priority == 0 and section.title.startswith("Instrucción"):
                 label, text = section.parts[0]
-                keep = max(200, len(text) - (_size(sections) - budget))
+                keep = max(200, len(text) - (size() - budget))
                 section.parts[0] = (label, text[:keep] + "\n[instrucción truncada por tamaño]")
                 omitted.append("Instrucción del orquestador: truncada (por tamaño)")
     return omitted

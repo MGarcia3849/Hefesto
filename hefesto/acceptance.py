@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import os
 import shutil
 import subprocess
@@ -116,6 +117,74 @@ def review(project: Path, task_id: str, verdict: str, notes: str, run_id: str | 
         return EXIT_OK, f"Revisión pass registrada para {task_id} por {reviewer}{suffix}."
 
 
+DECISIONS_PATH = ".hefesto/DECISIONS.md"
+
+
+def _file_at(workdir: Path, base: str | None, rel: str) -> str | None:
+    if not base:
+        return None
+    blob = gitops.git(workdir, "show", f"{base}:{rel}", check=False, binary=True)
+    return blob.stdout.decode("utf-8", errors="replace") if blob.returncode == 0 else None
+
+
+def _read_current(workdir: Path, rel: str) -> str | None:
+    path = workdir / rel
+    return path.read_text(encoding="utf-8", errors="replace") if path.is_file() else None
+
+
+def _diff_additions(diff_text: str) -> list[str]:
+    """Líneas '+' de un diff unificado. La cabecera (antes del primer '@@') no cuenta: una línea '++' sí."""
+    additions: list[str] = []
+    in_hunk = False
+    for line in diff_text.splitlines():
+        if line.startswith("@@"):
+            in_hunk = True
+        elif in_hunk and line.startswith("+"):
+            additions.append(line)
+    return additions
+
+
+def _added_lines(workdir: Path, base: str | None, rel: str) -> list[str]:
+    """Líneas '+' que el diff de la tarea añade a `rel`; si `rel` no está en `base` (fichero nuevo), todo el fichero."""
+    text = _read_current(workdir, rel) or ""
+    if _file_at(workdir, base, rel) is None:
+        return ["+" + line for line in text.splitlines()]
+    diff = gitops.git(workdir, "diff", "--no-ext-diff", "--no-color", base or "", "--", rel, check=False)
+    if diff.returncode != 0:
+        return ["+" + line for line in text.splitlines()]
+    return _diff_additions(diff.stdout)
+
+
+def _detector_ignore_problems(workdir: Path, base: str | None, task: roadmap.Task) -> list[str]:
+    """Un trabajador delegado no toca las excepciones del detector; el Core solo las cambia con motivo."""
+    from hefesto import visual
+
+    problems: list[str] = []
+    before = _file_at(workdir, base, visual.PROJECT_CONFIG)
+    after = _read_current(workdir, visual.PROJECT_CONFIG)
+    if task.role != "core":
+        if visual.ignores_changed(before, after):
+            problems.append(f"El rol {task.role} cambia las excepciones del detector ({visual.PROJECT_CONFIG}): "
+                            "solo el Core puede hacerlo, con motivo.")
+        for rel in code_changes(workdir, base):
+            if any("impeccable-disable" in line for line in _added_lines(workdir, base, rel)):
+                problems.append(f"{rel} añade impeccable-disable: las excepciones inline son del Core, con motivo.")
+    elif visual.ignores_changed(before, after):
+        added = "\n".join(line[1:] for line in _added_lines(workdir, base, DECISIONS_PATH))
+        missing = [value for value in visual.ignore_values_added(before, after) if value not in added]
+        if not added.strip() or missing:
+            problems.append(f"Cambio de excepciones del detector sin motivo: añade a {DECISIONS_PATH} una línea que "
+                            f"nombre {', '.join(missing) or 'el cambio'}.")
+    return problems
+
+
+def _visual_red(project: Path, task_id: str, title: str, summary: str) -> tuple[int, str]:
+    code, message = workflow.register_failure(project, task_id, f"{title}:\n{summary}", source="verify")
+    if code:
+        return code, f"{title} en rojo.\n{message}"
+    return EXIT_INPUT, f"{title} en rojo. Rol del siguiente intento: {message}\n{summary}"
+
+
 def done(project: Path, task_id: str) -> tuple[int, str]:
     with project_lock(project):
         cfg = config.load(project)
@@ -158,6 +227,33 @@ def done(project: Path, task_id: str) -> tuple[int, str]:
             if code:
                 return code, f"verify en rojo.\n{message}"
             return EXIT_INPUT, f"verify en rojo (exit {result.exit_code}). Rol del siguiente intento: {message}\n{result.summary}"
+        visual_record = None
+        detect_on = bool(cfg.get("visual", "detect"))
+        if task.kind in ("app", "web") and (cfg.get("visual", "enabled") or detect_on):
+            from hefesto import visual
+
+            if detect_on:
+                ignore_problems = _detector_ignore_problems(workdir, data.get("task_base"), task)
+                if ignore_problems:
+                    return _visual_red(project, task_id, "verify visual (excepciones del detector)",
+                                       "\n".join(ignore_problems))
+            if cfg.get("visual", "enabled"):
+                capture = visual.capture(workdir, cfg, task, out_dir=visual.artifacts_dir(project, task.id))
+                if not capture.ok:
+                    return _visual_red(project, task_id, "verify visual", "\n".join(capture.problems))
+                visual_record = {"captures": [{"path": p.relative_to(project.resolve()).as_posix(),
+                                               "sha256": hashlib.sha256(p.read_bytes()).hexdigest()}
+                                              for p in capture.images]}
+            if detect_on:
+                report = visual.detect(workdir, cfg, task, out_dir=visual.artifacts_dir(project, task.id))
+                visual_record = visual_record or {}
+                visual_record["detect"] = {"ok": report.ok, "skipped": report.skipped, "note": report.note,
+                                           "findings": report.findings}
+                if not report.ok:
+                    lines = [f"- {f.get('antipattern', '?')} ({f.get('severity', '?')}) {f.get('file', '')}"
+                             for f in report.findings]
+                    return _visual_red(project, task_id, "verify visual (impeccable detect)",
+                                       "\n".join(lines + [report.note]))
         changed = code_changes(workdir, data.get("task_base"))
         review_rec = data.get("review")
         if changed and (not review_rec or review_rec.get("verdict") != "pass" or review_rec.get("attempt") != data["attempts"]):
@@ -192,6 +288,8 @@ def done(project: Path, task_id: str) -> tuple[int, str]:
             "runs": [{"run_id": r.get("run_id"), "role": r.get("role"), "model_id": r.get("model_id"),
                       "success": r.get("success")} for r in runs],
         }
+        if visual_record is not None:
+            record["visual"] = visual_record
         ev_path, head = evidence.write(project, record)
         is_local = bool(getattr(cfg, "settings", None) and cfg.settings.get("install_mode") == "local")
         if not is_local:

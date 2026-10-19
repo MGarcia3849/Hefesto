@@ -11,7 +11,7 @@ from pathlib import Path
 import sys
 from typing import Any
 
-from hefesto import acceptance, adapters, config, guard, log, packet, preflight, providers, quota, roadmap, state
+from hefesto import acceptance, adapters, config, guard, log, packet, preflight, providers, quota, roadmap, state, visual
 from hefesto.adapters.base import AdapterResult, Call
 from hefesto.util import EXIT_BLOCKED, EXIT_INPUT, EXIT_OK, EXIT_UNAVAILABLE, HefestoError, read_jsonl
 from hefesto.workflow import new_run_id
@@ -334,7 +334,9 @@ def run(project: Path, role: str, instruction: str, task_id: str | None = None, 
         call = Call(role=role, prompt=pkt.text, task_id=task.id if task else None, run_id=run_id,
                     model=model or str(cfg.get("adapters", provider, "model", default="") or ""),
                     model_id=mid,
-                    workdir=eff_workdir, project=project, packet_path=packet_path.resolve(), timeout=timeout)
+                    workdir=eff_workdir, project=project, packet_path=packet_path.resolve(), timeout=timeout,
+                    extra={"images": [str(path) for path in visual.reviewer_images(project, cfg, task)]
+                           if role == "reviewer" and task is not None and task.kind in ("app", "web") else {}})
         result = adapters.get(cfg, provider).run(call)
         quota.record_call(provider)
         _record(project, role, task, eff_task_run_id, run_id, mid, result, packet_path)

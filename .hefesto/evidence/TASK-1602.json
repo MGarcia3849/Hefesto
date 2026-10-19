@@ -1,0 +1,75 @@
+{
+  "attempts": 1,
+  "base_commit": "a8bb03c65ef7daddc80b83702020126960e93f6f",
+  "branch": "hefesto/fase-16-diseno-y-verificacion-visual",
+  "commit": "ee24681f63195dfce4b0c84bb8dda7fa792837f7",
+  "contract": [],
+  "created_at": "2026-10-18T18:39:13+00:00",
+  "files": [
+    {
+      "path": "hefesto/distribution.py",
+      "sha256": "7270eb2f4bd1074304621cbc237993abf53412641703a7f8bf1cc823bcc71986"
+    },
+    {
+      "path": "hefesto/packet.py",
+      "sha256": "3c2b271bb7ac01a447fa65a8179d503eb13c8c731186de3447e7ee292a2968eb"
+    },
+    {
+      "path": "hefesto/project.py",
+      "sha256": "1a1857be056c717f385e44c3845f19105bf449b0bb5a24aed5599813ac4b1562"
+    }
+  ],
+  "phase": "Fase 16 — Diseño y verificación visual",
+  "prev_sha256": "b137067db08e6eda93547be89d8165b773ac7093bfc728fa31d56cd1a8b8fd7d",
+  "prev_task_id": "TASK-1601",
+  "providers": [
+    "claude:sonnet",
+    "codex:default",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-18T18:39:03+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:default"
+    ],
+    "exception": null,
+    "notes": "sonnet: criterios cubiertos; _fit cuenta omisiones (context_pack OK)",
+    "reviewer": "claude:sonnet",
+    "run_id": "258ce797cc33",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "runner",
+      "run_id": "2b11dfa9e347",
+      "success": false
+    },
+    {
+      "model_id": "codex:default",
+      "role": "runner",
+      "run_id": "2b11dfa9e347",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "258ce797cc33",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 69,
+  "task_id": "TASK-1602",
+  "title": "DESIGN.md y PRODUCT.md como contexto fijo y en la adopción",
+  "verify": {
+    "command": "python -m unittest tests.test_visual.DesignContextTests tests.test_context_pack && python tools/dev.py lint",
+    "duration_seconds": 8.897,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1602-a1-2026-10-18T183913+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (84 ficheros Python)\n...............\n----------------------------------------------------------------------\nRan 15 tests in 7.753s\n\nOK",
+    "sha256": "0e819106df8b9f006c82c86d68f21b622461234364536f6376633296d08720d4",
+    "trust": "human"
+  }
+}

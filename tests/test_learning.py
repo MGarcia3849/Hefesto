@@ -686,7 +686,9 @@ class NotifyTests(LearningCase):
 
 
 class AutopilotTests(LearningCase):
-    WHEN = dt.datetime(2026, 10, 18, 7, 30, tzinfo=dt.timezone.utc)
+    # Siempre en el futuro: una fecha fija caduca y `autopilot schedule` la cambia por ahora + 2 min.
+    WHEN = (dt.datetime.now(dt.timezone.utc) + dt.timedelta(days=1)).replace(hour=7, minute=30, second=0,
+                                                                           microsecond=0)
 
     def trust_next(self) -> None:
         task = roadmap.load_valid(self.project).get("TASK-001")

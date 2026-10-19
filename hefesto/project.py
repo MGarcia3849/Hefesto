@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import shutil
 import subprocess
+from dataclasses import dataclass
 from pathlib import Path
 
 from hefesto import __version__, config, util
@@ -51,6 +52,63 @@ BANNER = r"""
  |  _  |  __/  _|  __/\__ \ || (_) |
  |_| |_|\___|_|  \___||___/\__\___/   v{version}
 """
+
+
+@dataclass
+class DesignContext:
+    design: str | None
+    product: str | None
+    product_ready: bool
+    suggestions: list[str]
+
+
+def design_context(project: Path) -> DesignContext:
+    """Lee el contexto de diseño sin crearlo ni sobrescribirlo."""
+    def read(name: str) -> str | None:
+        path = project / name
+        if path.is_symlink() or not path.is_file():
+            return None
+        try:
+            return path.read_text(encoding="utf-8")
+        except (OSError, UnicodeError):
+            return None
+
+    design = read("DESIGN.md")
+    product = read("PRODUCT.md")
+    placeholder = "[TO" "DO]"  # Separado para no activar el lint de marcadores pendientes del código.
+    ready = product is not None and len(product.strip()) > 200 and placeholder not in product
+    suggestions = []
+    if not ready:
+        suggestions.append(
+            "El Core debe ejecutar impeccable init con el humano para definir producto, marca y "
+            "anti-referencias concretas en PRODUCT.md; conservar cualquier documento existente."
+        )
+    elif not (project / "DESIGN.md").exists():
+        suggestions.append("Proponer impeccable document (delegable) para documentar el diseño existente en DESIGN.md.")
+    return DesignContext(design, product, ready, suggestions)
+
+
+def update_impeccable_gitignore(project: Path) -> bool:
+    """Mantiene un bloque propio que ignora únicamente la configuración local."""
+    path = project / ".gitignore"
+    if path.is_symlink():
+        raise HefestoError("`.gitignore` no puede ser un enlace simbólico.", EXIT_INPUT)
+    text = path.read_text(encoding="utf-8") if path.exists() else ""
+    start, end = "# >>> impeccable-ignore", "# <<< impeccable-ignore"
+    block = f"{start}\n.impeccable/config.local.json\n{end}"
+    lines = text.splitlines(keepends=True)
+    first = next((i for i, line in enumerate(lines) if line.strip() == start), None)
+    last = next((i for i, line in enumerate(lines) if line.strip() == end), None)
+    if first is not None and last is not None and first < last:
+        updated = "".join(lines[:first]) + block + "\n" + "".join(lines[last + 1:])
+    elif first is not None or last is not None:
+        raise HefestoError("Bloque impeccable-ignore incompleto en .gitignore.", EXIT_INPUT)
+    else:
+        updated = text + ("\n" if text and not text.endswith("\n") else "") + block + "\n"
+    if updated == text:
+        return False
+    util.atomic_write_text(path, updated)
+    return True
 
 
 def find_project(start: Path | None = None) -> Path:

@@ -1,0 +1,163 @@
+{
+  "attempts": 3,
+  "base_commit": "35502de6ecb7ef5ba6daa95c51d61d996d989924",
+  "branch": "hefesto/fase-16-diseno-y-verificacion-visual",
+  "commit": "6f54b19be7fdbeb74f289099663947a8f9318b09",
+  "contract": [],
+  "created_at": "2026-10-19T01:33:23+00:00",
+  "files": [
+    {
+      "path": "hefesto/adapters/base.py",
+      "sha256": "87063b10eb4343fc6552e0e51ac203685a957fe508b44c73a52a6b22f016d427"
+    },
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "c92a0bc8a4f2607bf5e1e85880a6086627d21dc2effd3e0117df90e5b0e2c301"
+    },
+    {
+      "path": "hefesto/visual.py",
+      "sha256": "b1aa976970b01925358f95b1f6bcefae9cf6eaf65871b33d7912dd17a1a6c8b1"
+    },
+    {
+      "path": "prompts/protocol/next.md",
+      "sha256": "ab0d55372c1de99161881a5725083951a451ccaede0c74a750705dd93664bf0f"
+    },
+    {
+      "path": "tests/test_design_pass.py",
+      "sha256": "bb5f1c300b5f64e704f63185d3854b97d6f833460355c65d493fd40cc2d9a448"
+    }
+  ],
+  "phase": "Fase 16 — Diseño y verificación visual",
+  "prev_sha256": "d5da3f99945705dac2e6f20e287f0c476ae9f559c3cd3fb480f986006e36f7b1",
+  "prev_task_id": "TASK-1605",
+  "providers": [
+    "claude:opus",
+    "claude:sonnet",
+    "codex:default",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-19T01:33:14+00:00",
+    "attempt": 2,
+    "authors": [
+      "claude:sonnet",
+      "codex:default"
+    ],
+    "exception": "mismo proveedor (claude) sin alternativa disponible; revisor claude:opus superior a claude:sonnet",
+    "notes": "claude:opus (tier 3 > autor claude:sonnet; codex también autor; gemini sin cuota): lógica revisada en 093721cb6d5b; tests nuevos movidos a tests/test_design_pass.py, contrato test_visual.py idéntico a HEAD.",
+    "reviewer": "claude:opus",
+    "run_id": "ee1e2efb5571",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "claude:sonnet",
+      "role": "forge",
+      "run_id": "cd8ee438cf37",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "reviewer",
+      "run_id": "523176f65cee",
+      "success": false
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "523176f65cee",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "forge",
+      "run_id": "47e1dbe592d1",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "reviewer",
+      "run_id": "00ca6246aa7e",
+      "success": false
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "00ca6246aa7e",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "aeaf6082fb03",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "forge",
+      "run_id": "3d7ecefe1ef7",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "forge",
+      "run_id": "f4acc9a73272",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "forge",
+      "run_id": "91e32f534be1",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "reviewer",
+      "run_id": "dd86171b45d9",
+      "success": false
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "dd86171b45d9",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "forge",
+      "run_id": "e2f1105f9ad8",
+      "success": true
+    },
+    {
+      "model_id": "claude:opus",
+      "role": "reviewer",
+      "run_id": "093721cb6d5b",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "forge",
+      "run_id": "14d2ca2917b8",
+      "success": true
+    },
+    {
+      "model_id": "claude:opus",
+      "role": "reviewer",
+      "run_id": "ee1e2efb5571",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 73,
+  "task_id": "TASK-1606",
+  "title": "Flujo de impeccable orquestado: diagnóstico, comandos y pulido final",
+  "verify": {
+    "command": "python -m unittest tests.test_visual.DesignPassTests && python tools/dev.py lint",
+    "duration_seconds": 6.532,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1606-a3-2026-10-19T013321+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (86 ficheros Python)\n..............\n----------------------------------------------------------------------\nRan 14 tests in 5.385s\n\nOK",
+    "sha256": "6f9f58d88671e2d6da5e5681e6ed63b7208cd474c23e397774c4113061eea8a0",
+    "trust": "human"
+  }
+}

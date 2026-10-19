@@ -1,0 +1,84 @@
+{
+  "attempts": 2,
+  "base_commit": "eb87e1a0f495031a0a611b956d3fe62639014eda",
+  "branch": "hefesto/fase-16-diseno-y-verificacion-visual",
+  "commit": "3979bd315d4613dbcaf3a916e3db39281fc58d63",
+  "contract": [],
+  "created_at": "2026-10-18T18:56:57+00:00",
+  "files": [
+    {
+      "path": "hefesto.toml",
+      "sha256": "97147ccaaefd97e8d8645728cf5dd24ed7789c03264f52edbc6367ee949d9530"
+    },
+    {
+      "path": "hefesto/acceptance.py",
+      "sha256": "b22c24bc01bca9ad6bf9db97870728863b6b86623b1dfcfb65cedc189ef2b2e6"
+    },
+    {
+      "path": "hefesto/config.py",
+      "sha256": "789769214489c58a9b53723e46bd1a6b39d943adf9843750915a0b2250afc1bd"
+    },
+    {
+      "path": "hefesto/visual.py",
+      "sha256": "b73fb40d90af2495737c59a48cbb00043eb3edfe269d333d3f539255dacba511"
+    }
+  ],
+  "phase": "Fase 16 — Diseño y verificación visual",
+  "prev_sha256": "1da9f078ad08db002ac1ac8dcbc84b75b2f6e27b3599c759a601afd17edfb61c",
+  "prev_task_id": "TASK-1602",
+  "providers": [
+    "claude:sonnet",
+    "codex:default"
+  ],
+  "review": {
+    "at": "2026-10-18T18:56:36+00:00",
+    "attempt": 1,
+    "authors": [
+      "codex:default"
+    ],
+    "exception": null,
+    "notes": "sonnet r2: árbol de procesos y listas vacías resueltos",
+    "reviewer": "claude:sonnet",
+    "run_id": "1e5e80422dc4",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:default",
+      "role": "forge",
+      "run_id": "48b2c9d029cf",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "a9af1d7fafe5",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "forge",
+      "run_id": "825cab9a31f7",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "1e5e80422dc4",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 70,
+  "task_id": "TASK-1604",
+  "title": "Evidencia visual con playwright-cli",
+  "verify": {
+    "command": "python -m unittest tests.test_visual.CaptureTests && python tools/dev.py lint",
+    "duration_seconds": 20.297,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1604-a2-2026-10-18T185656+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (85 ficheros Python)\n............Aviso: playwright-cli no est� instalado; se omiten las capturas\n.\n----------------------------------------------------------------------\nRan 13 tests in 19.092s\n\nOK",
+    "sha256": "521abd84d0b6e15d03dc5fec6d7e1bccdd4d4ca0f64aacfc20033f6eb677347c",
+    "trust": "human"
+  }
+}

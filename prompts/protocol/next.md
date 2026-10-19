@@ -16,6 +16,7 @@ Un ciclo completo para **una** tarea. La CLI `hefesto` es la única fuente de ve
    - Salida 0: lee el resumen. Salida 1: el trabajador falló; decide entre reintentar con otra instrucción o `hefesto fail TASK "motivo"`.
    - Salida 3: ningún proveedor del rol tiene cuota. **No es un fallo de la tarea**: `hefesto note "pausa: sin cuota para <rol>"` y termina.
    - Tras cada delegación: `hefesto note "qué se hizo / qué falta"`.
+   - En tareas `kind` app o web, tras implementar ejecuta `hefesto design pass TASK` (diagnóstico → comandos → polish); la implementación describe la superficie sin anunciar el tipo de trabajo.
 4. Revisión: `hefesto run reviewer "Revisa el diff de TASK frente a sus criterios"`. Lee `VEREDICTO: pass|fail` y registra con `hefesto review TASK --verdict pass|fail --run-id <run_id> --notes "…"`. Un `fail` cuenta como intento.
 5. `hefesto done TASK`: ejecuta el `verify` aprobado, hace el commit y escribe la evidencia.
    - Salida 2 por `verify` no confiado: pide al usuario `hefesto trust` y termina.

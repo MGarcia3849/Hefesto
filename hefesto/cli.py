@@ -1332,6 +1332,66 @@ def cmd_autopilot_cancel(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def cmd_design_ref(args: argparse.Namespace) -> int:
+    from hefesto import visual
+
+    proj = _project(args)
+    if args.list:
+        if args.site:
+            raise HefestoError("`hefesto design ref --list` no admite SITIO.", EXIT_INPUT)
+        for site in visual.list_design_refs(proj):
+            print(site)
+        return EXIT_OK
+    if not args.site:
+        raise HefestoError("Indica un SITIO o usa `--list`.", EXIT_INPUT)
+    print(visual.design_ref(proj, args.site))
+    return EXIT_OK
+
+
+def cmd_design_pass(args: argparse.Namespace) -> int:
+    from hefesto import gitops, roadmap, router, visual
+
+    proj = _project(args)
+    cfg = config.load(proj)
+    task = roadmap.load_valid(proj).get(args.task)
+    visual.check_pass(proj, task, args.diagnosis)
+    if args.dry_run:
+        if args.shortcut:
+            diagnosis, commands = visual.shortcut_plan(args.shortcut)
+            steps = ([diagnosis] if diagnosis else []) + commands
+        else:
+            steps = [args.diagnosis, "(según el diagnóstico)", "polish"]
+        print(" → ".join(steps))
+        return EXIT_OK
+
+    unavailable = False
+
+    def delegate(role: str, instruction: str) -> tuple[bool, str]:
+        nonlocal unavailable
+        outcome = router.run(proj, role, instruction, task_id=args.task)
+        unavailable = unavailable or outcome.code == util.EXIT_UNAVAILABLE
+        result = outcome.result
+        text = (result.text or result.summary) if result else ""
+        return bool(outcome.code == 0 and result and result.success), text
+
+    def checkpoint(label: str) -> None:
+        workdir = router._task_context(proj, args.task)[3]
+        gitops.checkpoint(proj, workdir, cfg, task, f"hefesto({task.id}): impeccable {label}")
+
+    report = visual.design_pass(proj, cfg, task, delegate, checkpoint, diagnosis=args.diagnosis,
+                                shortcut=args.shortcut)
+    print(" → ".join(report.steps))
+    if report.report_path:
+        print(f"informe: {report.report_path}")
+    if not report.ok:
+        if unavailable:
+            print(f"Sin proveedor con cuota para {report.failed}; no es un fallo de la tarea.", file=sys.stderr)
+            return util.EXIT_UNAVAILABLE
+        print(f"falló: {report.failed}", file=sys.stderr)
+        return EXIT_BLOCKED
+    return EXIT_OK
+
+
 # ---------------------------------------------------------------------------
 
 
@@ -1610,6 +1670,21 @@ def build_parser() -> argparse.ArgumentParser:
 
     c = asub.add_parser("cancel", help="cancela la programación vigente del proyecto")
     c.set_defaults(func=cmd_autopilot_cancel)
+
+    p = sub.add_parser("design", help="referencias de diseño de terceros (inspiración, no contrato)")
+    dsub = p.add_subparsers(dest="design_cmd", metavar="ACCIÓN", required=True)
+
+    c = dsub.add_parser("ref", help="trae el DESIGN.md de un sitio a .hefesto/design/refs/ o lista los disponibles")
+    c.add_argument("site", nargs="?", help="sitio de awesome-design-md, p. ej. apple")
+    c.add_argument("--list", action="store_true", help="lista los sitios disponibles en el commit fijado")
+    c.set_defaults(func=cmd_design_ref)
+
+    c = dsub.add_parser("pass", help="flujo de impeccable: diagnóstico, comandos y polish")
+    c.add_argument("task", help="id de la tarea (kind app o web)")
+    c.add_argument("--dry-run", action="store_true", help="imprime el plan sin delegar")
+    c.add_argument("--shortcut", choices=("impacto", "robustez", "tipografia"), help="secuencia conocida")
+    c.add_argument("--diagnosis", choices=("critique", "audit"), default="critique")
+    c.set_defaults(func=cmd_design_pass)
 
     return parser
 

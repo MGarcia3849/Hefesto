@@ -1,0 +1,105 @@
+{
+  "attempts": 3,
+  "base_commit": "a01d9fddc9f30e3afd4200f49b5a41bdcdd757d0",
+  "branch": "hefesto/fase-16-diseno-y-verificacion-visual",
+  "commit": "a7b9ac083b9b8a0ff66f4eb0ec5f496504893b5e",
+  "contract": [
+    "tests/test_visual.py"
+  ],
+  "created_at": "2026-10-18T18:10:55+00:00",
+  "files": [
+    {
+      "path": "tests/test_visual.py",
+      "sha256": "3bf948168976736e6a84cb4967e0939935f815b97ca1db191966ae1e9d3d76a0"
+    }
+  ],
+  "phase": "Fase 16 — Diseño y verificación visual",
+  "prev_sha256": "34636a478033f37ae7c0edded52eba0b7a304780fc2a87b216c57dcf5b314e71",
+  "prev_task_id": "TASK-1507",
+  "providers": [
+    "claude:sonnet",
+    "codex:default",
+    "gemini:default"
+  ],
+  "review": {
+    "at": "2026-10-18T18:10:37+00:00",
+    "attempt": 2,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "codex r3: puntos de r1 y r2 resueltos; sin defectos bloqueantes",
+    "reviewer": "codex:default",
+    "run_id": "0528dfc17029",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:default",
+      "role": "reviewer",
+      "run_id": "51a1d4ba6ab6",
+      "success": false
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "51a1d4ba6ab6",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "06f49d8d70d5",
+      "success": true
+    },
+    {
+      "model_id": "gemini:default",
+      "role": "reviewer",
+      "run_id": "7981e5c70307",
+      "success": false
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "7981e5c70307",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "28aef8e07e9d",
+      "success": false
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "bc9c22cb7f91",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "3189a170f7dc",
+      "success": true
+    },
+    {
+      "model_id": "codex:default",
+      "role": "reviewer",
+      "run_id": "0528dfc17029",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 68,
+  "task_id": "TASK-1601",
+  "title": "Contratos de diseño y verificación visual",
+  "verify": {
+    "command": "python -m py_compile tests/test_visual.py && python -m unittest tests.test_visual 2>&1 | grep -q \"FAILED\"",
+    "duration_seconds": 15.896,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1601-a3-2026-10-18T181053+0000.log",
+    "output_summary": "",
+    "sha256": "c73fce1af9b52925bb79a26d71fc2e4c919aece17f610bd866299bdc0adf419c",
+    "trust": "human"
+  }
+}

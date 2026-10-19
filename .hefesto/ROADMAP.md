@@ -573,7 +573,7 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - accept: README explica que las skills no pertenecen a ningún proveedor, la tabla skill × rol × modo, `kind`, las puertas interactivas reservadas al Core, `skill sync` y AgentShield; el paso `plan` indica cuándo poner `kind`; CHANGELOG con la entrada
 
 ## Fase 16 — Diseño y verificación visual
-- [ ] TASK-1601: Contratos de diseño y verificación visual
+- [x] TASK-1601: Contratos de diseño y verificación visual
   - verify: `python -m py_compile tests/test_visual.py && python -m unittest tests.test_visual 2>&1 | grep -q "FAILED"`
   - files: tests/test_visual.py
   - role: core
@@ -582,23 +582,23 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - parallel: false
   - contract: tests/test_visual.py
   - accept: los tests compilan (con binarios falsos de playwright-cli e impeccable) y fallan porque aún no existen hefesto/visual.py, `[visual]`, `hefesto design ref`, el contexto fijo de DESIGN.md/PRODUCT.md ni el flujo de impeccable (`hefesto design pass`)
-- [ ] TASK-1602: DESIGN.md y PRODUCT.md como contexto fijo y en la adopción
+- [x] TASK-1602: DESIGN.md y PRODUCT.md como contexto fijo y en la adopción
   - verify: `python -m unittest tests.test_visual.DesignContextTests tests.test_context_pack && python tools/dev.py lint`
-  - files: hefesto/packet.py, hefesto/project.py
+  - files: hefesto/packet.py, hefesto/project.py, hefesto/distribution.py
   - role: runner
   - depends_on: TASK-1601
   - size: S
   - parallel: false
   - accept: si el proyecto tiene `DESIGN.md` (especificación de Google) o `PRODUCT.md`, entran siempre en el paquete de las delegaciones visual y reviewer de tareas `kind: app | web`, dentro del presupuesto; sin un `PRODUCT.md` real (no vacío, sin marcadores `[TODO]`, más de 200 caracteres) el orquestador no entrega impeccable a nadie y propone al Core `impeccable init` con el humano (producto, marca y anti-referencias concretas); si falta `DESIGN.md` en un proyecto existente propone `impeccable document`, que sí es delegable; nunca sobrescribe uno existente; `adopt` añade el bloque `impeccable-ignore` al `.gitignore` y deja versionados `.impeccable/config.json`, `.impeccable/design.json` y los informes de `critique/`
-- [ ] TASK-1603: `hefesto design ref` desde awesome-design-md
+- [x] TASK-1603: `hefesto design ref` desde awesome-design-md
   - verify: `python -m unittest tests.test_visual.DesignRefTests && python tools/dev.py lint`
   - files: hefesto/visual.py, hefesto/cli.py
   - role: runner
-  - depends_on: TASK-1602
+  - depends_on: TASK-1602, TASK-1604
   - size: S
   - parallel: false
   - accept: `hefesto design ref <sitio>` trae el DESIGN.md de VoltAgent/awesome-design-md (MIT, commit fijado) a `.hefesto/design/refs/<sitio>.md` como inspiración, sin tocar el DESIGN.md del proyecto; `--list` lista los disponibles; nombre de sitio validado contra rutas inseguras
-- [ ] TASK-1604: Evidencia visual con playwright-cli
+- [x] TASK-1604: Evidencia visual con playwright-cli
   - verify: `python -m unittest tests.test_visual.CaptureTests && python tools/dev.py lint`
   - files: hefesto/visual.py, hefesto/config.py, hefesto.toml, hefesto/acceptance.py
   - role: forge
@@ -606,7 +606,7 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - size: M
   - parallel: false
   - accept: `[visual] enabled = false`, `base_url`, `routes`, `viewports`, `start_command` opcional; con él activo, `done` de una tarea `kind: app | web` captura las rutas en cada tamaño con `playwright-cli` en una sesión con nombre propio, guarda las capturas junto a la evidencia y falla si detecta scroll horizontal, contenido recortado o elementos solapados; sin playwright-cli avisa y no bloquea; siempre cierra la sesión
-- [ ] TASK-1605: `impeccable detect` como verify determinista
+- [x] TASK-1605: `impeccable detect` como verify determinista
   - verify: `python -m unittest tests.test_visual.DetectTests && python tools/dev.py lint`
   - files: hefesto/visual.py, hefesto/acceptance.py
   - role: runner
@@ -614,23 +614,23 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - size: S
   - parallel: false
   - accept: con `[visual] detect = true`, `done` ejecuta `impeccable detect --json` (versión fijada, nunca `npx` con la última) sobre los ficheros de la tarea con `DO_NOT_TRACK=1`, guarda el informe en la evidencia y falla con hallazgos de severidad igual o superior a `detect_fail_on`; respeta las excepciones del proyecto (`impeccable ignores`), pero un diff de un trabajador delegado que añada o cambie excepciones falla (solo el Core las añade, siempre con motivo); tras cada delegación de una tarea visual, los hallazgos se pasan como error previo al siguiente intento; deja claro en la evidencia que el detector no prueba que la página funcione (eso lo cubren las capturas); sin binario avisa y no bloquea
-- [ ] TASK-1606: Flujo de impeccable orquestado: diagnóstico, comandos y pulido final
+- [x] TASK-1606: Flujo de impeccable orquestado: diagnóstico, comandos y pulido final
   - verify: `python -m unittest tests.test_visual.DesignPassTests && python tools/dev.py lint`
-  - files: hefesto/visual.py, hefesto/cli.py, prompts/protocol/next.md
+  - files: hefesto/visual.py, hefesto/cli.py, prompts/protocol/next.md, hefesto/adapters/base.py, tests/test_design_pass.py
   - role: forge
   - depends_on: TASK-1605
   - size: M
   - parallel: false
   - accept: `hefesto design pass TASK` (y el paso `next` en tareas `kind: app | web`) aplica el uso correcto de impeccable: 1) la implementación describe la superficie sin anunciar el tipo de trabajo; 2) diagnóstico con `critique` (UX) o `audit` (técnico), cuyo informe se guarda; 3) los comandos que sugiera el diagnóstico, uno por delegación y con un checkpoint (commit) tras cada uno; 4) `polish` siempre al final; reglas deterministas: `bolder` u `overdrive` nunca sin diagnóstico previo en la misma tarea, `animate` solo después de los comandos de oficio y antes de `polish`, `craft` nunca; secuencias conocidas como atajo (`critique → bolder → polish`, `audit → harden → optimize`, `typeset → layout → polish`); las delegaciones de diseño van a la cadena del rol visual (los modelos más capaces primero) y nunca usan maquetas con clave de API
-- [ ] TASK-1607: El revisor ve capturas e informe del detector
+- [x] TASK-1607: El revisor ve capturas e informe del detector
   - verify: `python -m unittest tests.test_visual.ReviewerVisualTests tests.test_review_attribution && python tools/dev.py lint`
-  - files: hefesto/packet.py, hefesto/adapters/claude.py, hefesto/adapters/codex.py, hefesto/adapters/gemini.py
+  - files: hefesto/packet.py, hefesto/visual.py, hefesto/router.py, hefesto/adapters/claude.py, hefesto/adapters/codex.py, hefesto/adapters/gemini.py
   - role: runner
   - depends_on: TASK-1606
   - size: M
   - parallel: false
   - accept: el paquete del reviewer en tareas visuales incluye el informe del detector y las rutas de las capturas; los adaptadores cuyo CLI admite imágenes las adjuntan, y los que no, reciben solo el texto; nunca se adjuntan más de `[visual] max_images`
-- [ ] TASK-1608: Documentación de diseño y verificación visual
+- [x] TASK-1608: Documentación de diseño y verificación visual
   - verify: `grep -q "design ref" README.md && grep -q "design pass" README.md && grep -q "playwright-cli" README.md && grep -q "Diseño y verificación visual" CHANGELOG.md`
   - files: README.md, CHANGELOG.md
   - role: runner
@@ -638,6 +638,80 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - size: S
   - parallel: false
   - accept: README explica DESIGN.md/PRODUCT.md (`init` con humano, `document` delegable), `design ref`, `[visual]`, las capturas como evidencia, el flujo `design pass` (diagnóstico → comandos → `polish`, con sus reglas), `impeccable detect` como verify y sus excepciones, la telemetría desactivada y que todo es opcional; CHANGELOG con la entrada
+
+- [x] TASK-1609: Quitar la bomba de tiempo de AutopilotTests
+  - verify: `python -m unittest tests.test_learning.AutopilotTests && python tools/dev.py lint`
+  - files: tests/test_learning.py
+  - role: core
+  - depends_on: TASK-1608
+  - size: S
+  - parallel: false
+  - accept: `AutopilotTests.WHEN` era una fecha fija (2026-10-18 07:30 UTC); al quedar en el pasado, `autopilot schedule` la sustituye por ahora + 2 min y dos tests fallan desde el 19/10/2026, bloqueando `hefesto finish`. `WHEN` pasa a ser relativo al momento de ejecución (p. ej. mañana a las 07:30 UTC), conservando la intención de cada test; no se toca `hefesto/autopilot.py`.
+
+## Fase 19 — Cuotas y coste por modelo
+
+<!-- Origen: sesión del 19/10/2026. La cuota de Gemini "se agotó" para 5-6 días y Hefesto solo la bloqueó
+     1 hora: `parse_reset` no entiende "Resets in 126h13m11s" (la regex exige \b tras la unidad) y cae a
+     `cooldown_default_minutes`. Además el cooldown es por PROVEEDOR, pero la cuota de Gemini es por MODELO
+     (Flash seguía disponible con el modelo por defecto agotado). Gemini no expone su uso, pero `agy
+     --output-format json` devuelve `usage` (tokens) en cada llamada: ~12 000 tokens fijos por llamada.
+     El adaptador de Codex solo pasa `-m`, así que todas las llamadas heredan el `model_reasoning_effort`
+     global. Va antes de las fases 17-18 a petición del usuario (optimizar gasto). -->
+
+- [ ] TASK-1901: Contratos de cuotas y coste por modelo
+  - verify: `python -m py_compile tests/test_quota_cost.py && python -m unittest tests.test_quota_cost 2>&1 | grep -q "FAILED"`
+  - files: tests/test_quota_cost.py
+  - role: core
+  - depends_on: TASK-1606
+  - size: S
+  - parallel: false
+  - contract: tests/test_quota_cost.py
+  - accept: clases `ResetParsingTests`, `ModelCooldownTests`, `UsageAccountingTests`, `ReasoningEffortTests` y `AdaptiveCapTests`; compilan y fallan porque aún no existe el comportamiento: `parse_reset` con duraciones compuestas ("126h13m11s", "2d3h", "45m10s"); cooldown por modelo (`mark_cooldown(..., model=)` / `provider_state(provider, model=)` / `providers.available(cfg, provider, model=)`: un cooldown de `gemini:default` no bloquea `gemini:gemini-3.8-flash-medium`, uno sin modelo bloquea todo el proveedor); registro de tokens por modelo (`quota.record_usage(model_id, tokens)`, `quota.usage_window(model_id, hours)`, `quota.learned_limit(model_id)` = tokens acumulados en la ventana hasta el último error de cuota) y `limits.gemini_limits()` con tokens observados de 24 h y 7 días por modelo; razonamiento por entrada (`codex:gpt-6.1-sol:high` → `providers.split_entry` da `("codex", "gpt-6.1-sol")`, `providers.entry_effort` da `"high"`, el adaptador de Codex añade `-c model_reasoning_effort="high"` y `model_id` conserva el sufijo para las estadísticas); topes adaptativos (`limits.adaptive_cap(provider, base_cap, now)` reduce el tope proporcionalmente cuando el uso semanal va por delante de la fracción de semana transcurrida, nunca por debajo de 1, y lo deja igual si el uso es desconocido).
+
+- [ ] TASK-1902: Reinicio real y cooldown por modelo
+  - verify: `python -m unittest tests.test_quota_cost.ResetParsingTests tests.test_quota_cost.ModelCooldownTests tests.test_adapters && python tools/dev.py lint`
+  - files: hefesto/quota.py, hefesto/providers.py, hefesto/router.py, hefesto/loop.py, hefesto/preflight.py
+  - role: runner
+  - depends_on: TASK-1901
+  - size: M
+  - parallel: false
+  - accept: "Resets in 126h13m11s" da 126 h 13 min 11 s; los cooldowns por cuota se guardan con el `model_id` de la entrada que falló y el router salta solo esa entrada; un error de autenticación sigue bloqueando el proveedor entero; `hefesto providers status` muestra los cooldowns por modelo; `~/.hefesto/providers.json` antiguo (sin modelos) se sigue leyendo.
+
+- [ ] TASK-1903: Cuenta de tokens de Gemini y umbral aprendido
+  - verify: `python -m unittest tests.test_quota_cost.UsageAccountingTests tests.test_limits_robustness && python tools/dev.py lint`
+  - files: hefesto/adapters/gemini.py, hefesto/quota.py, hefesto/limits.py
+  - role: runner
+  - depends_on: TASK-1902
+  - size: M
+  - parallel: false
+  - accept: el adaptador de Gemini lee `usage.total_tokens` de la salida JSON de `agy` y lo registra por modelo; `hefesto limits` muestra para Gemini los tokens de 24 h y 7 días por modelo en vez de `unknown`; al llegar un error de cuota se guarda lo acumulado como umbral aprendido, y `near_limit` usa ese umbral con `near_limit_threshold` para dejar de elegir el modelo antes de agotarlo; sin umbral aprendido no bloquea nada.
+
+- [ ] TASK-1904: Razonamiento por entrada en Codex
+  - verify: `python -m unittest tests.test_quota_cost.ReasoningEffortTests tests.test_adapters && python tools/dev.py lint`
+  - files: hefesto/providers.py, hefesto/adapters/codex.py, hefesto/config.py
+  - role: runner
+  - depends_on: TASK-1902
+  - size: S
+  - parallel: false
+  - accept: una entrada `codex:modelo:nivel` pasa `-c model_reasoning_effort="nivel"` además de `-m modelo`; sin sufijo no se añade nada (hereda la configuración de la CLI); `hefesto config validate` rechaza niveles fuera de `low | medium | high | xhigh | max`; las entradas de otros proveedores no cambian.
+
+- [ ] TASK-1905: Topes de llamadas adaptativos según el ritmo de la cuota
+  - verify: `python -m unittest tests.test_quota_cost.AdaptiveCapTests && python tools/dev.py lint`
+  - files: hefesto/limits.py, hefesto/providers.py, hefesto/config.py
+  - role: runner
+  - depends_on: TASK-1903
+  - size: S
+  - parallel: false
+  - accept: con `[quota] adaptive_caps = true` (por defecto `false`), `providers.available` usa `limits.adaptive_cap` sobre `max_calls_per_provider_per_loop`: si un proveedor ha gastado más porcentaje semanal que el porcentaje de semana transcurrido desde su último reinicio, su tope baja en proporción; tras el reinicio vuelve al tope base sin intervención.
+
+- [ ] TASK-1906: Documentación de cuotas y coste por modelo
+  - verify: `grep -q "adaptive_caps" README.md && grep -q "model_reasoning_effort" README.md && python tools/dev.py lint`
+  - files: README.md, docs/ENTREGA.md
+  - role: runner
+  - depends_on: TASK-1904, TASK-1905
+  - size: S
+  - parallel: false
+  - accept: cómo fijar el modelo y el razonamiento por entrada, por qué nunca dejar el modelo por defecto de una CLI, cooldown por modelo, cuenta de tokens de Gemini y umbral aprendido, topes adaptativos, con el ejemplo de cadenas por precio y resultado.
 
 ## Fase 17 — Bóveda Obsidian
 - [ ] TASK-1701: Contratos de la bóveda

@@ -43,6 +43,7 @@ ENUMS: dict[tuple[str, ...], tuple[str, ...]] = {
     ("execution", "branch_mode"): ("phase", "task"),
     ("execution", "isolation"): ("auto", "branch", "worktree"),
     ("execution", "finish_strategy"): ("squash", "merge"),
+    ("visual", "detect_fail_on"): ("warning", "error"),
 }
 
 POSITIVE_INTS: tuple[tuple[str, ...], ...] = (
@@ -57,6 +58,7 @@ POSITIVE_INTS: tuple[tuple[str, ...], ...] = (
     ("quota", "probe_max_age_minutes"),
     ("guard", "max_file_mb"),
     ("packs_context", "query_budget"),
+    ("visual", "start_timeout"),
 )
 
 DEFAULTS_PATH = FRAMEWORK_ROOT / "hefesto.toml"
@@ -330,6 +332,27 @@ def validate(cfg: Config) -> list[str]:
     notify_enabled = cfg.get("notify", "enabled", default=False)
     if not isinstance(notify_enabled, bool):
         errors.append("notify.enabled debe ser booleano")
+    max_images = cfg.get("visual", "max_images")
+    if isinstance(max_images, bool) or not isinstance(max_images, int) or max_images < 0:
+        errors.append("visual.max_images debe ser un entero ≥ 0")
+    viewports = cfg.get("visual", "viewports")
+    if isinstance(viewports, list):
+        if not viewports or any(not isinstance(v, str) or not re.fullmatch(r"[1-9][0-9]*x[1-9][0-9]*", v)
+                                for v in viewports):
+            errors.append("visual.viewports debe contener tamaños WxH positivos")
+    routes = cfg.get("visual", "routes")
+    if isinstance(routes, list):
+        if not routes or any(not isinstance(r, str) or not r.startswith("/") or r.startswith("//")
+                             or any(c in r for c in "\r\n\x00") for r in routes):
+            errors.append("visual.routes debe contener rutas que empiecen por /")
+    command = cfg.get("visual", "start_command")
+    if isinstance(command, list) and any(not isinstance(a, str) or not a or "\x00" in a for a in command):
+        errors.append("visual.start_command debe ser argv sin argumentos vacíos ni NUL")
+    for key, pattern in (("impeccable_version", r"[0-9]+\.[0-9]+\.[0-9]+"),
+                         ("design_refs_commit", r"[0-9a-fA-F]{40}")):
+        value = cfg.get("visual", key)
+        if not isinstance(value, str) or not re.fullmatch(pattern, value):
+            errors.append(f"visual.{key} debe fijar una versión exacta")
     return errors
 
 

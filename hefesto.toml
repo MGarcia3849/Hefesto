@@ -132,3 +132,16 @@ min_samples = 5                         # mínimo de tareas distintas por modelo
 [notify]
 enabled = false                         # avisos de escritorio cuando algo necesita a un humano
 
+[visual]
+enabled = false
+base_url = ""
+routes = ["/"]
+viewports = ["390x844", "1280x800"]
+start_command = []                      # argv del servidor, sin shell
+start_timeout = 30
+detect = false
+detect_fail_on = "warning"
+max_images = 4
+impeccable_version = "4.6.0"
+design_refs_commit = "3b605329240ce735b510037cca322f1831fdd7f8"
+

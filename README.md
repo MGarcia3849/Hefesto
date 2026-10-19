@@ -250,6 +250,30 @@ hefesto route TASK-001 --dry-run          # muestra el proveedor/modelo previsto
 
 `hefesto skill suggest TASK --online` **solo propone**: consulta el registro público con las palabras clave de la tarea y muestra cada candidata con su nivel de confianza y el comando `hefesto skill fetch <id>` correspondiente.
 
+## Diseño y verificación visual
+
+`DESIGN.md` y `PRODUCT.md`, cuando existen, son contexto fijo para las delegaciones `visual` y `reviewer` de tareas `app` y `web`. `PRODUCT.md` define producto, marca y anti-referencias; el Core debe preparar ese contexto con la persona responsable: `impeccable init` es interactivo y solo se ejecuta con el humano. Si el proyecto ya existe y `PRODUCT.md` está listo, `impeccable document` puede delegarse para documentar el diseño actual en `DESIGN.md`. El flujo `hefesto design pass` requiere `PRODUCT.md` listo. Todo este circuito es opcional.
+
+Las referencias de `awesome-design-md` sirven solo de inspiración: `hefesto design ref --list` enumera sitios y `hefesto design ref apple` copia su `DESIGN.md` a `.hefesto/design/refs/apple.md`. Hefesto usa `VoltAgent/awesome-design-md` en el commit fijado `3b605329240ce735b510037cca322f1831fdd7f8` (configurable con `[visual] design_refs_commit`). La copia no modifica el `DESIGN.md` del proyecto ni se convierte en su contrato de diseño.
+
+La tabla `[visual]` de `hefesto.toml` permite activar por separado las capturas y el detector. Valores iniciales: `enabled = false`, `detect = false`, `base_url = ""`, `routes = ["/"]`, `viewports = ["390x844", "1280x800"]`, `start_command = []`, `start_timeout = 30`, `detect_fail_on = "warning"`, `max_images = 4`, `impeccable_version = "4.6.0"` y el commit fijado de referencias indicado arriba. `start_command` es una lista de argumentos, nunca un comando de shell. `detect_fail_on` admite `advisory`, `warning` o `error` como umbral de fallo.
+
+Con `[visual] enabled = true`, el verify de tareas `app` y `web` usa el binario instalado `playwright-cli` para abrir cada combinación de `routes` y `viewports`, comprobar desbordes, solapes y recortes, y guardar PNG en `.hefesto/logs/visual/TASK-ID/`. Puede iniciar el servidor con `start_command`; necesita `base_url` HTTP(S). Estas capturas son evidencia de la tarea: el revisor recibe sus rutas y el informe del detector, y Hefesto adjunta como máximo `[visual] max_images` imágenes (por defecto, 4). Codex recibe las imágenes adjuntas; los demás proveedores reciben las rutas y el informe. Si `max_images = 0`, no se envían imágenes al revisor. La ausencia de `playwright-cli` omite las capturas; si están activadas, un fallo al ejecutar la captura hace fallar el verify.
+
+El verify determinista `impeccable detect --json` se activa con `[visual] detect = true`; ejecuta la versión exacta fijada en `impeccable_version` sobre los ficheros de interfaz existentes de la tarea. Por defecto, `warning` y `error` bloquean; `advisory` no. Se omite sin bloquear si el detector está desactivado, no está instalado, la versión no coincide o no hay ficheros de interfaz aplicables. La telemetría se desactiva siempre para esta ejecución (`DO_NOT_TRACK=1` y `IMPECCABLE_NO_TELEMETRY=1`). `detect` no demuestra que la página funcione, por eso las capturas son evidencia complementaria.
+
+Las excepciones del detector en `.impeccable/config.json` y las directivas inline `impeccable-disable` solo puede añadirlas el Core y deben tener un motivo en `.hefesto/DECISIONS.md`. Los roles delegados no pueden cambiarlas; las excepciones en `.impeccable/config.local.json` también hacen fallar el verify cuando el detector está activo.
+
+`hefesto design pass TASK-ID` ejecuta el diagnóstico (`critique` por defecto, o `audit`) con el revisor, guarda su informe bajo `.hefesto/design/reports/` y extrae los comandos de diseño sugeridos. Después delega cada comando visual por separado y hace un checkpoint tras cada uno; `polish` siempre es el último. `bolder` y `overdrive` requieren diagnóstico; `animate`, si se sugiere, va justo antes de `polish`; `craft` no se ejecuta. Los atajos disponibles son `impacto`, `robustez` y `tipografia`. Usa `--diagnosis audit` para elegir el otro diagnóstico, `--shortcut impacto` para una secuencia conocida, y `--dry-run` para ver el plan sin delegar:
+
+```bash
+hefesto design pass TASK-001 --dry-run
+hefesto design pass TASK-001 --diagnosis audit
+hefesto design pass TASK-001 --shortcut robustez --dry-run
+```
+
+La configuración, las referencias, el flujo de pulido, las capturas y el detector son opcionales; si no se activan, no añaden pasos al verify habitual.
+
 ### Instalación automática de skills
 
 Cuando las skills instaladas no bastan para cubrir una tarea, Hefesto puede buscar, auditar, descargar y promover automáticamente desde `skills.sh` las skills necesarias (sustituyendo a la regla de promoción solo humana únicamente para este circuito acotado, ADR 2026-10-16):

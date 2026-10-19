@@ -20,6 +20,8 @@ class CodexAdapter(Adapter):
         argv = [binary, "exec", "--json", "-s", "read-only" if call.read_only else "workspace-write"]
         if call.model and call.model != "default":
             argv += ["-m", call.model]
+        for image in call.extra.get("images", []):
+            argv += ["--image", str(image)]
         return argv + ["-"]
 
     def parse(self, stdout: str, stderr: str, returncode: int, call: Call) -> AdapterResult:
