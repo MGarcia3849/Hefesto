@@ -220,6 +220,39 @@ Las comprobaciones de la CLI (`guard.py`) se aplican siempre, pase lo que pase e
 - Ante `quota` o `rate_limit`, el proveedor entra en cooldown (hasta la hora de reinicio si la CLI la indica, o 60 minutos) y la petición pasa al siguiente de la cadena **sin gastar intento**.
 - Las variables `*_API_KEY` se eliminan del entorno de las CLIs hijas, para que facturen por suscripción, y `doctor` avisa si existen.
 
+### Modelo y razonamiento por entrada
+
+Fija el modelo en cada cadena como `proveedor:modelo`. Solo Codex acepta un tercer campo de razonamiento: `codex:modelo:nivel`, con `low`, `medium`, `high`, `xhigh` o `max`; Hefesto lo pasa a la CLI como `-c model_reasoning_effort="nivel"`. Sin ese campo, Codex hereda el nivel configurado en la CLI. `hefesto config validate` rechaza niveles desconocidos.
+
+No dejes el modelo por defecto de una CLI en una cadena: puede tener una cuota distinta y agotarse mientras otro modelo del mismo proveedor aún está disponible. Ocurrió con Gemini: el modelo por defecto quedó bloqueado 126 horas aunque Flash seguía disponible. Especificar cada modelo permite que Hefesto aplique el cooldown correcto y continúe por el siguiente.
+
+### Cooldowns por modelo
+
+Un error de cuota o de límite de velocidad bloquea solo el modelo de la entrada que falló; un error de autenticación bloquea el proveedor completo. Hefesto entiende duraciones como `Resets in 126h13m11s`. `hefesto providers status` muestra los cooldowns por modelo.
+
+### Uso y umbral aprendido de Gemini
+
+Gemini no expone su cuota restante. Hefesto guarda los tokens que reporta en `~/.hefesto/usage.json`, separados por modelo y durante hasta 8 días. `hefesto limits` muestra el uso de las últimas 24 horas y de 7 días. Al primer error de cuota, guarda como umbral aprendido los tokens consumidos por ese modelo hasta entonces; tras el reinicio, `near_limit_threshold` hace que Hefesto deje de elegirlo al acercarse a ese consumo, antes de agotarlo.
+
+### Topes adaptativos
+
+`[quota] adaptive_caps = true` (por defecto `false`) reduce `max_calls_per_provider_per_loop` en proporción cuando el uso semanal conocido va por delante de la fracción de semana transcurrida. El tope nunca baja de 1 llamada y vuelve al valor base tras el reinicio semanal.
+
+### Cadenas por precio y resultado
+
+```toml
+[roles.runner]
+use = ["codex:gpt-6-luna", "gemini:gemini-3.8-flash-medium", "claude:haiku"]
+
+[roles.forge]
+use = ["codex:gpt-6.1-sol:high", "claude:sonnet", "gemini:gemini-3.8-flash-high"]
+
+[roles.reviewer]
+use = ["gemini:gemini-3.8-flash-medium", "claude:sonnet", "codex:gpt-6.1-sol"]
+```
+
+El criterio es poner primero lo barato y dejar el modelo caro de reserva. El revisor empieza con un proveedor distinto al autor, para mantener independiente la revisión.
+
 ## Skills del framework
 
 `sync` instala en cada proyecto (como `hefesto-skill-<nombre>`): `git-checkpointer`, `test-runner`, `skill-creator`, `retro`, `frontend-taste`, `motion-system` y `ui-anatomy`. Las propuestas nuevas van a `skills/_proposals/` y nunca se activan solas.

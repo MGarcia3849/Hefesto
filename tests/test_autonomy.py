@@ -112,7 +112,7 @@ class PreflightTests(AutonomyCase):
         code, out, _ = self.cli("run", "runner", "x")
         self.assertEqual(json.loads(out)["provider"], "codex")
         self.assertEqual(len(self.calls("gemini")), 1)
-        self.assertEqual(quota.provider_state("gemini")["status"], "cooldown")
+        self.assertEqual(quota.provider_state("gemini", model="default")["status"], "cooldown")
 
     def test_provider_in_cooldown_gets_no_calls(self) -> None:
         quota.mark_cooldown("gemini", dt.datetime.now(dt.timezone.utc) + dt.timedelta(hours=1), "quota", "x")
@@ -146,7 +146,7 @@ class LoopTests(AutonomyCase):
         self.assertEqual(roadmap.load_valid(self.project).get("TASK-001").marker, "x")
         runner_calls = [c for c in self.calls("gemini") if "Eres el **Runner**" in str(c["stdin"])]
         self.assertEqual(len(runner_calls), 1)
-        self.assertEqual(quota.provider_state("claude")["status"], "cooldown")
+        self.assertEqual(quota.provider_state("claude", model="opus")["status"], "cooldown")
         ev = json.loads((self.project / ".hefesto" / "evidence" / "TASK-001.json").read_text(encoding="utf-8"))
         self.assertEqual(ev["attempts"], 1)
         notes = [n["text"] for n in read_jsonl(progress.progress_path(self.project))]

@@ -56,6 +56,10 @@ def status_table(project: Path) -> str:
             current.get("cooldown_until") or "-",
             str(quota.calls_in_loop(name)),
         ))
+        for model in sorted((quota.load()["providers"].get(name) or {}).get("models") or {}):
+            model_state = quota.provider_state(name, model=model)
+            if model_state.get("status") == "cooldown":
+                rows.append((f"  {name}:{model}", "", "", "", "cooldown", model_state.get("cooldown_until") or "-", ""))
     widths = [max(len(r[i]) for r in rows) for i in range(len(rows[0]))]
     return "\n".join("  ".join(cell.ljust(widths[i]) for i, cell in enumerate(row)) for row in rows)
 

@@ -1,0 +1,68 @@
+{
+  "attempts": 1,
+  "base_commit": "b506c6209ad96737c4bb378fdc196eab83fbe2d8",
+  "branch": "hefesto/fase-19-cuotas-y-coste-por-modelo",
+  "commit": "92b6ad158cf923b329666d95c3df2ed4c94c145c",
+  "contract": [],
+  "created_at": "2026-10-19T12:23:15+00:00",
+  "files": [
+    {
+      "path": "hefesto/adapters/gemini.py",
+      "sha256": "219a981e5f8d5b35cca1d4620889f1b4effc85b883241f73e92bb07354579c2d"
+    },
+    {
+      "path": "hefesto/limits.py",
+      "sha256": "4f9cbe9a8dc9bff32fcd4aadb00a0c6571d1d246aae8fac341d7a01be4307634"
+    },
+    {
+      "path": "hefesto/quota.py",
+      "sha256": "d1f2539eb158b918dc858b0fc69a5252afc489598fa69450ee9044cd7ea5442a"
+    }
+  ],
+  "phase": "Fase 19 — Cuotas y coste por modelo",
+  "prev_sha256": "897fde3aebf70a5ef377ef60d03490e56e37ee65ade318252d16a207de956aa1",
+  "prev_task_id": "TASK-1902",
+  "providers": [
+    "codex:gpt-6-luna",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-10-19T12:23:11+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:gpt-6-luna"
+    ],
+    "exception": null,
+    "notes": "Gemini flash: pass",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "64285f62a367",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "b9bfbfdaa442",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "64285f62a367",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 79,
+  "task_id": "TASK-1903",
+  "title": "Cuenta de tokens de Gemini y umbral aprendido",
+  "verify": {
+    "command": "python -m unittest tests.test_quota_cost.UsageAccountingTests tests.test_limits_robustness && python tools/dev.py lint",
+    "duration_seconds": 3.086,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1903-a1-2026-10-19T122314+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (87 ficheros Python)\n............\n----------------------------------------------------------------------\nRan 12 tests in 1.822s\n\nOK",
+    "sha256": "ec499f8eafbad1f9464d8f2b684fe2e5f90c5b0800c69ed8c2aab17c430bdb73",
+    "trust": "human"
+  }
+}

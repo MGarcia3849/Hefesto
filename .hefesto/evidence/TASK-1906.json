@@ -1,0 +1,64 @@
+{
+  "attempts": 1,
+  "base_commit": "088618e87d953de0cacb7a2d8ca28bcadc713ddd",
+  "branch": "hefesto/fase-19-cuotas-y-coste-por-modelo",
+  "commit": "14f91c138818dca0272f27e7d0fd5ff9a3bcb215",
+  "contract": [],
+  "created_at": "2026-10-19T12:48:58+00:00",
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "eddb5137c9107fb375f6992519d73181d3e31fc74bcd84b8ab04005d9c52340b"
+    },
+    {
+      "path": "docs/ENTREGA.md",
+      "sha256": "bcf5bec2217ec8925026b4e58d2d9a4e2a33e2e01a7da02070295939085a6eeb"
+    }
+  ],
+  "phase": "Fase 19 — Cuotas y coste por modelo",
+  "prev_sha256": "de7c30603781840832fab38eb27a624ed53291dad5d3fc670fb9eebe91d8761b",
+  "prev_task_id": "TASK-1905",
+  "providers": [
+    "codex:gpt-6-luna",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-10-19T12:48:56+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:gpt-6-luna"
+    ],
+    "exception": null,
+    "notes": "Gemini flash: pass",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "2d25df4bae4f",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "5b6b23d991ef",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "2d25df4bae4f",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 82,
+  "task_id": "TASK-1906",
+  "title": "Documentación de cuotas y coste por modelo",
+  "verify": {
+    "command": "grep -q \"adaptive_caps\" README.md && grep -q \"model_reasoning_effort\" README.md && python tools/dev.py lint",
+    "duration_seconds": 0.943,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1906-a1-2026-10-19T124858+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (87 ficheros Python)",
+    "sha256": "a0011a064d71ca711a207ceae09ef2cf81be226b0d0657ad9eb45c391b4a742d",
+    "trust": "human"
+  }
+}

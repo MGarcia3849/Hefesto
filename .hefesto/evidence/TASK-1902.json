@@ -1,0 +1,76 @@
+{
+  "attempts": 1,
+  "base_commit": "03d161844449a55cf9f99961ff2e9c974feae145",
+  "branch": "hefesto/fase-19-cuotas-y-coste-por-modelo",
+  "commit": "8e53f8abbda3bc5512220202c200a22e423bbdde",
+  "contract": [],
+  "created_at": "2026-10-19T12:15:03+00:00",
+  "files": [
+    {
+      "path": "hefesto/loop.py",
+      "sha256": "6021bc01d2e63c01653424339e815cef62ada22d8cd21488c2746091f2993d6d"
+    },
+    {
+      "path": "hefesto/preflight.py",
+      "sha256": "b7cef8c2bbc3c34361331b6660f5394891331a8ad793d94782f7dafa44a798da"
+    },
+    {
+      "path": "hefesto/providers.py",
+      "sha256": "1e7715da2cade9ed33f9057278733e31735e7d9fb81aca8035fd6c4888da84da"
+    },
+    {
+      "path": "hefesto/quota.py",
+      "sha256": "b365d70fc8085a20590d553d1d4d074bad4a7f7cf4ef94ae2fa08df086e97d4e"
+    },
+    {
+      "path": "hefesto/router.py",
+      "sha256": "bb12a3c9f6bb5ca33aa520dd8695c019b031d1d9ef72003d863579374b60f61b"
+    }
+  ],
+  "phase": "Fase 19 — Cuotas y coste por modelo",
+  "prev_sha256": "0dad6e2f9dbaab2f0b1ca0ac589dc3ccc759f171b8b99e806f44c2be12b0aa63",
+  "prev_task_id": "TASK-1901",
+  "providers": [
+    "codex:gpt-6-luna",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-10-19T12:14:11+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:gpt-6-luna"
+    ],
+    "exception": null,
+    "notes": "Gemini flash: pass; ajustes del Core incluidos",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "7a4dee5c41bd",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "76fe87c0d4dc",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "7a4dee5c41bd",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 78,
+  "task_id": "TASK-1902",
+  "title": "Reinicio real y cooldown por modelo",
+  "verify": {
+    "command": "python -m unittest tests.test_quota_cost.ResetParsingTests tests.test_quota_cost.ModelCooldownTests tests.test_adapters && python tools/dev.py lint",
+    "duration_seconds": 50.502,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1902-a1-2026-10-19T121502+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (87 ficheros Python)\n.....................................\n----------------------------------------------------------------------\nRan 37 tests in 49.219s\n\nOK",
+    "sha256": "c4c94aa07f7c67fb42d8bf7e2c9081e188d9394adaf832ef397f71c313a91529",
+    "trust": "human"
+  }
+}

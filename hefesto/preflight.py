@@ -46,17 +46,18 @@ def probe_is_fresh(cfg: config.Config, provider: str) -> bool:
     return age < dt.timedelta(minutes=int(cfg.get("quota", "probe_max_age_minutes")))
 
 
-def probe(project: Path, cfg: config.Config, provider: str) -> dict[str, object]:
+def probe(project: Path, cfg: config.Config, provider: str, model: str | None = None) -> dict[str, object]:
     """Una llamada mínima en solo lectura. Aplica cooldown/auth igual que una delegación."""
     from hefesto.workflow import new_run_id
 
-    call = Call(role="reviewer", prompt=PROBE_PROMPT, task_id=None, run_id=f"probe-{new_run_id()}", model="",
+    call = Call(role="reviewer", prompt=PROBE_PROMPT, task_id=None, run_id=f"probe-{new_run_id()}", model=model or "",
+                model_id=f"{provider}:{model}" if model else "",
                 workdir=project, project=project, timeout=PROBE_TIMEOUT)
     result = adapters.get(cfg, provider).run(call)
     if result.error_type in ("quota", "rate_limit"):
         until = quota.cooldown_until(result.reset_hint or result.summary,
                                      int(cfg.get("quota", "cooldown_default_minutes")))
-        quota.mark_cooldown(provider, until, result.error_type, result.summary)
+        quota.mark_cooldown(provider, until, result.error_type, result.summary, model=model)
     elif result.error_type == "auth":
         quota.mark_auth_error(provider, result.summary)
     record = {"at": now_iso(), "ok": result.success, "error_type": result.error_type}
@@ -67,9 +68,9 @@ def probe(project: Path, cfg: config.Config, provider: str) -> dict[str, object]
     return record
 
 
-def ensure(project: Path, cfg: config.Config, provider: str) -> tuple[bool, str]:
+def ensure(project: Path, cfg: config.Config, provider: str, model: str | None = None) -> tuple[bool, str]:
     """Preflight completo para una delegación: niveles 1 y 3 (si `quota.probe` está activo)."""
-    ok, reason = providers.available(cfg, provider)
+    ok, reason = providers.available(cfg, provider, model=model)
     if not ok:
         return ok, reason
     from hefesto import limits
@@ -88,7 +89,7 @@ def ensure(project: Path, cfg: config.Config, provider: str) -> tuple[bool, str]
     if not cfg.get("quota", "probe"):
         return ok, reason
     if not probe_is_fresh(cfg, provider):
-        record = probe(project, cfg, provider)
+        record = probe(project, cfg, provider, model=model)
         if not record["ok"]:
             return False, f"la sonda falló ({record.get('error_type') or 'error'})"
     elif not (cached_probe(provider) or {}).get("ok"):

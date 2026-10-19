@@ -658,7 +658,7 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
      El adaptador de Codex solo pasa `-m`, así que todas las llamadas heredan el `model_reasoning_effort`
      global. Va antes de las fases 17-18 a petición del usuario (optimizar gasto). -->
 
-- [ ] TASK-1901: Contratos de cuotas y coste por modelo
+- [x] TASK-1901: Contratos de cuotas y coste por modelo
   - verify: `python -m py_compile tests/test_quota_cost.py && python -m unittest tests.test_quota_cost 2>&1 | grep -q "FAILED"`
   - files: tests/test_quota_cost.py
   - role: core
@@ -668,7 +668,7 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - contract: tests/test_quota_cost.py
   - accept: clases `ResetParsingTests`, `ModelCooldownTests`, `UsageAccountingTests`, `ReasoningEffortTests` y `AdaptiveCapTests`; compilan y fallan porque aún no existe el comportamiento: `parse_reset` con duraciones compuestas ("126h13m11s", "2d3h", "45m10s"); cooldown por modelo (`mark_cooldown(..., model=)` / `provider_state(provider, model=)` / `providers.available(cfg, provider, model=)`: un cooldown de `gemini:default` no bloquea `gemini:gemini-3.8-flash-medium`, uno sin modelo bloquea todo el proveedor); registro de tokens por modelo (`quota.record_usage(model_id, tokens)`, `quota.usage_window(model_id, hours)`, `quota.learned_limit(model_id)` = tokens acumulados en la ventana hasta el último error de cuota) y `limits.gemini_limits()` con tokens observados de 24 h y 7 días por modelo; razonamiento por entrada (`codex:gpt-6.1-sol:high` → `providers.split_entry` da `("codex", "gpt-6.1-sol")`, `providers.entry_effort` da `"high"`, el adaptador de Codex añade `-c model_reasoning_effort="high"` y `model_id` conserva el sufijo para las estadísticas); topes adaptativos (`limits.adaptive_cap(provider, base_cap, now)` reduce el tope proporcionalmente cuando el uso semanal va por delante de la fracción de semana transcurrida, nunca por debajo de 1, y lo deja igual si el uso es desconocido).
 
-- [ ] TASK-1902: Reinicio real y cooldown por modelo
+- [x] TASK-1902: Reinicio real y cooldown por modelo
   - verify: `python -m unittest tests.test_quota_cost.ResetParsingTests tests.test_quota_cost.ModelCooldownTests tests.test_adapters && python tools/dev.py lint`
   - files: hefesto/quota.py, hefesto/providers.py, hefesto/router.py, hefesto/loop.py, hefesto/preflight.py
   - role: runner
@@ -677,7 +677,7 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - parallel: false
   - accept: "Resets in 126h13m11s" da 126 h 13 min 11 s; los cooldowns por cuota se guardan con el `model_id` de la entrada que falló y el router salta solo esa entrada; un error de autenticación sigue bloqueando el proveedor entero; `hefesto providers status` muestra los cooldowns por modelo; `~/.hefesto/providers.json` antiguo (sin modelos) se sigue leyendo.
 
-- [ ] TASK-1903: Cuenta de tokens de Gemini y umbral aprendido
+- [x] TASK-1903: Cuenta de tokens de Gemini y umbral aprendido
   - verify: `python -m unittest tests.test_quota_cost.UsageAccountingTests tests.test_limits_robustness && python tools/dev.py lint`
   - files: hefesto/adapters/gemini.py, hefesto/quota.py, hefesto/limits.py
   - role: runner
@@ -686,7 +686,7 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - parallel: false
   - accept: el adaptador de Gemini lee `usage.total_tokens` de la salida JSON de `agy` y lo registra por modelo; `hefesto limits` muestra para Gemini los tokens de 24 h y 7 días por modelo en vez de `unknown`; al llegar un error de cuota se guarda lo acumulado como umbral aprendido, y `near_limit` usa ese umbral con `near_limit_threshold` para dejar de elegir el modelo antes de agotarlo; sin umbral aprendido no bloquea nada.
 
-- [ ] TASK-1904: Razonamiento por entrada en Codex
+- [x] TASK-1904: Razonamiento por entrada en Codex
   - verify: `python -m unittest tests.test_quota_cost.ReasoningEffortTests tests.test_adapters && python tools/dev.py lint`
   - files: hefesto/providers.py, hefesto/adapters/codex.py, hefesto/config.py
   - role: runner
@@ -695,7 +695,7 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - parallel: false
   - accept: una entrada `codex:modelo:nivel` pasa `-c model_reasoning_effort="nivel"` además de `-m modelo`; sin sufijo no se añade nada (hereda la configuración de la CLI); `hefesto config validate` rechaza niveles fuera de `low | medium | high | xhigh | max`; las entradas de otros proveedores no cambian.
 
-- [ ] TASK-1905: Topes de llamadas adaptativos según el ritmo de la cuota
+- [x] TASK-1905: Topes de llamadas adaptativos según el ritmo de la cuota
   - verify: `python -m unittest tests.test_quota_cost.AdaptiveCapTests && python tools/dev.py lint`
   - files: hefesto/limits.py, hefesto/providers.py, hefesto/config.py
   - role: runner
@@ -704,7 +704,7 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - parallel: false
   - accept: con `[quota] adaptive_caps = true` (por defecto `false`), `providers.available` usa `limits.adaptive_cap` sobre `max_calls_per_provider_per_loop`: si un proveedor ha gastado más porcentaje semanal que el porcentaje de semana transcurrido desde su último reinicio, su tope baja en proporción; tras el reinicio vuelve al tope base sin intervención.
 
-- [ ] TASK-1906: Documentación de cuotas y coste por modelo
+- [x] TASK-1906: Documentación de cuotas y coste por modelo
   - verify: `grep -q "adaptive_caps" README.md && grep -q "model_reasoning_effort" README.md && python tools/dev.py lint`
   - files: README.md, docs/ENTREGA.md
   - role: runner

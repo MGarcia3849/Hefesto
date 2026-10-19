@@ -86,6 +86,8 @@ class GeminiAdapter(Adapter):
         if not isinstance(data, dict):
             return self.failure_from_text(call, stdout + "\n" + stderr, returncode)
 
+        _record_usage(data, call)
+
         error = data.get("error")
         if error:
             message = error.get("message") if isinstance(error, dict) else str(error)
@@ -128,3 +130,27 @@ def _usage(data: dict[str, Any]) -> dict[str, Any] | str:
         if inp is not None or out is not None:
             return {"input_tokens": int(inp or 0), "output_tokens": int(out or 0)}
     return "unknown"
+
+
+def _record_usage(data: dict[str, Any], call: Call) -> None:
+    """Registra el consumo reportado por Gemini sin afectar al resultado del adaptador."""
+    try:
+        usage = data.get("usage")
+        total: Any = usage.get("total_tokens") if isinstance(usage, dict) else None
+        if isinstance(total, bool) or not isinstance(total, int):
+            measured = _usage(data)
+            if isinstance(measured, dict):
+                input_tokens = measured.get("input_tokens", 0)
+                output_tokens = measured.get("output_tokens", 0)
+                if (isinstance(input_tokens, int) and not isinstance(input_tokens, bool) and
+                        isinstance(output_tokens, int) and not isinstance(output_tokens, bool)):
+                    total = input_tokens + output_tokens
+        if isinstance(total, bool) or not isinstance(total, int) or total <= 0:
+            return
+        from hefesto import quota
+
+        model_id = call.model_id or f"gemini:{call.model or 'default'}"
+        quota.record_usage(model_id, total)
+    except Exception:
+        # Telemetría de uso no debe convertir una respuesta válida en error de parseo.
+        return

@@ -178,8 +178,10 @@ def load(project: Path | None = None, validate_layers: bool = True) -> Config:
     cfg = Config(data=data, layers=layers, project=project, settings=psettings)
     if validate_layers:
         errors = validate(cfg)
-        if errors:
-            raise HefestoError("Configuración inválida:\n  - " + "\n  - ".join(errors), EXIT_INPUT)
+        effort_errors_found = effort_errors(cfg)
+        blocking_errors = [error for error in errors if error not in effort_errors_found]
+        if blocking_errors:
+            raise HefestoError("Configuración inválida:\n  - " + "\n  - ".join(blocking_errors), EXIT_INPUT)
     return cfg
 
 
@@ -239,8 +241,30 @@ def _chain_errors(chain: Any, label: str) -> list[str]:
     return errors
 
 
+def effort_errors(cfg: Config) -> list[str]:
+    """Find unknown Codex reasoning levels without blocking config loading."""
+    from hefesto.providers import EFFORTS
+
+    errors: list[str] = []
+    chains = [cfg.get("roles", role, "use", default=[]) for role in ROLES]
+    chains.append(cfg.get("orchestrator", "use", default=[]))
+    for chain in chains:
+        if not isinstance(chain, list):
+            continue
+        for entry in chain:
+            if not isinstance(entry, str):
+                continue
+            parts = entry.split(":")
+            if len(parts) == 3 and parts[0].strip() == "codex" and parts[2].strip() not in EFFORTS:
+                effort = parts[2].strip()
+                errors.append(f"entrada `{entry}` tiene nivel de razonamiento desconocido `{effort}`; "
+                              f"valores válidos: {', '.join(EFFORTS)}")
+    return errors
+
+
 def validate(cfg: Config) -> list[str]:
     errors: list[str] = []
+
     schema = _load_toml(DEFAULTS_PATH)
     schema.setdefault("quota", {})
     for layer in cfg.layers[1:]:
@@ -265,6 +289,8 @@ def validate(cfg: Config) -> list[str]:
     threshold = cfg.get("quota", "near_limit_threshold")
     if isinstance(threshold, bool) or not isinstance(threshold, (int, float)) or not 0 < threshold <= 1:
         errors.append("quota.near_limit_threshold debe estar en (0, 1]")
+    if not isinstance(cfg.get("quota", "adaptive_caps", default=False), bool):
+        errors.append("quota.adaptive_caps debe ser booleano")
     if cfg.get("adapters", "local", "enabled"):
         if not cfg.get("adapters", "local", "base_url"):
             errors.append("adapters.local está activo pero falta base_url")
@@ -353,7 +379,7 @@ def validate(cfg: Config) -> list[str]:
         value = cfg.get("visual", key)
         if not isinstance(value, str) or not re.fullmatch(pattern, value):
             errors.append(f"visual.{key} debe fijar una versión exacta")
-    return errors
+    return errors + effort_errors(cfg)
 
 
 def flatten(data: dict[str, Any], prefix: tuple[str, ...] = ()) -> list[tuple[tuple[str, ...], Any]]:

@@ -41,6 +41,7 @@ probe = false                       # sonda de una llamada mínima antes de dele
 probe_max_age_minutes = 30
 near_limit_threshold = 0.9          # solo si la CLI expone su uso
 max_calls_per_provider_per_loop = { claude = 15, codex = 25, gemini = 40, local = 100 }
+adaptive_caps = false               # baja el tope si la cuota semanal va por delante de la semana
 
 [limits]
 max_parallel_tasks = 6              # 1 = todo en serie

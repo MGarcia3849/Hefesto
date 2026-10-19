@@ -1,0 +1,55 @@
+{
+  "attempts": 1,
+  "base_commit": "29f86cb02357291479ab998e1b2ae9290130be02",
+  "branch": "hefesto/fase-19-cuotas-y-coste-por-modelo",
+  "commit": "560060be6b54e3b052d45bc837e54a3cbef23a1d",
+  "contract": [
+    "tests/test_quota_cost.py"
+  ],
+  "created_at": "2026-10-19T12:02:43+00:00",
+  "files": [
+    {
+      "path": "tests/test_quota_cost.py",
+      "sha256": "6c3f487407d418ed554b6ac95750d280448096e22fd922e79ed7d3f44ae7a79f"
+    }
+  ],
+  "phase": "Fase 19 — Cuotas y coste por modelo",
+  "prev_sha256": "332c98c511849ed645efac4e20516208645b1a7e956d7dc69eac135cc0f073cb",
+  "prev_task_id": "TASK-1609",
+  "providers": [
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-10-19T12:02:31+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Gemini flash: contrato completo y determinista",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "e328e2a9a404",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "e328e2a9a404",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 77,
+  "task_id": "TASK-1901",
+  "title": "Contratos de cuotas y coste por modelo",
+  "verify": {
+    "command": "python -m py_compile tests/test_quota_cost.py && python -m unittest tests.test_quota_cost 2>&1 | grep -q \"FAILED\"",
+    "duration_seconds": 11.045,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1901-a1-2026-10-19T120243+0000.log",
+    "output_summary": "",
+    "sha256": "1fbe444f97603e15f2d3d22d7f6664ed7e08e605fca71bae50cf63e7c4fe228c",
+    "trust": "human"
+  }
+}

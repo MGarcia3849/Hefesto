@@ -78,10 +78,19 @@ def _pending_role(project: Path) -> tuple[str | None, str]:
     return (task.role, "") if task else (None, reason)
 
 
-def _choose(cfg: config.Config, requested: str) -> str | None:
+def _choose(cfg: config.Config, requested: str) -> tuple[str, str] | None:
+    entries = cfg.get("orchestrator", "use", default=[]) or []
     if requested != "auto":
-        return requested if providers.available(cfg, requested)[0] else None
-    return progress.next_orchestrator(cfg)
+        candidates = [e for e in entries if providers.split_entry(e)[0] == requested] or [requested]
+        for entry in candidates:
+            if providers.available(cfg, requested, model=providers.entry_model(cfg, entry))[0]:
+                return requested, entry
+        return None
+    for entry in entries:
+        name = providers.split_entry(entry)[0]
+        if providers.available(cfg, name, model=providers.entry_model(cfg, entry))[0]:
+            return name, entry
+    return None
 
 
 def _sleep_until(project: Path, until: str | None) -> bool:
@@ -97,9 +106,13 @@ def _sleep_until(project: Path, until: str | None) -> bool:
 
 
 def _earliest_orchestrator_cooldown(cfg: config.Config, requested: str) -> str | None:
-    names = [providers.split_entry(e)[0] for e in cfg.get("orchestrator", "use", default=[])] if requested == "auto" \
-        else [requested]
-    times = [quota.provider_state(n).get("cooldown_until") for n in names]
+    entries = cfg.get("orchestrator", "use", default=[]) or []
+    if requested == "auto":
+        candidates = [(providers.split_entry(e)[0], providers.entry_model(cfg, e)) for e in entries]
+    else:
+        candidates = [(requested, providers.entry_model(cfg, e)) for e in entries
+                      if providers.split_entry(e)[0] == requested] or [(requested, None)]
+    times = [quota.provider_state(name, model=model).get("cooldown_until") for name, model in candidates]
     valid = [t for t in times if t]
     return min(valid) if valid else None
 
@@ -132,20 +145,19 @@ def run(project: Path, orchestrator: str | None, max_tasks: int | None, max_turn
                     continue
                 return LoopResult(EXIT_UNAVAILABLE, f"Pausa: ningún proveedor del rol `{role}` tiene cuota. "
                                   f"Vuelve a haber hacia {when or 'desconocido'}.", completed, iterations)
-            name = _choose(cfg, requested)
-            if name is None:
+            chosen = _choose(cfg, requested)
+            if chosen is None:
                 when = _earliest_orchestrator_cooldown(cfg, requested)
                 if wait and _sleep_until(project, when):
                     continue
                 return LoopResult(EXIT_UNAVAILABLE, f"Pausa: ningún orquestador disponible ({requested}). "
                                   f"Vuelve a haber hacia {when or 'desconocido'}.", completed, iterations)
+            name, entry = chosen
             iterations += 1
             if iterations > max_iterations:
                 return LoopResult(EXIT_INPUT, "Tope de iteraciones alcanzado sin completar las tareas.",
                                   completed, iterations)
             before_done, before = _done_count(project), _fingerprint(project)
-            entry = next((e for e in cfg.get("orchestrator", "use", default=[]) if providers.split_entry(e)[0] == name),
-                         name)
             run_id = new_run_id()
             call = Call(role="core", prompt=prompt, task_id=None, run_id=run_id,
                         model=providers.split_entry(entry)[1],
@@ -164,13 +176,16 @@ def run(project: Path, orchestrator: str | None, max_tasks: int | None, max_turn
                 else:
                     until = quota.cooldown_until(result.reset_hint or result.summary,
                                                  int(cfg.get("quota", "cooldown_default_minutes")))
-                    quota.mark_cooldown(name, until, result.error_type, result.summary)
+                    quota.mark_cooldown(name, until, result.error_type, result.summary,
+                                        model=providers.entry_model(cfg, entry))
                 progress.note(project, f"relevo automático: {name} sin cuota ({result.error_type}); el estado queda "
                                        "para el siguiente orquestador", orchestrator=name)
-                if requested != "auto" and not wait:
+                if requested != "auto" and not wait and _choose(cfg, requested) is None:
                     return LoopResult(EXIT_UNAVAILABLE, f"{name} se quedó sin cuota; estado guardado para "
                                       "`hefesto resume`.", completed, iterations)
                 continue
+            if result.success:
+                quota.mark_ok(name, model=providers.entry_model(cfg, entry))
             completed += max(0, _done_count(project) - before_done)
             after = _fingerprint(project)
             if state.load(project)["status"] == "BLOCKED_NEED_ARCHITECT_REVIEW":

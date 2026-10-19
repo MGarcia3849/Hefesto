@@ -1,0 +1,68 @@
+{
+  "attempts": 1,
+  "base_commit": "0fa0686f5c45b17e015213b35b52e00e89f6b152",
+  "branch": "hefesto/fase-19-cuotas-y-coste-por-modelo",
+  "commit": "018ff11395578fdd7ff1774b21362c4a69d8f40f",
+  "contract": [],
+  "created_at": "2026-10-19T12:43:42+00:00",
+  "files": [
+    {
+      "path": "hefesto/config.py",
+      "sha256": "b59a7a5c9eb7a7bf0ab71041171e4f6816ea2f9c8e6dbf34fb51bca3c63031f0"
+    },
+    {
+      "path": "hefesto/limits.py",
+      "sha256": "c6800482162c9e2ece0cba9b126a6a81f501f490b39a10d86263de8b8e8428d5"
+    },
+    {
+      "path": "hefesto/providers.py",
+      "sha256": "4772abc2289f7939c6f8675dbac9493d4fc8f47cd4c30b62753bd7ba1cf58ce3"
+    }
+  ],
+  "phase": "Fase 19 — Cuotas y coste por modelo",
+  "prev_sha256": "d7824381c455a96fdd37f14de045ff4e4ce3d3c9a9f736090dbbffa41d2183e2",
+  "prev_task_id": "TASK-1904",
+  "providers": [
+    "codex:gpt-6-luna",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-10-19T12:43:38+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:gpt-6-luna"
+    ],
+    "exception": null,
+    "notes": "Gemini flash: pass",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "81f05bcf5b7e",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "3496bd9cb7de",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "81f05bcf5b7e",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 81,
+  "task_id": "TASK-1905",
+  "title": "Topes de llamadas adaptativos según el ritmo de la cuota",
+  "verify": {
+    "command": "python -m unittest tests.test_quota_cost.AdaptiveCapTests && python tools/dev.py lint",
+    "duration_seconds": 2.567,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1905-a1-2026-10-19T124341+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (87 ficheros Python)\n.....\n----------------------------------------------------------------------\nRan 5 tests in 1.296s\n\nOK",
+    "sha256": "6016e81bdb0f869f927670c741ea10acec18c251347edbd7f2c29da50c0b10dd",
+    "trust": "human"
+  }
+}

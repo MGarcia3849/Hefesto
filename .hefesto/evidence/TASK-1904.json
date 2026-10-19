@@ -1,0 +1,80 @@
+{
+  "attempts": 2,
+  "base_commit": "f7973e667ddf4b5b95ab282f5ed62cd19477a97a",
+  "branch": "hefesto/fase-19-cuotas-y-coste-por-modelo",
+  "commit": "53fbd6ec32075b2617d3a4b554f360f22feebc80",
+  "contract": [],
+  "created_at": "2026-10-19T12:39:28+00:00",
+  "files": [
+    {
+      "path": "hefesto/adapters/codex.py",
+      "sha256": "ae1f6a880ca02d69a899a9cb308e7657f7e5a8972748bec65dabac4eb01dde59"
+    },
+    {
+      "path": "hefesto/config.py",
+      "sha256": "3f525fe605c9dec8b73336c0dcbbf265bd4f62ab3b4963fcac3a336a4aac3974"
+    },
+    {
+      "path": "hefesto/providers.py",
+      "sha256": "7f9d4cb1dc9627b23f0efa1fc5613f41ac176c87a27311ed683a7d60adc28bbc"
+    }
+  ],
+  "phase": "Fase 19 — Cuotas y coste por modelo",
+  "prev_sha256": "4ffef398b19c9af3c7c9c762b438b64f0ce4954e4af9708d044a01495cfa66fc",
+  "prev_task_id": "TASK-1903",
+  "providers": [
+    "codex:gpt-6-luna",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-10-19T12:38:37+00:00",
+    "attempt": 1,
+    "authors": [
+      "codex:gpt-6-luna"
+    ],
+    "exception": null,
+    "notes": "Gemini flash: pass (intento 2)",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "5a6cf055b8cd",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "e7c0bb904d1c",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "61dd6c994f12",
+      "success": true
+    },
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "233a6203aa8d",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "5a6cf055b8cd",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 80,
+  "task_id": "TASK-1904",
+  "title": "Razonamiento por entrada en Codex",
+  "verify": {
+    "command": "python -m unittest tests.test_quota_cost.ReasoningEffortTests tests.test_adapters && python tools/dev.py lint",
+    "duration_seconds": 50.261,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1904-a2-2026-10-19T123927+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (87 ficheros Python)\n..................................\n----------------------------------------------------------------------\nRan 34 tests in 49.006s\n\nOK",
+    "sha256": "09d96089cab1de061db46faf9bcf958350dd3045b10503de36f38b8b2333b1fa",
+    "trust": "human"
+  }
+}

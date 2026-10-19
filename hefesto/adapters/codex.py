@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from hefesto import providers
 from hefesto.adapters.base import Adapter, AdapterResult, Call, loads_or_none
 
 
@@ -20,6 +21,9 @@ class CodexAdapter(Adapter):
         argv = [binary, "exec", "--json", "-s", "read-only" if call.read_only else "workspace-write"]
         if call.model and call.model != "default":
             argv += ["-m", call.model]
+        effort = providers.entry_effort(call.model_id)
+        if effort in providers.EFFORTS:
+            argv += ["-c", f'model_reasoning_effort="{effort}"']
         for image in call.extra.get("images", []):
             argv += ["--image", str(image)]
         return argv + ["-"]

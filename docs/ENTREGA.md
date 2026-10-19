@@ -256,6 +256,14 @@ exit 0
 
 ---
 
+## Cuotas y coste por modelo
+
+Las cadenas de `[roles]` fijan cada entrada como `proveedor:modelo`; en Codex se puede añadir `:low|medium|high|xhigh|max` para establecer `model_reasoning_effort`. Especifica siempre el modelo: la cuota del modelo por defecto puede agotarse aunque otro del proveedor siga disponible (en Gemini hubo un bloqueo de 126 h con Flash aún disponible). `hefesto config validate` rechaza niveles de razonamiento desconocidos.
+
+Los errores de cuota y rate limit ponen en cooldown solo el modelo afectado; los de autenticación bloquean el proveedor. `hefesto providers status` muestra el estado por modelo y reconoce reinicios como `Resets in 126h13m11s`. Gemini registra hasta 8 días de tokens por modelo en `~/.hefesto/usage.json`; `hefesto limits` muestra ventanas de 24 h y 7 días. El primer agotamiento aprende el consumo alcanzado y `near_limit_threshold` evita ese modelo al aproximarse al umbral tras el reinicio. `[quota] adaptive_caps = true` reduce proporcionalmente el tope de llamadas si el uso semanal va adelantado, con mínimo 1 y restauración del tope base al reiniciar.
+
+Ejemplo: usar Codex/Gemini económicos primero para `runner`, reservar un modelo más caro para `forge` y elegir para `reviewer` un proveedor distinto al autor.
+
 ## 4. Demostración de una tarea completa en serie (Smoke)
 
 Salida de la prueba completa de humo (`python tools/dev.py smoke`) ejecutada con fakes en directorio temporal:

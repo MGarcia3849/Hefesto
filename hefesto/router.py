@@ -132,7 +132,8 @@ def plan_route(
     authors = author_providers or set()
     chain, qualified = _ordered_chain(cfg, role, project)
     other_available = any(
-        providers.split_entry(e)[0] not in authors and providers.available(cfg, providers.split_entry(e)[0])[0]
+        providers.split_entry(e)[0] not in authors and providers.available(
+            cfg, providers.split_entry(e)[0], model=providers.entry_model(cfg, e))[0]
         for e in chain
     ) if (authors and role == "reviewer") else False
     deferred_authors: list[str] = []
@@ -144,7 +145,7 @@ def plan_route(
             hops.append(Hop(entry, mid, f"saltado: autor del cambio{suffix}"))
             deferred_authors.append(entry)
             continue
-        ok, reason = providers.available(cfg, provider)
+        ok, reason = providers.available(cfg, provider, model=providers.entry_model(cfg, entry))
         base = "elegido" if ok else f"saltado: {reason}"
         hops.append(Hop(entry, mid, f"{base}{suffix}"))
         if ok:
@@ -190,7 +191,7 @@ def _other_provider_available(project: Path, cfg: config.Config, entries: list[s
     for entry in entries:
         prov = providers.split_entry(entry)[0]
         if prov not in author_providers:
-            ok, _ = preflight.ensure(project, cfg, prov)
+            ok, _ = preflight.ensure(project, cfg, prov, model=providers.entry_model(cfg, entry))
             if ok:
                 return True
     return False
@@ -211,7 +212,7 @@ def _pick_challenger(
             provider = providers.split_entry(entry)[0]
             if provider == target_provider:
                 continue
-            ok, _ = preflight.ensure(project, cfg, provider)
+            ok, _ = preflight.ensure(project, cfg, provider, model=providers.entry_model(cfg, entry))
             if ok:
                 return entry
     return None
@@ -294,9 +295,12 @@ def run(project: Path, role: str, instruction: str, task_id: str | None = None, 
             _record(project, "challenge", task, eff_task_run_id, run_id, c_mid, c_result, None)
             if c_result.error_type in ("quota", "rate_limit"):
                 until = quota.cooldown_until(c_result.reset_hint or c_result.summary, default_cooldown)
-                quota.mark_cooldown(c_provider, until, c_result.error_type, c_result.summary)
+                quota.mark_cooldown(c_provider, until, c_result.error_type, c_result.summary,
+                                    model=providers.entry_model(cfg, critic_entry))
+            elif c_result.error_type == "auth":
+                quota.mark_auth_error(c_provider, c_result.summary)
             if c_result.success and c_result.summary.strip():
-                quota.mark_ok(c_provider)
+                quota.mark_ok(c_provider, model=providers.entry_model(cfg, critic_entry))
                 critique = guard.redact(c_result.summary.strip())
                 ch_path = log.write_text(project, f"challenges/{run_id}-{c_provider}.md", critique)
                 ch_rel = _rel(project, ch_path)
@@ -325,7 +329,8 @@ def run(project: Path, role: str, instruction: str, task_id: str | None = None, 
         nonlocal packet_path
         provider, model = providers.split_entry(entry)
         mid = providers.model_id(cfg, entry)
-        ok, reason = preflight.ensure(project, cfg, provider)
+        model_key = providers.entry_model(cfg, entry)
+        ok, reason = preflight.ensure(project, cfg, provider, model=model_key)
         if not ok:
             hops.append(Hop(entry, mid, f"saltado: {reason}"))
             return None
@@ -342,7 +347,7 @@ def run(project: Path, role: str, instruction: str, task_id: str | None = None, 
         _record(project, role, task, eff_task_run_id, run_id, mid, result, packet_path)
         if result.error_type in ("quota", "rate_limit"):
             until = quota.cooldown_until(result.reset_hint or result.summary, default_cooldown)
-            quota.mark_cooldown(provider, until, result.error_type, result.summary)
+            quota.mark_cooldown(provider, until, result.error_type, result.summary, model=model_key)
             hops.append(Hop(entry, mid, f"{result.error_type}: cooldown hasta {until.isoformat()}"))
             return None
         if result.error_type == "auth":
@@ -357,7 +362,7 @@ def run(project: Path, role: str, instruction: str, task_id: str | None = None, 
             return RunOutcome(EXIT_BLOCKED, run_id, result, hops, _rel(project, packet_path),
                               challenge=challenge_info)
         if result.success:
-            quota.mark_ok(provider)
+            quota.mark_ok(provider, model=model_key)
         return RunOutcome(EXIT_OK if result.success else EXIT_INPUT, run_id, result, hops,
                           _rel(project, packet_path), challenge=challenge_info)
 
@@ -396,7 +401,7 @@ def run(project: Path, role: str, instruction: str, task_id: str | None = None, 
 def earliest_cooldown(cfg: config.Config, role: str) -> str | None:
     times = []
     for entry in cfg.role_chain(role):
-        current = quota.provider_state(providers.split_entry(entry)[0])
+        current = quota.provider_state(providers.split_entry(entry)[0], model=providers.entry_model(cfg, entry))
         if current.get("status") == "cooldown" and current.get("cooldown_until"):
             times.append(current["cooldown_until"])
     return min(times) if times else None

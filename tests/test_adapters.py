@@ -141,7 +141,7 @@ class RoutingTests(AdapterCase):
         self.assertEqual(code, 0, data)
         self.assertEqual(data["provider"], "codex")
         self.assertEqual(state.load(self.project)["attempts"], 0)
-        self.assertEqual(quota.provider_state("gemini")["status"], "cooldown")
+        self.assertEqual(quota.provider_state("gemini", model="default")["status"], "cooldown")
         before = len(self.calls("gemini"))
         code, data = self.run_json()
         self.assertEqual(len(self.calls("gemini")), before)

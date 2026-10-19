@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 from typing import Any
 
-from hefesto import util
+from hefesto import quota, util
 
 
 def _parse_window(win: Any) -> dict[str, Any] | str:
@@ -234,13 +234,32 @@ def claude_limits() -> dict[str, Any]:
 
 
 def gemini_limits() -> dict[str, Any]:
-    """Gemini no expone límites de cuota legibles."""
+    """Gemini no expone cuota real, pero Hefesto conserva el uso por modelo."""
+    models: dict[str, dict[str, int | None]] = {}
+    try:
+        data = util.read_json(quota.usage_path(), default={})
+        usage = data.get("usage", {}) if isinstance(data, dict) else {}
+        if isinstance(usage, dict):
+            for model_id, recorded in usage.items():
+                if not isinstance(model_id, str) or not model_id.startswith("gemini:") or not isinstance(recorded, list):
+                    continue
+                tokens_24h = quota.usage_window(model_id, 24)
+                tokens_7d = quota.usage_window(model_id, 168)
+                if tokens_24h or tokens_7d:
+                    models[model_id] = {
+                        "tokens_24h": tokens_24h,
+                        "tokens_7d": tokens_7d,
+                        "learned_limit": quota.learned_limit(model_id),
+                    }
+    except Exception:
+        models = {}
     return {
         "provider": "gemini",
         "five_hour": "unknown",
         "weekly": "unknown",
         "observed_at": None,
         "plan": None,
+        "models": models,
     }
 
 
@@ -256,9 +275,23 @@ def all_limits() -> list[dict[str, Any]]:
         ]
 
 
-def near_limit(provider: str, threshold: float) -> str | None:
+def near_limit(provider: str, threshold: float, model: str | None = None) -> str | None:
     """Devuelve un motivo si alguna ventana conocida y no reiniciada tiene used_percent >= threshold * 100."""
     try:
+        try:
+            threshold_value = float(threshold)
+        except (ValueError, TypeError):
+            return None
+        if not math.isfinite(threshold_value):
+            return None
+        if provider == "gemini" and model:
+            model_id = model if model.startswith("gemini:") else f"gemini:{model}"
+            learned = quota.learned_limit(model_id)
+            if learned is not None:
+                used = quota.usage_since_limit(model_id)
+                if used >= threshold_value * learned:
+                    return f"cerca del umbral aprendido ({used} de {learned} tokens)"
+            return None
         if provider == "codex":
             info = codex_limits()
         elif provider == "claude":
@@ -272,7 +305,7 @@ def near_limit(provider: str, threshold: float) -> str | None:
             return None
 
         try:
-            target = float(threshold) * 100.0
+            target = threshold_value * 100.0
         except (ValueError, TypeError):
             return None
         if not math.isfinite(target):
@@ -331,6 +364,64 @@ def near_limit(provider: str, threshold: float) -> str | None:
         return None
     except Exception:
         return None
+
+
+def adaptive_cap(provider: str, base_cap: int, now: dt.datetime) -> int:
+    """Ajusta el tope de llamadas al ritmo de uso de la cuota semanal conocida."""
+    try:
+        readers = {
+            "codex": codex_limits,
+            "claude": claude_limits,
+            "gemini": gemini_limits,
+        }
+        reader = readers.get(provider)
+        if reader is None:
+            return base_cap
+
+        info = reader()
+        weekly = info.get("weekly") if isinstance(info, dict) else None
+        if not isinstance(weekly, dict):
+            return base_cap
+
+        used_raw = weekly.get("used_percent")
+        resets_raw = weekly.get("resets_at")
+        if used_raw is None or resets_raw is None or isinstance(used_raw, bool):
+            return base_cap
+        used_percent = float(used_raw)
+        if not math.isfinite(used_percent) or not 0.0 <= used_percent <= 100.0:
+            return base_cap
+
+        if isinstance(resets_raw, dt.datetime):
+            resets_at = resets_raw
+        elif isinstance(resets_raw, (int, float)) and not isinstance(resets_raw, bool):
+            if not math.isfinite(resets_raw):
+                return base_cap
+            resets_at = dt.datetime.fromtimestamp(resets_raw, tz=dt.timezone.utc)
+        elif isinstance(resets_raw, str):
+            cleaned = resets_raw.strip().replace("Z", "+00:00")
+            resets_at = dt.datetime.fromisoformat(cleaned)
+        else:
+            return base_cap
+
+        if now.tzinfo is None:
+            now = now.replace(tzinfo=dt.timezone.utc)
+        else:
+            now = now.astimezone(dt.timezone.utc)
+        if resets_at.tzinfo is None:
+            resets_at = resets_at.replace(tzinfo=dt.timezone.utc)
+        else:
+            resets_at = resets_at.astimezone(dt.timezone.utc)
+        if resets_at <= now:
+            return base_cap
+
+        week = dt.timedelta(days=7)
+        elapsed = max(0.0, min(1.0, 1.0 - (resets_at - now) / week))
+        used = used_percent / 100.0
+        if used > elapsed:
+            return max(1, math.floor(base_cap * elapsed / used))
+        return base_cap
+    except Exception:
+        return base_cap
 
 
 def update_claude_cache(raw_limits: dict[str, Any]) -> None:
@@ -464,6 +555,20 @@ def render_table(entries: list[dict[str, Any]] | None = None) -> str:
     rows: list[list[str]] = [headers]
     for e in entries:
         prov = str(e.get("provider", ""))
+        models = e.get("models") if prov == "gemini" else None
+        if isinstance(models, dict) and models:
+            for model_id, model_usage in sorted(models.items()):
+                if not isinstance(model_usage, dict):
+                    continue
+                rows.append([
+                    str(model_id),
+                    f"{int(model_usage.get('tokens_24h') or 0)} tokens",
+                    "-",
+                    f"{int(model_usage.get('tokens_7d') or 0)} tokens",
+                    "-",
+                    _format_age(e.get("observed_at")),
+                ])
+            continue
         fh = e.get("five_hour")
         if isinstance(fh, dict):
             fh_used = f"{fh.get('used_percent', 0):.0f}%"
