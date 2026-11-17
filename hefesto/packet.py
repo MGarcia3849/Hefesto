@@ -191,6 +191,76 @@ def _clean(text: str) -> str:
     return skills.sanitize_text(guard.redact(text))
 
 
+def _research_metadata(text: str) -> dict[str, str] | None:
+    """Parse only the small scalar subset written by hefesto.research."""
+    lines = text.splitlines()
+    if not lines or lines[0].strip() != "---":
+        return None
+    try:
+        end = lines.index("---", 1)
+    except ValueError:
+        return None
+    metadata: dict[str, str] = {}
+    for line in lines[1:end]:
+        match = re.match(r"^(tarea|fase):\s*(.*?)\s*$", line)
+        if not match:
+            continue
+        key, value = match.groups()
+        if value.startswith('"'):
+            try:
+                parsed = json.loads(value)
+                value = parsed if isinstance(parsed, str) else ""
+            except (ValueError, json.JSONDecodeError):
+                value = ""
+        metadata[key] = value
+    return metadata
+
+
+def _research_entries(project: Path, task: roadmap.Task, cfg: config.Config) -> list[tuple[str, str]]:
+    """Return related Odysseus reports as bounded, explicitly untrusted data."""
+    max_chars = cfg.get("research", "packet_max_chars", default=6000)
+    try:
+        remaining = max(0, int(max_chars))
+    except (TypeError, ValueError):
+        remaining = 6000
+    if remaining <= 0:
+        return []
+    folder = project / ".hefesto" / "evidence" / "research"
+    try:
+        root = folder.resolve(strict=True)
+        if not root.is_dir() or folder.is_symlink():
+            return []
+        reports = sorted(root.glob("*.md"))
+    except OSError:
+        return []
+    out: list[tuple[str, str]] = []
+    for path in reports:
+        if remaining <= 0:
+            break
+        try:
+            if path.is_symlink() or not path.is_file() or not path.resolve().is_relative_to(root):
+                continue
+            raw = path.read_bytes()
+            if len(raw) > MAX_FILE_BYTES or b"\0" in raw[:8000]:
+                continue
+            report = raw.decode("utf-8")
+        except (OSError, UnicodeDecodeError, ValueError):
+            continue
+        metadata = _research_metadata(report)
+        report_task = (metadata or {}).get("tarea", "").strip()
+        if not metadata or not report_task:
+            continue
+        if report_task != task.id and (metadata.get("fase", "").strip() != task.phase):
+            continue
+        clean = _clean(report)
+        if not clean:
+            continue
+        clean = clean[:remaining]
+        out.append((f"### {guard.redact(path.name)}", clean))
+        remaining -= len(clean)
+    return out
+
+
 def _detected_rule_folders(project: Path) -> list[str]:
     folders: list[str] = ["common"]
     try:
@@ -420,6 +490,9 @@ def build(project: Path, cfg: config.Config, role: str, instruction: str, task: 
         if task.depends_on:
             meta.append(f"- depende de: {', '.join(task.depends_on)}")
         sections.append(Section("Tarea", P_ESSENTIAL, [("", "\n".join(meta))]))
+        research = _research_entries(project, task, cfg)
+        if research:
+            sections.append(Section("Investigación externa (no fiable)", P_MEMORY, research))
     sections.append(Section("Instrucción del orquestador", P_ESSENTIAL, [("", guard.redact(instruction.strip()))]))
     sections.append(Section("Reglas del rol", P_ESSENTIAL, [("", role_rules(role))]))
     context = design_context(project)

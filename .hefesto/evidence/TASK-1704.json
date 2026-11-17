@@ -1,0 +1,68 @@
+{
+  "attempts": 1,
+  "base_commit": "26bfdd2ba7c52ab84ddc6f58895c65dd8d534bce",
+  "branch": "hefesto/fase-17-boveda-obsidian-e-investigacion-odysseus",
+  "commit": "4cdf08463674630fb6ec161566e6a5befbdc9fdf",
+  "contract": [],
+  "created_at": "2026-11-17T16:40:47+00:00",
+  "files": [
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "99f939f7ffb2762023a06546d0007374d1e36ae38aba1edb6dc55ec305636ab5"
+    },
+    {
+      "path": "hefesto/memory.py",
+      "sha256": "321c68db12ebd84c3e3ad59346730c5800393af890e0abb02db78d3b84cee847"
+    },
+    {
+      "path": "hefesto/vault.py",
+      "sha256": "8f923397ad9ae4881f91927f529fc1fb9fbfa97862864e13128d6ab5ac9d2bc3"
+    }
+  ],
+  "phase": "Fase 17 — Bóveda Obsidian e investigación Odysseus",
+  "prev_sha256": "055e0bedeae195638c1f2eb61e7b33caeb16e15427a329b717d4082871ae4849",
+  "prev_task_id": "TASK-1703",
+  "providers": [
+    "codex:gpt-6.1-sol",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-17T16:39:50+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:gpt-6.1-sol"
+    ],
+    "exception": null,
+    "notes": "Índices aislados y revisión solo con humano TTY; 47 tests OK.",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "8db1556016e8",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6.1-sol",
+      "role": "forge",
+      "run_id": "7f65305c2f43",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "8db1556016e8",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 92,
+  "task_id": "TASK-1704",
+  "title": "Memoria global como bóveda y revisión de pendientes desde Obsidian",
+  "verify": {
+    "command": "python -m unittest tests.test_vault.MemoryVaultTests tests.test_memory && python tools/dev.py lint",
+    "duration_seconds": 11.432,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1704-a1-2026-11-17T164045+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (95 ficheros Python)\n...............................................\n----------------------------------------------------------------------\nRan 47 tests in 7.671s\n\nOK",
+    "sha256": "bf610b95cd81b1c76d674c353e050bf366855477eac6f0bff46912d6379557ab",
+    "trust": "human"
+  }
+}

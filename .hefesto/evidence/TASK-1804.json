@@ -1,0 +1,60 @@
+{
+  "attempts": 1,
+  "base_commit": "70ac81916916a41f9e6f68941f47920caa75c283",
+  "branch": "hefesto/fase-17-boveda-obsidian-e-investigacion-odysseus",
+  "commit": "bab9f630df7437c3626cf1fa88207bf1e2f646ce",
+  "contract": [],
+  "created_at": "2026-11-17T17:41:06+00:00",
+  "files": [
+    {
+      "path": "hefesto/router.py",
+      "sha256": "f11f097b3c41419affb4ccfbe05e91a8c218f1e22d75aed548656990d4cb406b"
+    }
+  ],
+  "phase": "Fase 17 — Bóveda Obsidian e investigación Odysseus",
+  "prev_sha256": "51398ddb71259cfb07765d41fb618f0e9183f5724eecd15a989dbd6f2d77d652",
+  "prev_task_id": "TASK-1803",
+  "providers": [
+    "codex:gpt-6-luna",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-17T17:40:09+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:gpt-6-luna"
+    ],
+    "exception": null,
+    "notes": "Fallback local opt-in y seguro, sin cambiar roles/modelos; 37 tests y lint OK.",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "6c5c90657b32",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "e4a8e6208dc4",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "6c5c90657b32",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 98,
+  "task_id": "TASK-1804",
+  "title": "Modelo local como último recurso sin cuota",
+  "verify": {
+    "command": "python -m unittest tests.test_research.LastResortTests tests.test_adapters && python tools/dev.py lint",
+    "duration_seconds": 53.94,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1804-a1-2026-11-17T174105+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (97 ficheros Python)\n.....................................\n----------------------------------------------------------------------\nRan 37 tests in 52.585s\n\nOK",
+    "sha256": "14ecadfa8e70b7acbbb1306977f2d627b7ad9b9d8940a81015e9ab55ded58cb7",
+    "trust": "human"
+  }
+}

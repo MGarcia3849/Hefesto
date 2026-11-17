@@ -1,0 +1,70 @@
+{
+  "attempts": 2,
+  "base_commit": "1f3c40bd03edc4f3e3b849a7bacf7256541814d0",
+  "branch": "hefesto/fase-17-boveda-obsidian-e-investigacion-odysseus",
+  "commit": "c7eec6e3d1cd4754d014fd3b663a9ef0a73f14d1",
+  "contract": [],
+  "created_at": "2026-11-17T17:04:14+00:00",
+  "files": [
+    {
+      "path": "hefesto/doctor.py",
+      "sha256": "f25af141fd2abb33cde0ec5c8fb3439617af412657d03f8dea10801543c96fea"
+    },
+    {
+      "path": "hefesto/vault.py",
+      "sha256": "ff968cb807fa069b0e44e5fd325817becb3ed2e3e9ee15e0f2c6806b91d0f0a6"
+    }
+  ],
+  "phase": "Fase 17 — Bóveda Obsidian e investigación Odysseus",
+  "prev_sha256": "663e1f1505dd7fe03125d5d84f8472f248c94fa5ad3c1d7dc836d84e1fb4c601",
+  "prev_task_id": "TASK-1704",
+  "providers": [
+    "codex:gpt-6-luna",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-17T17:04:06+00:00",
+    "attempt": 1,
+    "authors": [
+      "codex:gpt-6-luna"
+    ],
+    "exception": null,
+    "notes": "CLI opcional con fallback seguro y doctor no obligatorio; 7 tests y lint OK.",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "d07c80800e5d",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "1b2af92f1917",
+      "success": true
+    },
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "5c06ff290392",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "d07c80800e5d",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 93,
+  "task_id": "TASK-1705",
+  "title": "CLI de Obsidian opcional",
+  "verify": {
+    "command": "python -m unittest tests.test_vault.ObsidianCliTests && python tools/dev.py lint",
+    "duration_seconds": 4.693,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1705-a2-2026-11-17T170413+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (95 ficheros Python)\n.......\n----------------------------------------------------------------------\nRan 7 tests in 3.482s\n\nOK",
+    "sha256": "e3ceaaf1de84037336114063b3254703c665bf7d99ff13539df0eb8d6e996c80",
+    "trust": "human"
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "attempts": 1,
+  "base_commit": "42338c9b0260338904b6bb9b5544f91218ff4992",
+  "branch": "hefesto/fase-17-boveda-obsidian-e-investigacion-odysseus",
+  "commit": "c140432fbd49ee7d5f6cdd413d129c5ad8182cc6",
+  "contract": [
+    "tests/test_research.py"
+  ],
+  "created_at": "2026-11-17T17:19:30+00:00",
+  "files": [
+    {
+      "path": "tests/test_research.py",
+      "sha256": "c2537c8907b61ac338edf49c8e227a579adda16a713b28951aa45707dc59f6a2"
+    }
+  ],
+  "phase": "Fase 17 — Bóveda Obsidian e investigación Odysseus",
+  "prev_sha256": "72837fa62b150f2c86467ab5757df81324c5a9f4547a2c09463f614da97e929f",
+  "prev_task_id": "TASK-1706",
+  "providers": [
+    "claude:opus",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-17T17:19:23+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Contrato offline con HTTP fake y límites; 6 pruebas de definición OK.",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "34fe1bd72e8c",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "claude:opus",
+      "role": "core",
+      "run_id": "0cd927922e99",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "34fe1bd72e8c",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 95,
+  "task_id": "TASK-1801",
+  "title": "Contratos de la investigación y del modelo local de último recurso",
+  "verify": {
+    "command": "python -m unittest tests.test_research.ContractDefinitionTests",
+    "duration_seconds": 0.957,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1801-a1-2026-11-17T171929+0000.log",
+    "output_summary": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.608s\n\nOK",
+    "sha256": "bc9e0e7e7d182a404a2b3b061daa931ddf54a50b889a3b3e1ee068b1b1383d4c",
+    "trust": "auto"
+  }
+}

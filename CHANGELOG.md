@@ -1,5 +1,15 @@
 # Changelog
 
+## Odysseus
+
+- Documenta la investigación externa opcional por API HTTP, el token de entorno, los límites y el tratamiento de los informes como datos no fiables.
+- Explica cómo configurar `adapters.local` con el servidor de modelos de Odysseus u Ollama y habilitar `last_resort` para continuar localmente cuando no haya cuota.
+- Aclara que Hefesto no instala Odysseus ni incluye su código AGPL-3.0.
+
+## Bóveda Obsidian
+
+- **Documentación de la bóveda (`TASK-1706`, `README.md`):** Explica la exportación unidireccional de solo lectura, cómo abrir en Obsidian `.hefesto/vault/` y `~/hefesto/memory/`, generar el Canvas del ROADMAP, revisar candidatas mediante `revision` con TTY y confirmación humana, y usar la CLI de Obsidian opcional.
+
 ## Fase 21 — Guías web actuales
 
 - Añade `hefesto web-guidance search|retrieve|legacy-scan` para Modern Web Guidance 1.0.0 preinstalado, con telemetría desactivada, validación de rutas, salida acotada y redactada. La ausencia del binario no afecta al resto de Hefesto.

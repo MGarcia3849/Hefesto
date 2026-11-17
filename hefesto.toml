@@ -33,6 +33,17 @@ model = ""
 enabled = false        # API compatible con OpenAI; se activa con `hefesto local enable`
 model = ""
 base_url = ""
+last_resort = false
+
+[research]
+enabled = false
+base_url = ""
+token_env = "ODYSSEUS_TOKEN"
+max_time = 600
+search_provider = ""
+poll_seconds = 5.0
+max_report_chars = 100000
+packet_max_chars = 6000
 
 [quota]
 cooldown_default_minutes = 60       # si la CLI no informa de cuándo se restablece

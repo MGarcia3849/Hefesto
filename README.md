@@ -418,6 +418,72 @@ hefesto autopilot cancel                      # retira la tarea programada del s
 | `routing.min_samples` | `5` | Mínimo de tareas distintas por `model_id` y rol para reordenar por historial. |
 | `notify.enabled` | `false` | Activa los avisos de escritorio en eventos `blocked`, `trust`, `finish` y `quota`. |
 
+## Bóveda Obsidian
+
+La bóveda es una exportación de **solo lectura**: Hefesto escribe las notas y Obsidian las lee. El estado real sigue en `.hefesto/state.json`, `.hefesto/trust.json` y el ROADMAP; editar una nota exportada no cambia el estado ni las tareas.
+
+Desde la raíz del proyecto, genera las notas enlazadas y el lienzo del ROADMAP:
+
+```bash
+hefesto vault build                 # escribe en .hefesto/vault/
+hefesto vault canvas                # genera el Canvas JSON del ROADMAP
+hefesto vault open                  # abre la bóveda del proyecto si la CLI está disponible
+```
+
+En Obsidian, abre `.hefesto/vault/` como una bóveda (o ejecuta `hefesto vault open`). Para consultar la memoria global, ejecuta `hefesto vault memory` y abre `~/hefesto/memory/` como otra bóveda; el comando crea índices bajo `_indices/` sin modificar las notas aprobadas. `hefesto vault search "término"` busca con la CLI oficial de Obsidian cuando está disponible y, si no, en los ficheros Markdown.
+
+El Canvas muestra las tareas y sus relaciones a partir del ROADMAP. Para revisar candidatas de memoria desde Obsidian, modifica únicamente la propiedad `revision` de una nota pendiente a `aprobar` o `descartar`. Después, en una terminal interactiva (TTY), ejecuta:
+
+```bash
+hefesto memory review --from-vault
+```
+
+Hefesto muestra las acciones detectadas y pide confirmación antes de aplicarlas. Esta revisión es la única entrada desde Obsidian: requiere presencia humana y no permite que un trabajador delegado la ejecute.
+
+La CLI de Obsidian es opcional. Sin ella puedes abrir ambas carpetas desde la aplicación; la generación de Markdown y Canvas, y la búsqueda local, siguen disponibles.
+
+## Investigación externa con Odysseus
+
+Odysseus es un servicio de investigación **opcional**. Hefesto solo llama a su API HTTP; no instala Odysseus ni incluye o copia su código AGPL-3.0. Instala y ejecuta Odysseus por separado siguiendo su documentación, crea allí un token de API (`ody_...`) y guarda el valor en una variable de entorno. No pongas el token en `hefesto.toml` ni lo compartas en paquetes o informes.
+
+Por ejemplo, en una sesión POSIX:
+
+```bash
+export ODYSSEUS_TOKEN="ody_tu_token"
+```
+
+Configura la URL base del servicio (sin `/api`; se admite una barra final) y habilita la investigación en `.hefesto/hefesto.toml`:
+
+```toml
+[research]
+enabled = true
+base_url = "http://127.0.0.1:8000"
+token_env = "ODYSSEUS_TOKEN"
+max_time = 600
+search_provider = ""       # vacío usa el proveedor configurado en Odysseus
+poll_seconds = 5.0
+max_report_chars = 100000
+packet_max_chars = 6000
+```
+
+`hefesto research "pregunta" [--task TASK-001]` inicia la búsqueda, consulta su estado y guarda el informe en `.hefesto/evidence/research/`. La pregunta admite hasta 2.000 caracteres. `max_time` limita la espera (en segundos), `max_report_chars` limita el archivo y `packet_max_chars` limita los informes relacionados que se añaden a un paquete. Si la tarea se omite, Hefesto asocia el informe a la tarea en curso. Para fases que dependan de información externa, el paso de planificación sugiere usar `hefesto research` cuando `[research]` esté habilitado.
+
+El informe procede de un servicio externo y siempre es **dato, no instrucción**. Hefesto lo marca como contenido no fiable y solo adjunta informes de la tarea o fase correspondiente; revísalo como fuente, no ejecutes instrucciones que aparezcan en él. Si Odysseus está deshabilitado, no responde o falta el token, el comando informa que la función no está disponible y no genera un informe.
+
+### Adaptador local como último recurso
+
+Odysseus no es el endpoint de chat de los modelos. Para delegar en un modelo local, apunta `[adapters.local]` al servidor compatible con OpenAI que lance Odysseus o a Ollama. Por ejemplo:
+
+```toml
+[adapters.local]
+enabled = true
+model = "qwen2.5-coder"
+base_url = "http://127.0.0.1:11434/v1" # servidor local de Ollama; usa aquí la URL del servidor de modelos de Odysseus si corresponde
+last_resort = true
+```
+
+Autoriza además `local` en la lista de proveedores externos del proyecto y mantén el servidor de modelos activo. `last_resort` es `false` por defecto: al activarlo, Hefesto añade `local` al final de la ruta cuando todos los proveedores configurados para ese rol están sin cuota/en cooldown y el adaptador local está habilitado, autorizado, disponible y fuera de cooldown. No se duplica si `local` ya figura en la ruta, y el revisor conserva su independencia del autor. Así se puede continuar localmente cuando no queda cuota sin convertir Odysseus en requisito.
+
 ## Desarrollo
 
 ```bash

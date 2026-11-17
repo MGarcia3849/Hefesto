@@ -1,0 +1,64 @@
+{
+  "attempts": 1,
+  "base_commit": "9814a247780e88265abc189bc4f53b4f436005cb",
+  "branch": "hefesto/fase-17-boveda-obsidian-e-investigacion-odysseus",
+  "commit": "baf6cae9e50e136908ffb6b3de4c94979decdd70",
+  "contract": [],
+  "created_at": "2026-11-17T17:33:19+00:00",
+  "files": [
+    {
+      "path": "hefesto/packet.py",
+      "sha256": "60320e8ce506c7d8abeb42819c7275a3c4b2804542c6650c61546cf0a61ad288"
+    },
+    {
+      "path": "prompts/protocol/plan.md",
+      "sha256": "37b14c051f16e65f437492a15b446823979a126066d871f074e7c984f0281fe8"
+    }
+  ],
+  "phase": "Fase 17 — Bóveda Obsidian e investigación Odysseus",
+  "prev_sha256": "a01a4f9391cda11eaa234c120952c7656f244a17246de3cc151b9678705c0e02",
+  "prev_task_id": "TASK-1802",
+  "providers": [
+    "codex:gpt-6-luna",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-17T17:33:05+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:gpt-6-luna"
+    ],
+    "exception": null,
+    "notes": "Informes relevantes y acotados como dato no fiable; 14 tests y lint OK.",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "b18f6efe152a",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "ebc5775fb6f4",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "b18f6efe152a",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 97,
+  "task_id": "TASK-1803",
+  "title": "Informes de investigación en el plan y en el paquete",
+  "verify": {
+    "command": "python -m unittest tests.test_research.PacketTests tests.test_context_pack && python tools/dev.py lint",
+    "duration_seconds": 9.947,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1803-a1-2026-11-17T173318+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (97 ficheros Python)\n..............\n----------------------------------------------------------------------\nRan 14 tests in 8.637s\n\nOK",
+    "sha256": "ed7f785fdc2052c899396ff5ab0dcc9da6dbd0f153a4ef8f0e0c6fa0279b779e",
+    "trust": "human"
+  }
+}

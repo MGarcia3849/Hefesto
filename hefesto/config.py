@@ -8,6 +8,7 @@ from __future__ import annotations
 import copy
 import re
 import tomllib
+import urllib.parse
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -293,6 +294,19 @@ def validate(cfg: Config) -> list[str]:
         errors.append("quota.near_limit_threshold debe estar en (0, 1]")
     if not isinstance(cfg.get("quota", "adaptive_caps", default=False), bool):
         errors.append("quota.adaptive_caps debe ser booleano")
+    if cfg.get("research", "token") is not None:
+        errors.append("research.token no se admite; configura research.token_env con el nombre de una variable de entorno")
+    token_env = cfg.get("research", "token_env", default="ODYSSEUS_TOKEN")
+    if not isinstance(token_env, str) or not token_env or token_env.startswith("ody_"):
+        errors.append("research.token_env debe ser el nombre de una variable de entorno, no un token")
+    research_url = cfg.get("research", "base_url", default="")
+    if not isinstance(research_url, str):
+        errors.append("research.base_url debe ser una URL HTTP o HTTPS")
+    elif research_url:
+        parsed_research_url = urllib.parse.urlsplit(research_url)
+        if (parsed_research_url.scheme not in ("http", "https") or not parsed_research_url.netloc
+                or parsed_research_url.username or parsed_research_url.password):
+            errors.append("research.base_url debe ser una URL HTTP o HTTPS sin credenciales")
     if cfg.get("adapters", "local", "enabled"):
         if not cfg.get("adapters", "local", "base_url"):
             errors.append("adapters.local está activo pero falta base_url")

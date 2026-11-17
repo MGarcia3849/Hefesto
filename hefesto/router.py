@@ -121,6 +121,25 @@ def _hop_suffix(mid: str, qualified: dict[str, dict[str, Any]]) -> str:
     return f" (pass@1 {p1}%, pass@k {pk}%, {st['tasks']} tareas)"
 
 
+def _last_resort_entry(cfg: config.Config, role: str, authors: set[str], chain: list[str]) -> str | None:
+    """Return local only when every configured route is unavailable due to cooldown."""
+    if not cfg.get("adapters", "local", "last_resort", default=False) or "local" in {
+        providers.split_entry(entry)[0] for entry in chain
+    }:
+        return None
+    if not chain:
+        return None
+    for entry in chain:
+        provider = providers.split_entry(entry)[0]
+        ok, reason = providers.available(cfg, provider, model=providers.entry_model(cfg, entry))
+        if ok or "en cooldown hasta" not in reason:
+            return None
+    if role == "reviewer" and "local" in authors:
+        return None
+    ok, _reason = providers.available(cfg, "local")
+    return "local" if ok else None
+
+
 def plan_route(
     cfg: config.Config,
     role: str,
@@ -159,6 +178,9 @@ def plan_route(
         hops.append(Hop(entry, mid, f"{base}{suffix}"))
         if ok:
             return hops
+    fallback = _last_resort_entry(cfg, role, authors, chain)
+    if fallback:
+        hops.append(Hop(fallback, providers.model_id(cfg, fallback), "elegido: último recurso local"))
     return hops
 
 
@@ -381,6 +403,15 @@ def run(project: Path, role: str, instruction: str, task_id: str | None = None, 
     for entry in deferred_authors:
         outcome = try_entry(entry)
         if outcome is not None:
+            return outcome
+
+    fallback = _last_resort_entry(cfg, role, authors, chain)
+    if fallback:
+        outcome = try_entry(fallback)
+        if outcome is not None:
+            for hop in outcome.hops:
+                if hop.entry == fallback and hop.outcome == "respondió":
+                    hop.outcome = "respondió: último recurso local"
             return outcome
 
     next_avail = earliest_cooldown(cfg, role)

@@ -1,0 +1,64 @@
+{
+  "attempts": 1,
+  "base_commit": "a21baee6d41b761c0452f024d849b14d63ad9910",
+  "branch": "hefesto/fase-17-boveda-obsidian-e-investigacion-odysseus",
+  "commit": "6b21844b9ab5554396697d9c1bc90edae3a4cbf4",
+  "contract": [],
+  "created_at": "2026-11-17T16:02:41+00:00",
+  "files": [
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "8b7c488255385b536481386d62dbf60a6ebc01705cbf767c3b37f2b9bbe692c0"
+    },
+    {
+      "path": "hefesto/vault.py",
+      "sha256": "b3c19eb8f0b629e56ae88a33a8885ef26d99ce92184aa294adc96d778610b7be"
+    }
+  ],
+  "phase": "Fase 17 — Bóveda Obsidian e investigación Odysseus",
+  "prev_sha256": "b35ec1f43c3e49ba1616786a5cf182c76c253a4fb80ba6ae8bdb96d5de142e3a",
+  "prev_task_id": "TASK-1702",
+  "providers": [
+    "claude:sonnet",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-17T16:02:33+00:00",
+    "attempt": 0,
+    "authors": [
+      "gemini:gemini-3.8-flash-medium"
+    ],
+    "exception": null,
+    "notes": "Canvas JSON válido, determinista y enlazado; CanvasTests 5/5 OK.",
+    "reviewer": "claude:sonnet",
+    "run_id": "22eed5cbac9f",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "runner",
+      "run_id": "1592de0fe7db",
+      "success": true
+    },
+    {
+      "model_id": "claude:sonnet",
+      "role": "reviewer",
+      "run_id": "22eed5cbac9f",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 91,
+  "task_id": "TASK-1703",
+  "title": "Lienzo JSON Canvas del ROADMAP",
+  "verify": {
+    "command": "python -m unittest tests.test_vault.CanvasTests && python tools/dev.py lint",
+    "duration_seconds": 4.088,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1703-a1-2026-11-17T160241+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (95 ficheros Python)\n.....\n----------------------------------------------------------------------\nRan 5 tests in 2.811s\n\nOK",
+    "sha256": "b780bbed55cef98ae0149aa58a54b18731ee59e3c2796e2e822d116b7e778bfc",
+    "trust": "human"
+  }
+}

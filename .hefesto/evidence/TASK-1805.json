@@ -1,0 +1,64 @@
+{
+  "attempts": 1,
+  "base_commit": "d1d91728a3c585de496352a0364451bbba1eed77",
+  "branch": "hefesto/fase-17-boveda-obsidian-e-investigacion-odysseus",
+  "commit": "48b4a4cd6e5eae44bcb0163a99c9c5b4436fb6b1",
+  "contract": [],
+  "created_at": "2026-11-17T17:45:00+00:00",
+  "files": [
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "7b9222d5afb21c6d8763b7a7336203cc51623a8c2791a6c47c709170ab6b526c"
+    },
+    {
+      "path": "README.md",
+      "sha256": "614846c13e7cced135b903bf43ee6cb44b4b5202e7e1f21b9549b81bab043460"
+    }
+  ],
+  "phase": "Fase 17 — Bóveda Obsidian e investigación Odysseus",
+  "prev_sha256": "ceff8e9745f208ed5888ffa7d13204e88c7417139c64427059b8a9a5f1d278e0",
+  "prev_task_id": "TASK-1804",
+  "providers": [
+    "codex:gpt-6-luna",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-17T17:44:56+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:gpt-6-luna"
+    ],
+    "exception": null,
+    "notes": "Documentación Odysseus opcional y segura; verificaciones rg OK.",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "f2e71c7867c7",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "d97a2196a13d",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "f2e71c7867c7",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 99,
+  "task_id": "TASK-1805",
+  "title": "Documentación de Odysseus",
+  "verify": {
+    "command": "grep -q \"hefesto research\" README.md && grep -q \"last_resort\" README.md && grep -q \"Odysseus\" CHANGELOG.md",
+    "duration_seconds": 0.069,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1805-a1-2026-11-17T174459+0000.log",
+    "output_summary": "",
+    "sha256": "2f2f68ba2ca48f0af24b7b83672b3ad24407eda16cfc7dc3a2509892f0e2e641",
+    "trust": "human"
+  }
+}

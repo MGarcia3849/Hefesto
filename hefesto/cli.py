@@ -1265,7 +1265,12 @@ def cmd_memory_review(args: argparse.Namespace) -> int:
         proj: Path | None = _project(args)
     except HefestoError:
         proj = None
-    msg = memory.review(proj, yes=getattr(args, "yes", False))
+    if getattr(args, "from_vault", False):
+        from hefesto import vault
+
+        msg = vault.review_from_vault(proj)
+    else:
+        msg = memory.review(proj, yes=getattr(args, "yes", False))
     print(msg)
     return EXIT_OK
 
@@ -1339,6 +1344,14 @@ def cmd_notify_test(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def cmd_research(args: argparse.Namespace) -> int:
+    from hefesto import research
+
+    result = research.run(_project(args), args.question, task_id=args.task)
+    print(result.path.relative_to(_project(args)).as_posix())
+    return EXIT_OK
+
+
 def cmd_autopilot_schedule(args: argparse.Namespace) -> int:
     from hefesto import autopilot
 
@@ -1357,6 +1370,46 @@ def cmd_autopilot_cancel(args: argparse.Namespace) -> int:
     from hefesto import autopilot
 
     print(autopilot.cancel(_project(args)))
+    return EXIT_OK
+
+
+def cmd_vault_build(args: argparse.Namespace) -> int:
+    from hefesto import vault
+
+    result = vault.build(_project(args), out=args.out)
+    print(f"Bóveda generada en {result.root} ({len(result.written)} notas).")
+    return EXIT_OK
+
+
+def cmd_vault_memory(args: argparse.Namespace) -> int:
+    from hefesto import vault
+
+    written = vault.memory_index()
+    print(f"Memoria indexada ({len(written)} índices).")
+    return EXIT_OK
+
+
+def cmd_vault_canvas(args: argparse.Namespace) -> int:
+    from hefesto import vault
+
+    path = vault.canvas(_project(args), out=getattr(args, "out", None))
+    print(f"Lienzo generado en {path}.")
+    return EXIT_OK
+
+
+def cmd_vault_search(args: argparse.Namespace) -> int:
+    from hefesto import vault
+
+    result = vault.search(_project(args), args.term)
+    for hit in result.hits:
+        print(hit)
+    return EXIT_OK
+
+
+def cmd_vault_open(args: argparse.Namespace) -> int:
+    from hefesto import vault
+
+    print(vault.open_vault(_project(args)))
     return EXIT_OK
 
 
@@ -1683,7 +1736,9 @@ def build_parser() -> argparse.ArgumentParser:
     msub = p.add_subparsers(dest="memory_cmd", metavar="ACCIÓN", required=True)
 
     c = msub.add_parser("review", help="revisa notas pendientes de la memoria global")
-    c.add_argument("--yes", action="store_true", help="aprueba todas sin confirmación interactiva ni TTY")
+    review_mode = c.add_mutually_exclusive_group()
+    review_mode.add_argument("--yes", action="store_true", help="aprueba todas sin confirmación interactiva ni TTY")
+    review_mode.add_argument("--from-vault", action="store_true", help="aplica las marcas revision con confirmación humana y TTY")
     c.set_defaults(func=cmd_memory_review)
 
     c = msub.add_parser("prune", help="limpia duplicados y notas obsoletas de la memoria")
@@ -1694,6 +1749,26 @@ def build_parser() -> argparse.ArgumentParser:
     c.add_argument("term", help="término a buscar")
     c.add_argument("--limit", type=int, default=10, help="máximo de resultados")
     c.set_defaults(func=cmd_memory_search)
+
+    p = sub.add_parser("vault", help="exporta el proyecto a una bóveda Obsidian de solo lectura")
+    vsub = p.add_subparsers(dest="vault_cmd", metavar="ACCIÓN", required=True)
+    c = vsub.add_parser("build", help="genera notas Markdown enlazadas")
+    c.add_argument("--out", type=Path, help="directorio de salida dentro del proyecto")
+    c.set_defaults(func=cmd_vault_build)
+
+    c = vsub.add_parser("canvas", help="genera el lienzo JSON Canvas del ROADMAP")
+    c.add_argument("--out", type=Path, help="directorio de salida dentro del proyecto")
+    c.set_defaults(func=cmd_vault_canvas)
+
+    c = vsub.add_parser("memory", help="genera índices de la memoria global para Obsidian")
+    c.set_defaults(func=cmd_vault_memory)
+
+    c = vsub.add_parser("search", help="busca en la bóveda con Obsidian o en sus ficheros")
+    c.add_argument("term", help="término a buscar")
+    c.set_defaults(func=cmd_vault_search)
+
+    c = vsub.add_parser("open", help="abre la bóveda en Obsidian si la CLI está disponible")
+    c.set_defaults(func=cmd_vault_open)
 
     p = sub.add_parser("learn", help="extracción determinista de lecciones y borradores de skills")
     lsub = p.add_subparsers(dest="learn_cmd", metavar="ACCIÓN", required=True)
@@ -1721,6 +1796,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     c = asub.add_parser("cancel", help="cancela la programación vigente del proyecto")
     c.set_defaults(func=cmd_autopilot_cancel)
+
+    p = sub.add_parser("research", help="investiga con el servicio Odysseus configurado")
+    p.add_argument("question", help="pregunta de investigación")
+    p.add_argument("--task", help="asocia el informe a una tarea del ROADMAP")
+    p.set_defaults(func=cmd_research)
 
     p = sub.add_parser("design", help="referencias de diseño de terceros (inspiración, no contrato)")
     dsub = p.add_subparsers(dest="design_cmd", metavar="ACCIÓN", required=True)

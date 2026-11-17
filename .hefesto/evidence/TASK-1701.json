@@ -1,0 +1,62 @@
+{
+  "attempts": 1,
+  "base_commit": "aea8bf24b75cd64197f41915e621d413446d1fb7",
+  "branch": "hefesto/fase-17-boveda-obsidian-e-investigacion-odysseus",
+  "commit": "1c7cbd628b8de9e719ab9ab208e13d65329be1a3",
+  "contract": [
+    "tests/test_vault.py"
+  ],
+  "created_at": "2026-11-17T12:02:13+00:00",
+  "files": [
+    {
+      "path": "tests/test_vault.py",
+      "sha256": "8925a3fef7dd2e5e1f5a6e6f6d75094f139ed5145f86c215ce60b705e3d888fe"
+    }
+  ],
+  "phase": "Fase 17 — Bóveda Obsidian e investigación Odysseus",
+  "prev_sha256": "3935bbe6331b913803b03767eef5fc0a7ee0dd40445f4b3aa8079ca43c984c61",
+  "prev_task_id": "TASK-2102",
+  "providers": [
+    "claude:opus",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-17T12:00:58+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Contrato de bóveda revisado; ContractDefinitionTests 4/4; API offline y segura.",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "044e59e32404",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "claude:opus",
+      "role": "core",
+      "run_id": "1b9af2d73042",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "044e59e32404",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 89,
+  "task_id": "TASK-1701",
+  "title": "Contratos de la bóveda",
+  "verify": {
+    "command": "python -m unittest tests.test_vault.ContractDefinitionTests",
+    "duration_seconds": 0.388,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1701-a1-2026-11-17T120212+0000.log",
+    "output_summary": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.021s\n\nOK",
+    "sha256": "d9a0f9f7dc7a54d8e25f4238482e0048716bd21ad5fe887aefb26aec7993fa80",
+    "trust": "auto"
+  }
+}

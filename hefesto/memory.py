@@ -42,11 +42,14 @@ def pending_dir() -> Path:
 
 def is_memory_enabled(project: Path | None = None) -> bool:
     """True si el pack memory está habilitado en el proyecto (o globalmente si no hay proyecto)."""
-    if project is not None:
-        return packs.is_pack_enabled(project, "memory")
     try:
+        if project is not None:
+            local = config.read_settings(config.project_settings_path(project))
+            if "memory" in local.get("packs", {}):
+                return packs.is_pack_enabled(project, "memory")
         settings = config.read_settings(config.global_settings_path())
-        return bool(settings.get("packs", {}).get("memory", {}).get("enabled", False))
+        legacy = bool(settings.get("packs", {}).get("memory", {}).get("enabled", False))
+        return bool(config.load(project, validate_layers=False).get("packs", "memory", "enabled", default=legacy))
     except Exception:
         return False
 
@@ -99,7 +102,7 @@ def _approved_notes() -> list[Path]:
     for directory, dirs, files in os.walk(store, followlinks=False):
         parent = Path(directory)
         dirs[:] = sorted(d for d in dirs if _safe_to_read(parent / d)
-                         and parent / d != pending_dir())
+                         and parent / d not in (pending_dir(), store / "_indices"))
         for name in sorted(files):
             path = parent / name
             if path.suffix == ".md" and _safe_to_read(path) and path.is_file():
@@ -279,7 +282,8 @@ def _read_candidate(candidate: Path) -> tuple[dict[str, str], str] | None:
         return None
 
 
-def _approve_candidate(candidate: Path, project: Path | None, edited_body: str | None = None) -> bool:
+def _approve_candidate(candidate: Path, project: Path | None, edited_body: str | None = None,
+                       preserve_existing: bool = False) -> bool:
     # Releer tras la interacción: el fichero pudo cambiar desde que se mostró.
     note = _read_candidate(candidate)
     if note is None:
@@ -304,6 +308,9 @@ def _approve_candidate(candidate: Path, project: Path | None, edited_body: str |
             target_dir = memory_dir() / tipo
         dest = target_dir / candidate.name
         _check_memory_path(dest)
+        if preserve_existing and dest.exists():
+            print("Aviso: ya existe una nota aprobada con ese nombre; se conserva la candidata.", file=sys.stderr)
+            return False
         target_dir.mkdir(parents=True, exist_ok=True)
         approved_meta = {
             "fecha": fecha,

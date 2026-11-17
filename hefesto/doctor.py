@@ -111,6 +111,13 @@ def _agentshield_check() -> Check:
     )
 
 
+def _obsidian_check() -> Check:
+    path = which("obsidian")
+    if not path:
+        return Check(MISSING, "obsidian", "no encontrado — opcional: búsqueda y apertura de bóveda", False)
+    return Check(OK, "obsidian", f"{path} — disponible para `hefesto vault search` y `hefesto vault open`", False)
+
+
 def auth_status(provider: str) -> str:
     """Autenticación comprobable sin gastar llamadas: `yes`, `no` o `unknown`."""
     if provider == "codex":
@@ -287,6 +294,7 @@ def run_checks(project: Path | None) -> list[Check]:
     checks.append(_binary("shellcheck", purpose="opcional: lint de install.sh"))
     checks.append(_graphify_check())
     checks.append(_agentshield_check())
+    checks.append(_obsidian_check())
     keys = present_api_keys()
     if keys:
         checks.append(Check(WARN, "API keys", "en el entorno: " + ", ".join(keys)

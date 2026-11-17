@@ -1,0 +1,72 @@
+{
+  "attempts": 1,
+  "base_commit": "b4dbae69850bc53e7488f0b7c7f1be0f77487dbd",
+  "branch": "hefesto/fase-17-boveda-obsidian-e-investigacion-odysseus",
+  "commit": "85e3b705c2f2e7014ab399d19a3b1e8564c6c1ea",
+  "contract": [],
+  "created_at": "2026-11-17T17:28:13+00:00",
+  "files": [
+    {
+      "path": "hefesto.toml",
+      "sha256": "271f2c091b69622d585af23079436097512cb5d8678d14dddd6d4e358e028444"
+    },
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "dc65b0ba37b1f33bb5344006a6f5dec2cbff3f39454913976218ec60e700b068"
+    },
+    {
+      "path": "hefesto/config.py",
+      "sha256": "0adef84ae7fd9f02687bf631fa01b25b06746eb77bb86b67f3fc398aad748266"
+    },
+    {
+      "path": "hefesto/research.py",
+      "sha256": "4fa1b08bd0daf4f7e44f1e99636881d93c8b758782aa2e9f458f8339c9bd6702"
+    }
+  ],
+  "phase": "Fase 17 — Bóveda Obsidian e investigación Odysseus",
+  "prev_sha256": "621a3f92857246fab8792b5b5884629df64a2080989dc08cbdd4263177527d73",
+  "prev_task_id": "TASK-1801",
+  "providers": [
+    "codex:gpt-6-luna",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-17T17:27:56+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:gpt-6-luna"
+    ],
+    "exception": null,
+    "notes": "Cliente API opcional seguro y redactado; ResearchTests 10/10 OK.",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "6cf9ea921327",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "e5602c007226",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "6cf9ea921327",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 96,
+  "task_id": "TASK-1802",
+  "title": "`hefesto research` contra la API de Odysseus",
+  "verify": {
+    "command": "python -m unittest tests.test_research.ResearchTests && python tools/dev.py lint",
+    "duration_seconds": 13.229,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1802-a1-2026-11-17T172813+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (97 ficheros Python)\n..........\n----------------------------------------------------------------------\nRan 10 tests in 11.905s\n\nOK",
+    "sha256": "bc3ced6913c6ee84e8613efbd7611c75b4f05fe43a271aafa797359776b8e498",
+    "trust": "human"
+  }
+}

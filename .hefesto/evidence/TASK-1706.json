@@ -1,0 +1,64 @@
+{
+  "attempts": 1,
+  "base_commit": "6ceafb4b70bb6ad91c287d851907459896e471f8",
+  "branch": "hefesto/fase-17-boveda-obsidian-e-investigacion-odysseus",
+  "commit": "13941df00f98cc2f9f6cc5a28a635a6b160074b2",
+  "contract": [],
+  "created_at": "2026-11-17T17:09:21+00:00",
+  "files": [
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "4b1a8850165390a8dfdf0e07930ec7c173083bedcf90bb6be993cc464110513e"
+    },
+    {
+      "path": "README.md",
+      "sha256": "830ea9f4df8e4ca0e6b7b60952b63208aea2934252869c9b132e81ace6dab731"
+    }
+  ],
+  "phase": "Fase 17 — Bóveda Obsidian e investigación Odysseus",
+  "prev_sha256": "6306c78efa37be0f4dd1964d4e06d84a784e91c5b168706dd6e4eb1765300ce8",
+  "prev_task_id": "TASK-1705",
+  "providers": [
+    "codex:gpt-6-luna",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-17T17:09:16+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:gpt-6-luna"
+    ],
+    "exception": null,
+    "notes": "Documentación de bóveda y memoria clara; verificación rg OK.",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "4adb66191c6e",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "765724bd4b10",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "4adb66191c6e",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 94,
+  "task_id": "TASK-1706",
+  "title": "Documentación de la bóveda",
+  "verify": {
+    "command": "grep -q \"vault build\" README.md && grep -q \"Bóveda Obsidian\" CHANGELOG.md",
+    "duration_seconds": 0.238,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-1706-a1-2026-11-17T170921+0000.log",
+    "output_summary": "",
+    "sha256": "6a4670036d53b369c6dfe72008a8a9ad3b05f820407d77bc1ca672f787e2f3b6",
+    "trust": "human"
+  }
+}

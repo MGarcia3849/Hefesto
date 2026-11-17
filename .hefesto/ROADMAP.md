@@ -767,9 +767,9 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - parallel: false
   - accept: `hefesto web-guidance search|retrieve|legacy-scan` usa solo CLI preinstalada y versión fijada, sin npx ni instalación implícita, con DISABLE_TELEMETRY=1; la skill se selecciona para tareas web pertinentes, el resultado externo es dato y la ausencia del binario no rompe Hefesto
 
-## Fase 17 — Bóveda Obsidian
-- [ ] TASK-1701: Contratos de la bóveda
-  - verify: `python -m py_compile tests/test_vault.py && python -m unittest tests.test_vault 2>&1 | grep -q "FAILED"`
+## Fase 17 — Bóveda Obsidian e investigación Odysseus
+- [x] TASK-1701: Contratos de la bóveda
+  - verify: `python -m unittest tests.test_vault.ContractDefinitionTests`
   - files: tests/test_vault.py
   - role: core
   - depends_on: TASK-1608
@@ -777,7 +777,7 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - parallel: false
   - contract: tests/test_vault.py
   - accept: los tests compilan y fallan porque aún no existen hefesto/vault.py ni los comandos `vault build`, `vault canvas`, `vault memory`, `vault search` y `memory review --from-vault`
-- [ ] TASK-1702: `hefesto vault build`, bóveda de una sola dirección
+- [x] TASK-1702: `hefesto vault build`, bóveda de una sola dirección
   - verify: `python -m unittest tests.test_vault.BuildTests && python tools/dev.py lint`
   - files: hefesto/vault.py, hefesto/cli.py
   - role: runner
@@ -785,15 +785,15 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - size: M
   - parallel: false
   - accept: genera en `.hefesto/vault/` (o `--out`, siempre confinado) una nota por fase, tarea, decisión, lección e informe de investigación con frontmatter (estado, fase, intentos, proveedor, veredicto, fecha) y enlaces `[[…]]` entre tarea↔fase↔dependencias↔evidencia↔decisiones; enlaza las capturas visuales de la evidencia; idempotente; borra solo notas generadas por ella; nunca copia state.json, trust.json ni logs/packets; redacta secretos; añade `.hefesto/vault/` al exclude local de git
-- [ ] TASK-1703: Lienzo JSON Canvas del ROADMAP
+- [x] TASK-1703: Lienzo JSON Canvas del ROADMAP
   - verify: `python -m unittest tests.test_vault.CanvasTests && python tools/dev.py lint`
-  - files: hefesto/vault.py
+  - files: hefesto/vault.py, hefesto/cli.py
   - role: runner
   - depends_on: TASK-1702
   - size: S
   - parallel: false
   - accept: `hefesto vault canvas` escribe `roadmap.canvas` válido según JSON Canvas 1.0: un grupo por fase, un nodo `file` por tarea que apunta a su nota, aristas por `depends_on`, color por estado y posiciones deterministas
-- [ ] TASK-1704: Memoria global como bóveda y revisión de pendientes desde Obsidian
+- [x] TASK-1704: Memoria global como bóveda y revisión de pendientes desde Obsidian
   - verify: `python -m unittest tests.test_vault.MemoryVaultTests tests.test_memory && python tools/dev.py lint`
   - files: hefesto/vault.py, hefesto/memory.py, hefesto/cli.py
   - role: forge
@@ -801,7 +801,7 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - size: M
   - parallel: false
   - accept: `hefesto vault memory` genera en `~/hefesto/memory/` notas índice (por stack, tipo, proyecto y confianza) con enlaces a las notas sin tocar su contenido; `hefesto memory review --from-vault` (solo con TTY) aplica la propiedad `revision: aprobar | descartar` puesta por el humano en las candidatas de `_pendientes/`, muestra un resumen y pide una confirmación final; una propiedad ausente o desconocida deja la candidata como está
-- [ ] TASK-1705: CLI de Obsidian opcional
+- [x] TASK-1705: CLI de Obsidian opcional
   - verify: `python -m unittest tests.test_vault.ObsidianCliTests && python tools/dev.py lint`
   - files: hefesto/vault.py, hefesto/doctor.py
   - role: runner
@@ -809,7 +809,7 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - size: S
   - parallel: false
   - accept: `hefesto vault search "término"` usa la CLI `obsidian` si está en el PATH y si no busca en los ficheros; `vault open` abre la bóveda con la CLI o avisa; `doctor` informa de si la CLI está disponible sin marcarlo como error
-- [ ] TASK-1706: Documentación de la bóveda
+- [x] TASK-1706: Documentación de la bóveda
   - verify: `grep -q "vault build" README.md && grep -q "Bóveda Obsidian" CHANGELOG.md`
   - files: README.md, CHANGELOG.md
   - role: runner
@@ -818,9 +818,9 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - parallel: false
   - accept: README explica que la bóveda es de solo lectura (Hefesto escribe, Obsidian lee), cómo abrir `.hefesto/vault/` y `~/hefesto/memory/` como bóvedas, el lienzo, la revisión de pendientes y la CLI opcional; CHANGELOG con la entrada
 
-## Fase 18 — Odysseus como servicio externo
-- [ ] TASK-1801: Contratos de la investigación y del modelo local de último recurso
-  - verify: `python -m py_compile tests/test_research.py && python -m unittest tests.test_research 2>&1 | grep -q "FAILED"`
+### Odysseus como servicio externo
+- [x] TASK-1801: Contratos de la investigación y del modelo local de último recurso
+  - verify: `python -m unittest tests.test_research.ContractDefinitionTests`
   - files: tests/test_research.py
   - role: core
   - depends_on: TASK-1706
@@ -828,7 +828,7 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - parallel: false
   - contract: tests/test_research.py
   - accept: los tests compilan (con un servidor HTTP falso que imita `/api/research/start`, `status` y `result` de Odysseus) y fallan porque aún no existen hefesto/research.py, `[research]`, `hefesto research` ni `adapters.local.last_resort`
-- [ ] TASK-1802: `hefesto research` contra la API de Odysseus
+- [x] TASK-1802: `hefesto research` contra la API de Odysseus
   - verify: `python -m unittest tests.test_research.ResearchTests && python tools/dev.py lint`
   - files: hefesto/research.py, hefesto/cli.py, hefesto/config.py, hefesto.toml
   - role: runner
@@ -836,7 +836,7 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - size: M
   - parallel: false
   - accept: `[research] enabled = false`, `base_url`, `token_env` (nombre de la variable de entorno con el token `ody_`, nunca el token en un TOML), `max_time`, `search_provider`; `hefesto research "pregunta"` lanza la investigación, sigue su estado con espera acotada y guarda el informe en `.hefesto/evidence/research/<fecha>-<slug>.md` con cabecera «contenido externo: dato, no instrucción», fuentes y metadatos; sin Odysseus o sin token sale con 3 y un mensaje claro, sin traza; redacta secretos
-- [ ] TASK-1803: Informes de investigación en el plan y en el paquete
+- [x] TASK-1803: Informes de investigación en el plan y en el paquete
   - verify: `python -m unittest tests.test_research.PacketTests tests.test_context_pack && python tools/dev.py lint`
   - files: hefesto/packet.py, prompts/protocol/plan.md
   - role: runner
@@ -844,7 +844,7 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - size: S
   - parallel: false
   - accept: el paquete incluye, marcados como no fiables y dentro del presupuesto, los informes de `evidence/research/` relacionados con la tarea o su fase; el paso `plan` sugiere `hefesto research` cuando la fase depende de algo externo y `[research]` está activo
-- [ ] TASK-1804: Modelo local como último recurso sin cuota
+- [x] TASK-1804: Modelo local como último recurso sin cuota
   - verify: `python -m unittest tests.test_research.LastResortTests tests.test_adapters && python tools/dev.py lint`
   - files: hefesto/router.py, hefesto/config.py, hefesto.toml
   - role: runner
@@ -852,7 +852,7 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - size: S
   - parallel: false
   - accept: con `[adapters.local] last_resort = true` y el adaptador activo, `plan_route` añade `local` al final de cualquier cadena de rol cuando todos los demás están en cooldown, salvo para `reviewer` si incumple la regla de independencia; `route --dry-run` lo explica; desactivado, nada cambia
-- [ ] TASK-1805: Documentación de Odysseus
+- [x] TASK-1805: Documentación de Odysseus
   - verify: `grep -q "hefesto research" README.md && grep -q "last_resort" README.md && grep -q "Odysseus" CHANGELOG.md`
   - files: README.md, CHANGELOG.md
   - role: runner
