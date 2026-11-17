@@ -1,0 +1,64 @@
+{
+  "attempts": 1,
+  "base_commit": "e2773f1ae742892f18528772931a580c4ff94bd1",
+  "branch": "hefesto/fase-22-tablero-animado-de-la-forja",
+  "commit": "bc70f05adb6ab993436ef1fddebeb6b31dcebff8",
+  "contract": [],
+  "created_at": "2026-11-17T19:37:37+00:00",
+  "files": [
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "7ded3f5973bd921ee25f679020258529c2fabc7bfeaf984092b705851f7f80e7"
+    },
+    {
+      "path": "hefesto/dashboard.py",
+      "sha256": "4089f99b04ad979e6a599d4a5e4d52b3d511b425acd57895e3873d87bef8f061"
+    }
+  ],
+  "phase": "Fase 22 — Tablero animado de la forja",
+  "prev_sha256": "003a4fdc022ec922c53b49245d7f6aa775f11064b64c62be8eb46462d2890c84",
+  "prev_task_id": "TASK-2201",
+  "providers": [
+    "codex:gpt-6-luna",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-17T19:37:22+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:gpt-6-luna"
+    ],
+    "exception": null,
+    "notes": "Dashboard solo lectura, --once/TTY y Ctrl-C correctos; 22 tests y lint OK.",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "1d33b19301d0",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "fca0e7ee5f33",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "1d33b19301d0",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 102,
+  "task_id": "TASK-2202",
+  "title": "Tablero de solo lectura y comando dashboard",
+  "verify": {
+    "command": "python -m unittest tests.test_dashboard.RenderTests && python tools/dev.py lint",
+    "duration_seconds": 11.463,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-2202-a1-2026-11-17T193737+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (100 ficheros Python)\n......................\n----------------------------------------------------------------------\nRan 22 tests in 10.172s\n\nOK",
+    "sha256": "2283e73f211d790f0b0fb2483e09b8c205625ce9728be14677c0c2a60501235a",
+    "trust": "auto"
+  }
+}
