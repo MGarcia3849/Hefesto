@@ -418,6 +418,16 @@ hefesto autopilot cancel                      # retira la tarea programada del s
 | `routing.min_samples` | `5` | Mínimo de tareas distintas por `model_id` y rol para reordenar por historial. |
 | `notify.enabled` | `false` | Activa los avisos de escritorio en eventos `blocked`, `trust`, `finish` y `quota`. |
 
+## Tablero de actividad
+
+`hefesto dashboard` muestra el estado del ROADMAP, la tarea actual, los agentes por rol y las últimas delegaciones reales. En una terminal interactiva se actualiza en vivo; fuera de una TTY imprime una instantánea y termina. Para obtener siempre una sola salida, usa:
+
+```bash
+hefesto dashboard --once
+```
+
+El tablero es de solo lectura y atribuye cada delegación al proveedor, modelo y CLI que la ejecutó.
+
 ## Bóveda Obsidian
 
 La bóveda es una exportación de **solo lectura**: Hefesto escribe las notas y Obsidian las lee. El estado real sigue en `.hefesto/state.json`, `.hefesto/trust.json` y el ROADMAP; editar una nota exportada no cambia el estado ni las tareas.

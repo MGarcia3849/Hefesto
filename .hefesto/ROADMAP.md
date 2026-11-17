@@ -887,7 +887,7 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - size: M
   - parallel: false
   - accept: `hefesto dashboard` muestra Hefesto como coordinador, personajes Core/Runner/Forge/Reviewer, flujo, progreso total y tareas restantes; `--once` y terminal sin TTY imprimen una instantánea legible; en TTY se actualiza y anima sin cambiar estado ni depender de librerías externas
-- [ ] TASK-2203: Actividad real de delegaciones y documentación
+- [x] TASK-2203: Actividad real de delegaciones y documentación
   - verify: `python -m unittest tests.test_dashboard.LiveTests tests.test_dashboard.RenderTests && python tools/dev.py lint`
   - files: hefesto/router.py, hefesto/dashboard.py, hefesto/cli.py, README.md, CHANGELOG.md
   - role: runner

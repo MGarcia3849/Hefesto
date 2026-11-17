@@ -1,5 +1,10 @@
 # Changelog
 
+## Fase 22 — Tablero animado de la forja
+
+- Añade `hefesto dashboard` para consultar el progreso y la actividad real de delegaciones; `hefesto dashboard --once` imprime una instantánea estática.
+- Registra inicio y fin de cada delegación con proveedor, modelo, CLI, rol, proceso y resultado, con textos redactados.
+
 ## Odysseus
 
 - Documenta la investigación externa opcional por API HTTP, el token de entorno, los límites y el tratamiento de los informes como datos no fiables.
