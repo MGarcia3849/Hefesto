@@ -1,0 +1,78 @@
+{
+  "attempts": 1,
+  "base_commit": "aa60c647efa5bfa9ed640d42a7e5590f64d25da0",
+  "branch": "hefesto/fase-22-tablero-animado-de-la-forja",
+  "commit": "d6d1b1ee97799bce2a7e84abc6e8747eea698c6b",
+  "contract": [],
+  "created_at": "2026-11-17T20:05:32+00:00",
+  "files": [
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "46e41031823ae8f8dff6819546ef910a78d26720f5b9af629915e5e18c0c493b"
+    },
+    {
+      "path": "README.md",
+      "sha256": "48f1cb1ca81310edfc63c00b89d06b3eac42450e8008f0f50bac6f4cba4fd94c"
+    },
+    {
+      "path": "hefesto/dashboard.py",
+      "sha256": "e3b5c5cb9e266c0aa34788d09666dfece109352401b79b937d1cb619a43f0c23"
+    },
+    {
+      "path": "hefesto/router.py",
+      "sha256": "e18d340fb476970b767a7aebf99655ab433a9ce1736cd7b8c763931d5cc4ed48"
+    }
+  ],
+  "phase": "Fase 22 — Tablero animado de la forja",
+  "prev_sha256": "857440b0e5dce8b8d3ab5c79a58b039d30c42f85d01a104abce8c0d3cfabc7b2",
+  "prev_task_id": "TASK-2202",
+  "providers": [
+    "codex:gpt-6-luna",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-17T20:03:50+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:gpt-6-luna"
+    ],
+    "exception": null,
+    "notes": "Eventos start/end reales y dashboard ASCII animado, 32 tests y lint OK.",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "5de1682739f5",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "7a40365856fa",
+      "success": true
+    },
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "bb5de25c8099",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "5de1682739f5",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 103,
+  "task_id": "TASK-2203",
+  "title": "Actividad real de delegaciones y documentación",
+  "verify": {
+    "command": "python -m unittest tests.test_dashboard.LiveTests tests.test_dashboard.RenderTests && python tools/dev.py lint",
+    "duration_seconds": 22.883,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-2203-a1-2026-11-17T200531+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (100 ficheros Python)\n................................\n----------------------------------------------------------------------\nRan 32 tests in 21.511s\n\nOK",
+    "sha256": "b481c8e47c31d33c0ed7cc894eb331d5aadd025272037547cbcef01cb2c5150c",
+    "trust": "auto"
+  }
+}
