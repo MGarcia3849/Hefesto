@@ -7,17 +7,38 @@ main_branch = "main"
 [limits]
 timeout_seconds = 1500
 
+# Modelos por precio y resultado (19/10/2026, decisión del usuario; precios API por millón de tokens
+# como medida relativa de gasto de cuota, y SWE-bench Pro / Terminal-Bench como resultado):
+#   Luna $0.10/$0.50 (SWE-Pro 62.7) · Haiku 5.5 $0.10/$0.50 (64.8) · Flash 3.8 $0.75/$3.75 (TB 19.1)
+#   6.1 Sol $2/$10 (TB 58.2) · Sonnet 5.5 (SWE-Pro 81.3, TB 61.8). Astra ($10/$50) nunca automático.
+# Intentos 1-2 (runner): lo más barato; los tests de contrato y el verify cazan lo que falle.
+[roles.runner]
+use = ["codex:gpt-6-luna", "gemini:gemini-3.8-flash-medium", "claude:haiku"]   # Haiku el último: gasta la cuota del orquestador
+
+# Intento 3 (forge): solo llega lo difícil; Sol triplica a Flash en trabajo de agente y ejecuta tests.
+[roles.forge]
+use = ["codex:gpt-6.1-sol", "claude:sonnet", "gemini:gemini-3.8-flash-high"]
+
+# Revisión (solo lectura, otro proveedor que el autor): Flash con cuota propia; Sonnet si Flash no está.
 # Claude (el orquestador) escribe los contratos como Core: lo revisa otro proveedor.
 [roles.reviewer]
-use = ["codex", "gemini", "claude:sonnet"]
+use = ["gemini:gemini-3.8-flash-medium", "claude:sonnet", "codex:gpt-6.1-sol"]
+
+# Interfaz: Sonnet es el mejor en código y diseño; Sol de respaldo.
+[roles.visual]
+use = ["claude:sonnet", "codex:gpt-6.1-sol"]
 
 [adapters.gemini]
 binary = "agy"   # la CLI gemini ya no admite cuentas individuales (Antigravity)
-
-# Si Codex no tiene cuota, Gemini hace de Forge antes que Claude (Claude queda libre para revisar).
-[roles.forge]
-use = ["codex", "gemini", "claude:sonnet"]
+model = "gemini-3.8-flash-medium"   # nunca el modelo por defecto de la CLI (puede ser Argon, el caro)
 
 # Comandos de desarrollo propios que se aprueban solos como verify.
 [trust]
 extra_safe_prefixes = ["python tools/dev.py"]
+
+# Cuotas (19/10/2026): Codex tiene más margen (29 % semanal, reinicio 25/10) y carga con más trabajo;
+# Claude es también el orquestador (77 % semanal, reinicio 21/10): deja de recibir delegaciones al 85 %
+# para reservar el resto a la orquestación; Gemini no expone su uso: tope bajo para no agotarlo a ciegas.
+[quota]
+near_limit_threshold = 0.85
+max_calls_per_provider_per_loop = { claude = 6, codex = 30, gemini = 15, local = 100 }
