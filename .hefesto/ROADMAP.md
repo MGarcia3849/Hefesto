@@ -879,7 +879,7 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - parallel: false
   - contract: tests/test_dashboard.py
   - accept: contrato offline para instantánea de ROADMAP y estado, Hefesto central, agentes por rol, proveedor y herramienta atribuida, progreso, siguiente tarea, eventos reales, modo estático y animación TTY; sin inventar actividad ni leer secretos
-- [ ] TASK-2202: Tablero de solo lectura y comando dashboard
+- [x] TASK-2202: Tablero de solo lectura y comando dashboard
   - verify: `python -m unittest tests.test_dashboard.RenderTests && python tools/dev.py lint`
   - files: hefesto/dashboard.py, hefesto/cli.py
   - role: runner

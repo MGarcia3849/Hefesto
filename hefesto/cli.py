@@ -1373,6 +1373,12 @@ def cmd_autopilot_cancel(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def cmd_dashboard(args: argparse.Namespace) -> int:
+    from hefesto import dashboard
+
+    return dashboard.run(_project(args), once=args.once, interval=args.interval)
+
+
 def cmd_vault_build(args: argparse.Namespace) -> int:
     from hefesto import vault
 
@@ -1796,6 +1802,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     c = asub.add_parser("cancel", help="cancela la programación vigente del proyecto")
     c.set_defaults(func=cmd_autopilot_cancel)
+
+    p = sub.add_parser("dashboard", help="tablero de solo lectura del progreso y las delegaciones")
+    p.add_argument("--once", action="store_true", help="imprime una instantánea y termina")
+    p.add_argument("--interval", type=float, default=1.0, help="segundos entre fotogramas en TTY")
+    p.set_defaults(func=cmd_dashboard)
 
     p = sub.add_parser("research", help="investiga con el servicio Odysseus configurado")
     p.add_argument("question", help="pregunta de investigación")
