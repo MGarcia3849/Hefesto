@@ -1,0 +1,62 @@
+{
+  "attempts": 1,
+  "base_commit": "820859bcd398e1b94cca0793577fdefc5289a3f8",
+  "branch": "hefesto/fase-22-tablero-animado-de-la-forja",
+  "commit": "d5f3b5bde871d1254225ccb863c5ec87b58e6ac1",
+  "contract": [
+    "tests/test_dashboard.py"
+  ],
+  "created_at": "2026-11-17T19:31:12+00:00",
+  "files": [
+    {
+      "path": "tests/test_dashboard.py",
+      "sha256": "b4ad6dfcfa24482f3d9463b4d4bf36f1fd7967506336f1615053a6898bd56452"
+    }
+  ],
+  "phase": "Fase 22 — Tablero animado de la forja",
+  "prev_sha256": "abd07353fc8ae3fb8f03c1e156c4d0a89b31fa8e2b4e88abcd096c61cc399bcd",
+  "prev_task_id": "TASK-2200",
+  "providers": [
+    "claude:opus",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-17T19:31:09+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Contrato offline de snapshot, animación y eventos reales; 8 pruebas de definición OK.",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "bcdc50c06da4",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "claude:opus",
+      "role": "core",
+      "run_id": "069df91314af",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "bcdc50c06da4",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 101,
+  "task_id": "TASK-2201",
+  "title": "Contrato del tablero de consola",
+  "verify": {
+    "command": "python -m unittest tests.test_dashboard.ContractDefinitionTests",
+    "duration_seconds": 0.327,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-2201-a1-2026-11-17T193111+0000.log",
+    "output_summary": "........\n----------------------------------------------------------------------\nRan 8 tests in 0.034s\n\nOK",
+    "sha256": "db04993e2d4fac72e8e49128e87fb1bc6c7fb2fde04c3739b113f83960a9de0a",
+    "trust": "auto"
+  }
+}
