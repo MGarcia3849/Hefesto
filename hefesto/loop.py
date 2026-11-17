@@ -127,15 +127,48 @@ def run(project: Path, orchestrator: str | None, max_tasks: int | None, max_turn
     loop_id = new_run_id()
     quota.start_loop(loop_id)
     completed = iterations = stalls = 0
+    delivered_this_run: set[str] = set()
     prompt = sync.render_prompt("next") + AUTONOMY
     log.event(project, "loop", f"loop {loop_id} iniciado", orchestrator=requested, max_tasks=max_tasks)
     try:
-        while completed < max_tasks:
+        while True:
             if stop_path(project).exists():
                 return LoopResult(EXIT_OK, "Parado por .hefesto/STOP (bórralo para volver a lanzar el loop).",
                                   completed, iterations)
             cfg = config.load(project)
             role, reason = _pending_role(project)
+            # Deliver a closed phase before moving on to a later pending phase. Delivery is opt-in
+            # through persisted, project-local human authorization. A completed record is left
+            # alone so a subsequent loop can continue with the next phase.
+            from hefesto import delivery
+            phase_slugs = list((state.load(project).get("phases") or {}).keys())
+            for phase_slug in phase_slugs:
+                if phase_slug in delivered_this_run:
+                    continue
+                closure = delivery.phase_closure(project, phase_slug)
+                if not closure.ready or not delivery.is_authorized(project, "pr"):
+                    continue
+                record_path = delivery.record_path(project, closure.slug)
+                record = delivery._read_record(record_path, closure)
+                steps = record["steps"]
+                target = delivery.load_target(project)
+                delivered = steps["pr"].get("status") == "done" and (
+                    steps["deploy"].get("status") == "done" or
+                    (target is None and steps["deploy"].get("status") == "skipped")
+                )
+                if not delivered:
+                    try:
+                        report = delivery.deliver(project, phase_slug)
+                    except HefestoError as exc:
+                        return LoopResult(exc.code, str(exc), completed, iterations)
+                    if report.code:
+                        return LoopResult(report.code, f"Entrega de fase {closure.slug}: " +
+                                          ", ".join(f"{key}={value}" for key, value in report.steps.items()),
+                                          completed, iterations)
+                    delivered_this_run.add(phase_slug)
+                    continue
+            if completed >= max_tasks:
+                return LoopResult(EXIT_OK, f"Tope de {max_tasks} tareas alcanzado.", completed, iterations)
             if role is None:
                 code = EXIT_BLOCKED if "bloqueada" in reason else EXIT_OK
                 return LoopResult(code, f"Sin trabajo: {reason}.", completed, iterations)

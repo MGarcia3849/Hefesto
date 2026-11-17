@@ -49,6 +49,28 @@ EXPECTED = [
 
 
 class DemoTests(HefestoTestCase):
+    def test_delivery_guide_covers_authorization_target_and_recovery(self) -> None:
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        guide = (ROOT / "docs" / "ENTREGA.md").read_text(encoding="utf-8")
+        combined = readme + guide
+        for phrase in ("hefesto deliver authorize pr", "hefesto deliver authorize deploy",
+                       ".hefesto/deploy.toml", "idempotent", "interrupted", "skipped",
+                       "worktree", "no detecta autom?ticamente"):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase.lower(), combined.lower())
+
+    def test_smoke_uses_offline_fakes(self) -> None:
+        user_home = self.tmp / "home-smoke"
+        user_state = self.tmp / "state-smoke"
+        env = dict(os.environ, HEFESTO_HOME=str(user_home), HEFESTO_STATE_DIR=str(user_state),
+                   HEFESTO_ROLE="runner")
+        result = subprocess.run([sys.executable, str(ROOT / "tools" / "dev.py"), "smoke"], cwd=ROOT, env=env,
+                                capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=180)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("smoke: OK", result.stdout)
+        self.assertFalse(user_home.exists())
+        self.assertFalse(user_state.exists())
+
     def test_demo_runs_both_parts_with_fakes_and_leaves_no_trace(self) -> None:
         user_home = self.tmp / "home-del-usuario"
         user_state = self.tmp / "state-del-usuario"

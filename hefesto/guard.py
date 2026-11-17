@@ -127,7 +127,7 @@ def branch_allowed(branch: str) -> bool:
 
 
 PATH_KEYS = ("file_path", "path", "notebook_path", "absolute_path")
-CONTROL_FILES = (".hefesto/state.json", ".hefesto/trust.json", ".hefesto/settings.json")
+CONTROL_FILES = (".hefesto/state.json", ".hefesto/trust.json", ".hefesto/settings.json", ".hefesto/delivery.json")
 
 # Nombres de herramientas de Gemini CLI y Codex → equivalente de Claude Code.
 TOOL_ALIASES = {

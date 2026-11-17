@@ -86,6 +86,9 @@ protected_paths = [".env", ".env.*", "*.pem", "*.key", "*.p12", "*.pfx", "id_rsa
 [github]
 pr = false                          # habilita `hefesto finish --pr`
 
+[delivery]
+max_deploy_attempts = 2
+
 [privacy]
 redact_secrets = true
 

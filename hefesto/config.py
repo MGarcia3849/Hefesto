@@ -31,6 +31,7 @@ ORCHESTRATORS = ("claude", "codex", "gemini")
 FREE_TABLES: dict[tuple[str, ...], type] = {
     ("quota", "max_calls_per_provider_per_loop"): int,
     ("quota", "near_limit_tokens"): int,
+    ("delivery", "max_deploy_attempts"): int,
     ("limits", "max_parallel_per_model"): int,
     ("limits", "packet_max_tokens"): int,
     ("reviewer", "tiers"): int,
@@ -59,6 +60,7 @@ POSITIVE_INTS: tuple[tuple[str, ...], ...] = (
     ("guard", "max_file_mb"),
     ("packs_context", "query_budget"),
     ("visual", "start_timeout"),
+    ("delivery", "max_deploy_attempts"),
 )
 
 DEFAULTS_PATH = FRAMEWORK_ROOT / "hefesto.toml"

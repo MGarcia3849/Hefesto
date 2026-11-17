@@ -90,6 +90,21 @@ codex "$hefesto-next"                 # el nuevo orquestador empieza con `hefest
 
 `hefesto resume` muestra la tarea, los intentos, las delegaciones ya hechas (para no repetirlas), las notas, el último error y el `git diff --stat`.
 
+### Entrega aut?noma de una fase
+
+Cuando todas las tareas de una fase est?n completadas y tienen evidencia, Hefesto puede abrir un PR y, si el proyecto declara un destino, desplegar la versi?n verificada. Una persona autoriza cada acci?n una sola vez; los permisos quedan en `.hefesto/delivery.json`:
+
+```bash
+hefesto deliver authorize pr
+hefesto deliver authorize deploy   # despu?s de configurar el destino
+hefesto deliver run
+hefesto deliver status
+```
+
+El destino vive en `.hefesto/deploy.toml`, dentro de `[target]`, e incluye `name`, `environment` y `command` como lista argv (nunca una cadena de shell). Puede incluir `healthcheck`, `rollback`, `url`, `idempotent` y `timeout_seconds`. La autorizaci?n de despliegue queda ligada a la huella de la configuraci?n y caduca si cambia. Hefesto no detecta autom?ticamente el hosting; sin destino, abre el PR y deja `deploy: skipped`.
+
+La entrega reutiliza un PR abierto de la rama de fase antes de crear otro. El despliegue usa el worktree de fase solo si coincide con la rama verificada y est? limpio. `.hefesto/delivery/<fase>.json` permite reanudar sin repetir pasos `done`. Un despliegue interrumpido solo se reintenta autom?ticamente si `idempotent = true`; si no, requiere autorizaci?n humana nueva. Los fallos se reintentan hasta `[delivery] max_deploy_attempts` (2 por defecto); al agotarse, una persona puede revisar y rearmar el paso. La entrega no integra el PR en la rama principal. Consulta [`docs/ENTREGA.md`](docs/ENTREGA.md) para la gu?a completa.
+
 ### Modo autónomo
 
 ```bash
@@ -417,7 +432,7 @@ Los tests usan CLIs falsas (`tests/fakes/`) y repositorios temporales: no llaman
 
 La integración de cada fase en la rama principal configurada del proyecto la realiza `hefesto finish` (tras verificar tests, precondiciones y solicitar confirmación).
 
-Sin embargo, **publicar (push, tag, release) es siempre una acción humana**: el framework nunca ejecuta `git push` de forma autónoma.
+La entrega de una fase es una excepción acotada: `hefesto deliver` puede subir la rama de fase y abrir o adoptar su PR solo si una persona autorizó `pr` previamente en ese proyecto. El agente delegado nunca ejecuta `git push` directamente. La integración del PR, la subida de la rama principal, y la creación/subida de tags y releases siguen siendo acciones humanas; este flujo no crea tags ni releases.
 
 Para publicar una nueva versión una vez integradas las fases:
 

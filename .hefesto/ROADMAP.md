@@ -713,6 +713,41 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - parallel: false
   - accept: cómo fijar el modelo y el razonamiento por entrada, por qué nunca dejar el modelo por defecto de una CLI, cooldown por modelo, cuenta de tokens de Gemini y umbral aprendido, topes adaptativos, con el ejemplo de cadenas por precio y resultado.
 
+## Fase 20 — Entrega autónoma por proyecto
+- [x] TASK-2001: Contratos de entrega autónoma
+  - verify: `python -m unittest tests.test_delivery_contract.ContractDefinitionTests`
+  - files: tests/test_delivery_contract.py
+  - role: core
+  - depends_on: TASK-1906
+  - size: S
+  - parallel: false
+  - contract: tests/test_delivery_contract.py
+  - accept: los tests fijan cierre de fase, PR idempotente, destino de despliegue del proyecto, puertas de autorización y recuperación; compilan y demuestran fallos de implementación ausente
+- [x] TASK-2002: Cierre y PR automáticos desde loop
+  - verify: `python -m unittest tests.test_delivery_contract.TargetTests tests.test_delivery_contract.AuthorizationTests tests.test_delivery_contract.ClosureTests tests.test_delivery_contract.PullRequestTests && python tools/dev.py lint`
+  - files: hefesto/delivery.py, hefesto/loop.py, hefesto/config.py, hefesto.toml, hefesto/cli.py, hefesto/guard.py
+  - role: runner
+  - depends_on: TASK-2001
+  - size: M
+  - parallel: false
+  - accept: el loop cierra fases completas y crea PR solo con autorización persistida del proyecto, controles de finish en verde y sin repetir push o PR tras reanudación; conserva el modo manual y las cadenas de roles
+- [x] TASK-2003: Despliegue automático del destino del proyecto
+  - verify: `python -m unittest tests.test_delivery_contract.DeployTests tests.test_delivery_contract.RecoveryTests tests.test_delivery_contract.CliTests tests.test_delivery_runtime && python tools/dev.py lint`
+  - files: hefesto/delivery.py, hefesto/loop.py, hefesto/config.py, hefesto.toml, hefesto/cli.py, tests/test_delivery_runtime.py
+  - role: runner
+  - depends_on: TASK-2002
+  - size: M
+  - parallel: false
+  - accept: detecta un destino inequívoco o usa argv configurado por proyecto, hace preflight sin leer secretos, despliega una vez tras la puerta aprobada, registra evidencia y deja estado recuperable ante fallo; pruebas offline con CLIs falsas
+- [x] TASK-2004: Documentación y demostración de entrega autónoma
+  - verify: `python -m unittest tests.test_delivery_contract && python tools/dev.py lint && python tools/dev.py smoke`
+  - files: README.md, CHANGELOG.md, docs/ENTREGA.md, tests/test_demo.py
+  - role: runner
+  - depends_on: TASK-2003
+  - size: S
+  - parallel: false
+  - accept: explica autorización inicial, commit, PR, despliegue por proyecto, pausa por destino ambiguo y recuperación; smoke offline pasa sin llamadas comerciales
+
 ## Fase 17 — Bóveda Obsidian
 - [ ] TASK-1701: Contratos de la bóveda
   - verify: `python -m py_compile tests/test_vault.py && python -m unittest tests.test_vault 2>&1 | grep -q "FAILED"`

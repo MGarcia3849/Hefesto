@@ -1,0 +1,78 @@
+{
+  "attempts": 1,
+  "base_commit": "d787cdf72f0594b35d0b14b2167b8134b4e5388b",
+  "branch": "hefesto/fase-20-entrega-autonoma-por-proyecto",
+  "commit": "f9320b2d8f8e088384520897b0801b1eab831d74",
+  "contract": [],
+  "created_at": "2026-11-17T10:09:31+00:00",
+  "files": [
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "65e92883f4efcb55a49a1be7ec4b7ab66f22c52f0e203014ab30d53249432446"
+    },
+    {
+      "path": "README.md",
+      "sha256": "1a18120f122214f056e6a406ec0bc049be1ff6d6079ad454e36b89c0644ea779"
+    },
+    {
+      "path": "docs/ENTREGA.md",
+      "sha256": "2a72a2a5bd57ea4c07a7e0807cd18e6f1fd441219a3e9fa3a6753ba4e7f0c544"
+    },
+    {
+      "path": "tests/test_demo.py",
+      "sha256": "dddefdc42c1d8a5890e6027cf64983c714b93b3fbce5ba14ef0a8dc1735393d0"
+    }
+  ],
+  "phase": "Fase 20 — Entrega autónoma por proyecto",
+  "prev_sha256": "2cfcf24d49127423e89f3341e8dd30f2780db8a5f841dd72d28a5595502f7c51",
+  "prev_task_id": "TASK-2003",
+  "providers": [
+    "codex:gpt-6-luna",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-17T10:04:13+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:gpt-6-luna"
+    ],
+    "exception": null,
+    "notes": "Guía de autorización, PR, despliegue, recuperación y smoke offline fiel al código; Reviewer pass.",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "1e4647e5a81d",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "dece9e1cc779",
+      "success": true
+    },
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "755ce7848f36",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "1e4647e5a81d",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 86,
+  "task_id": "TASK-2004",
+  "title": "Documentación y demostración de entrega autónoma",
+  "verify": {
+    "command": "python -m unittest tests.test_delivery_contract && python tools/dev.py lint && python tools/dev.py smoke",
+    "duration_seconds": 40.795,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-2004-a1-2026-11-17T100929+0000.log",
+    "output_summary": "TASK-001 completada: commit 2f2f550888, evidencia TASK-001.json.\n\n$ hefesto -C C:\\Users\\mggcp\\AppData\\Local\\Temp\\hefesto-smoke-ksbo97mt\\proyecto evidence verify  → 0\nCadena de evidencias íntegra (1 evidencias).\n\n$ hefesto -C C:\\Users\\mggcp\\AppData\\Local\\Temp\\hefesto-smoke-ksbo97mt\\proyecto status  → 0\nhefesto: COMPLETED\n  tarea:     -  intentos: 0\n  rol:       -\n  rama:      hefesto/fase-1-humo\n  roadmap:   1/1 hechas, 0 en curso, 0 bloqueadas, 0 pendientes\n  próxima:   todas las tareas están completadas\n  siguiente: hefesto finish\n\nsmoke: OK\n.......................................\n----------------------------------------------------------------------\nRan 39 tests in 36.303s\n\nOK",
+    "sha256": "acf024a10e340eb578be244c988b74fa2af39ec29f2455e0dd21ac41ff26b622",
+    "trust": "auto"
+  }
+}

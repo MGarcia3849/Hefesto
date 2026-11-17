@@ -511,6 +511,34 @@ def cmd_stop(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def cmd_deliver(args: argparse.Namespace) -> int:
+    from hefesto import delivery
+    project = _project(args)
+    if args.deliver_cmd == "authorize":
+        entry = delivery.authorize(project, args.action, yes=args.yes)
+        print(f"Autorizado {args.action} ({entry['approved_at']}).")
+    elif args.deliver_cmd == "revoke":
+        print("Autorización revocada." if delivery.revoke(project, args.action) else "No había autorización.")
+    elif args.deliver_cmd == "status":
+        closure = delivery.phase_closure(project, args.phase)
+        record_path = delivery.record_path(project, closure.slug)
+        try:
+            delivery_record = json.loads(record_path.read_text(encoding="utf-8"))
+            step_status = {name: step.get("status", "pending")
+                           for name, step in delivery_record.get("steps", {}).items()}
+        except (OSError, ValueError, AttributeError):
+            step_status = {"pr": "pending", "deploy": "skipped" if delivery.load_target(project) is None else "pending"}
+        print(json.dumps({"phase": closure.slug, "branch": closure.branch, "ready": closure.ready,
+                          "pending": closure.pending, "pr_authorized": delivery.is_authorized(project, "pr"),
+                          "deploy_authorized": delivery.is_authorized(project, "deploy"),
+                          "steps": step_status}, ensure_ascii=False))
+    else:
+        report = delivery.deliver(project, args.phase)
+        print(json.dumps({"code": report.code, "steps": report.steps}, ensure_ascii=False))
+        return report.code
+    return EXIT_OK
+
+
 def cmd_parallel(args: argparse.Namespace) -> int:
     from hefesto import scheduler
 
@@ -1564,6 +1592,14 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--max-turns", type=int)
     p.add_argument("--wait", action="store_true", help="si no hay cuota, espera al primer cooldown_until")
     p.set_defaults(func=cmd_loop)
+
+    p = sub.add_parser("deliver", help="autoriza y ejecuta la entrega de una fase")
+    dsub = p.add_subparsers(dest="deliver_cmd", metavar="ACCIÓN", required=True)
+    for action in ("run", "status"):
+        d = dsub.add_parser(action); d.add_argument("phase", nargs="?"); d.set_defaults(func=cmd_deliver)
+    d = dsub.add_parser("authorize"); d.add_argument("action", choices=["pr", "deploy"])
+    d.add_argument("--yes", action="store_true"); d.set_defaults(func=cmd_deliver)
+    d = dsub.add_parser("revoke"); d.add_argument("action", choices=["pr", "deploy"]); d.set_defaults(func=cmd_deliver)
 
     p = sub.add_parser("stop", help="crea .hefesto/STOP para detener el loop")
     p.set_defaults(func=cmd_stop)

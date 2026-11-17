@@ -1,0 +1,62 @@
+{
+  "attempts": 1,
+  "base_commit": "67332875cde8098a150bfa9d2599d8d9475c9229",
+  "branch": "hefesto/fase-20-entrega-autonoma-por-proyecto",
+  "commit": "f54ce927be2934ad7541dbd5cb44b9336e4d595a",
+  "contract": [
+    "tests/test_delivery_contract.py"
+  ],
+  "created_at": "2026-11-17T04:13:39+00:00",
+  "files": [
+    {
+      "path": "tests/test_delivery_contract.py",
+      "sha256": "ff4f2e57c461696798b5c2a751f86d98ac836ecd0a5c099cfe0beb7b575ed101"
+    }
+  ],
+  "phase": "Fase 20 — Entrega autónoma por proyecto",
+  "prev_sha256": "bf11223be798a94fc01baa7ccd8494fbcc7fc15b20f9eee1170cf89cbbd078c2",
+  "prev_task_id": "TASK-1906",
+  "providers": [
+    "claude:opus",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-17T04:09:20+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Contrato de entrega autónoma cubre autorización, PR idempotente, destino, despliegue y recuperación; Reviewer independiente pass.",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "766baf7db927",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "claude:opus",
+      "role": "core",
+      "run_id": "dec9a7e2106b",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "766baf7db927",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 83,
+  "task_id": "TASK-2001",
+  "title": "Contratos de entrega autónoma",
+  "verify": {
+    "command": "python -m unittest tests.test_delivery_contract.ContractDefinitionTests",
+    "duration_seconds": 0.29,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-2001-a1-2026-11-17T041339+0000.log",
+    "output_summary": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.024s\n\nOK",
+    "sha256": "0d4ffec335ea32852ebd18890b0dcc44a71f391e8df58342fe9b285aa4b24a3f",
+    "trust": "auto"
+  }
+}

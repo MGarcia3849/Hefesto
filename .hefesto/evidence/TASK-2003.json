@@ -1,0 +1,90 @@
+{
+  "attempts": 1,
+  "base_commit": "aa72ef6e53dab72cd0b9c323926ae9df9ea9d336",
+  "branch": "hefesto/fase-20-entrega-autonoma-por-proyecto",
+  "commit": "bdc3d4b8886a731c408ea9486b05f606a32b4803",
+  "contract": [],
+  "created_at": "2026-11-17T09:49:34+00:00",
+  "files": [
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "9c990f642869d03dfb628eb5be47160779c47ca614d7bc2a7dee7d850d69033c"
+    },
+    {
+      "path": "hefesto/delivery.py",
+      "sha256": "0053fe524c8f2b2ee3ae321c50341b310544e1126c7d6fd6f4359c5a2fe74574"
+    },
+    {
+      "path": "hefesto/loop.py",
+      "sha256": "3d7b01554a1a06144b2571bc8ffed57dd145a2dc4f39985f85c4586466d5f239"
+    },
+    {
+      "path": "tests/test_delivery_runtime.py",
+      "sha256": "441584a736cff737c5b742bd2035f3e8bc7772474b560398d429eb0ae4063b73"
+    }
+  ],
+  "phase": "Fase 20 — Entrega autónoma por proyecto",
+  "prev_sha256": "4d5fd5a25a8f7bf3f4ed352293194f90e4ac0389d69fef76a78941663dfbf99d",
+  "prev_task_id": "TASK-2002",
+  "providers": [
+    "codex:gpt-6-luna",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-17T09:48:43+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:gpt-6-luna"
+    ],
+    "exception": null,
+    "notes": "Despliegue en worktree verificado, permisos ligados a destino, recuperación y pruebas runtime correctos; Reviewer pass.",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "2b5ad304dddd",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "a4fc9881841f",
+      "success": true
+    },
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "f48256c128ec",
+      "success": true
+    },
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "42d0c85678cb",
+      "success": true
+    },
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "da2be7c3b29d",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "2b5ad304dddd",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 85,
+  "task_id": "TASK-2003",
+  "title": "Despliegue automático del destino del proyecto",
+  "verify": {
+    "command": "python -m unittest tests.test_delivery_contract.DeployTests tests.test_delivery_contract.RecoveryTests tests.test_delivery_contract.CliTests tests.test_delivery_runtime && python tools/dev.py lint",
+    "duration_seconds": 26.953,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-2003-a1-2026-11-17T094933+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (90 ficheros Python)\n......................\n----------------------------------------------------------------------\nRan 22 tests in 25.693s\n\nOK",
+    "sha256": "1ad6eafda5ac4d83e6c6c759c02e93c63dff955a2015de2dea5d82b6a693e693",
+    "trust": "auto"
+  }
+}

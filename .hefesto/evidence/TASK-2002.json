@@ -1,0 +1,86 @@
+{
+  "attempts": 2,
+  "base_commit": "854881cfb80192307f68a39afc51a4b7563c525a",
+  "branch": "hefesto/fase-20-entrega-autonoma-por-proyecto",
+  "commit": "dcf647284a9beac34d32636726776e42261a8938",
+  "contract": [],
+  "created_at": "2026-11-17T08:21:10+00:00",
+  "files": [
+    {
+      "path": "hefesto.toml",
+      "sha256": "24920968e12e9528de6a16f02111383f415eeb9fcd2dfbc0553e6cb179149e45"
+    },
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "1056cc9e2d6b0506e1d36fb41a43e16ba1e52bcc7afa9925f24182664aa35f7c"
+    },
+    {
+      "path": "hefesto/config.py",
+      "sha256": "a5ec2b41cc8edd1265da17d3cdb083955494f03d5ada40c8ff6d85ee2feb3641"
+    },
+    {
+      "path": "hefesto/delivery.py",
+      "sha256": "672a1d2389ca4865ce072bfb0a40ff1aab0dc2ae0ab4f086adf8ebfcf213f394"
+    },
+    {
+      "path": "hefesto/guard.py",
+      "sha256": "f7f34fa02e4d3aa736799f50bf57ca4b9d49b79c4f5a248965018abe72e03ac5"
+    },
+    {
+      "path": "hefesto/loop.py",
+      "sha256": "22a7f4d34020f167f965bef11c07cda2992b59cbffd5f4f403cd7048dece698c"
+    }
+  ],
+  "phase": "Fase 20 — Entrega autónoma por proyecto",
+  "prev_sha256": "c4c7e03788b8304ad62484297b81b5521b6e913913f1e038fad008d615a79f15",
+  "prev_task_id": "TASK-2001",
+  "providers": [
+    "codex:gpt-6-luna",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-17T08:20:41+00:00",
+    "attempt": 1,
+    "authors": [
+      "codex:gpt-6-luna"
+    ],
+    "exception": null,
+    "notes": "Autorización por proyecto y humana, PR idempotente, guard y pruebas de contrato correctas; Reviewer independiente pass.",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "f1ecab16e201",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "4205884e9c5e",
+      "success": true
+    },
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "1536856464c2",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "f1ecab16e201",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 84,
+  "task_id": "TASK-2002",
+  "title": "Cierre y PR automáticos desde loop",
+  "verify": {
+    "command": "python -m unittest tests.test_delivery_contract.TargetTests tests.test_delivery_contract.AuthorizationTests tests.test_delivery_contract.ClosureTests tests.test_delivery_contract.PullRequestTests && python tools/dev.py lint",
+    "duration_seconds": 16.598,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-2002-a2-2026-11-17T082109+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (89 ficheros Python)\n...................\n----------------------------------------------------------------------\nRan 19 tests in 15.423s\n\nOK",
+    "sha256": "ccea576119fe4e3de9291a639a277cfcecd26ac0d66dcdcad2ed5aac0f8ea1b8",
+    "trust": "auto"
+  }
+}

@@ -1,5 +1,12 @@
 # Changelog
 
+## Fase 20 ? Entrega aut?noma por proyecto
+
+- Documenta autorizaciones humanas persistentes de una sola vez para PR y despliegue.
+- Describe el destino expl?cito por proyecto en `.hefesto/deploy.toml`, el PR idempotente y el despliegue desde el worktree verificado, sin prometer detecci?n autom?tica del hosting.
+- Explica pausas por destino ausente o ambiguo, recuperaci?n de interrupciones y l?mites de reintentos.
+- A?ade comprobaci?n de gu?a y smoke offline con CLIs falsas, sin llamadas comerciales ni consumo de cuota.
+
 Todas las novedades notables de Hefesto se documentan en este archivo.
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
