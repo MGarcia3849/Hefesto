@@ -1,5 +1,10 @@
 # Changelog
 
+## Fase 21 — Guías web actuales
+
+- Añade `hefesto web-guidance search|retrieve|legacy-scan` para Modern Web Guidance 1.0.0 preinstalado, con telemetría desactivada, validación de rutas, salida acotada y redactada. La ausencia del binario no afecta al resto de Hefesto.
+- Registra la skill fijada para tareas web. No se duplica ECC ni Playwright: sus funciones ya están cubiertas por el orquestador y las skills existentes.
+
 ## Fase 20 ? Entrega aut?noma por proyecto
 
 - Documenta autorizaciones humanas persistentes de una sola vez para PR y despliegue.

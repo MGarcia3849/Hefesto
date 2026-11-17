@@ -79,6 +79,10 @@ worktree_links = []                 # carpetas ignoradas que se enlazan en los w
 # si su nivel es estrictamente superior al del autor. Sin nivel = no comparable.
 tiers = { "claude:haiku" = 1, "claude:sonnet" = 2, "claude:opus" = 3 }
 
+[web_guidance]
+timeout_seconds = 60
+max_output_chars = 20000
+
 [guard]
 max_file_mb = 5                     # binarios mayores se bloquean en el checkpoint
 protected_paths = [".env", ".env.*", "*.pem", "*.key", "*.p12", "*.pfx", "id_rsa*", "id_ed25519*", "id_ecdsa*", "*.keystore", "*.jks", "credentials.json", "service-account*.json"]

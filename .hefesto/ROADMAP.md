@@ -748,6 +748,25 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - parallel: false
   - accept: explica autorización inicial, commit, PR, despliegue por proyecto, pausa por destino ambiguo y recuperación; smoke offline pasa sin llamadas comerciales
 
+## Fase 21 — Guías web actuales
+- [x] TASK-2101: Contratos de Modern Web Guidance
+  - verify: `python -m unittest tests.test_web_guidance_contract.ContractDefinitionTests`
+  - files: tests/test_web_guidance_contract.py
+  - role: core
+  - depends_on: TASK-2004
+  - size: S
+  - parallel: false
+  - contract: tests/test_web_guidance_contract.py
+  - accept: tests offline fijan búsqueda, recuperación y legacy-scan con versión 1.0.0, telemetría desactivada, rutas confinadas, salidas acotadas y fallo claro si falta la CLI; el contrato demuestra ausencia de implementación
+- [x] TASK-2102: CLI y skill de Modern Web Guidance
+  - verify: `python -m unittest tests.test_web_guidance_contract tests.test_web_guidance_runtime && python tools/dev.py lint`
+  - files: hefesto/web_guidance.py, hefesto/cli.py, hefesto/config.py, hefesto.toml, catalog/skills.toml, tests/test_web_guidance_runtime.py, README.md, CHANGELOG.md, .hefesto/DECISIONS.md
+  - role: runner
+  - depends_on: TASK-2101
+  - size: M
+  - parallel: false
+  - accept: `hefesto web-guidance search|retrieve|legacy-scan` usa solo CLI preinstalada y versión fijada, sin npx ni instalación implícita, con DISABLE_TELEMETRY=1; la skill se selecciona para tareas web pertinentes, el resultado externo es dato y la ausencia del binario no rompe Hefesto
+
 ## Fase 17 — Bóveda Obsidian
 - [ ] TASK-1701: Contratos de la bóveda
   - verify: `python -m py_compile tests/test_vault.py && python -m unittest tests.test_vault 2>&1 | grep -q "FAILED"`

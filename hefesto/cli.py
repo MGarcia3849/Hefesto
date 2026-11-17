@@ -1376,6 +1376,21 @@ def cmd_design_ref(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def cmd_web_guidance(args: argparse.Namespace) -> int:
+    from hefesto import web_guidance
+
+    project = _project(args)
+    if args.action == "search":
+        result = web_guidance.search(project, args.value)
+    elif args.action == "retrieve":
+        result = web_guidance.retrieve(project, args.value)
+    else:
+        result = web_guidance.legacy_scan(project, args.path or ".")
+    if result.output:
+        print(result.output)
+    return EXIT_OK if result.ok else EXIT_INPUT
+
+
 def cmd_design_pass(args: argparse.Namespace) -> int:
     from hefesto import gitops, roadmap, router, visual
 
@@ -1721,6 +1736,18 @@ def build_parser() -> argparse.ArgumentParser:
     c.add_argument("--shortcut", choices=("impacto", "robustez", "tipografia"), help="secuencia conocida")
     c.add_argument("--diagnosis", choices=("critique", "audit"), default="critique")
     c.set_defaults(func=cmd_design_pass)
+
+    p = sub.add_parser("web-guidance", help="consulta Modern Web Guidance instalado explícitamente")
+    wgsub = p.add_subparsers(dest="action", metavar="ACCIÓN", required=True)
+    c = wgsub.add_parser("search", help="busca una guía web actual")
+    c.add_argument("value", help="consulta")
+    c.set_defaults(func=cmd_web_guidance)
+    c = wgsub.add_parser("retrieve", help="recupera una guía por ID")
+    c.add_argument("value", help="ID de guía")
+    c.set_defaults(func=cmd_web_guidance)
+    c = wgsub.add_parser("legacy-scan", help="detecta APIs web heredadas en una ruta")
+    c.add_argument("path", nargs="?", help="ruta dentro del proyecto")
+    c.set_defaults(func=cmd_web_guidance)
 
     return parser
 

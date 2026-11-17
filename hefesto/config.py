@@ -360,6 +360,10 @@ def validate(cfg: Config) -> list[str]:
     notify_enabled = cfg.get("notify", "enabled", default=False)
     if not isinstance(notify_enabled, bool):
         errors.append("notify.enabled debe ser booleano")
+    for key, default in (("timeout_seconds", 60), ("max_output_chars", 20000)):
+        value = cfg.get("web_guidance", key, default=default)
+        if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+            errors.append(f"web_guidance.{key} debe ser un entero ≥ 1")
     max_images = cfg.get("visual", "max_images")
     if isinstance(max_images, bool) or not isinstance(max_images, int) or max_images < 0:
         errors.append("visual.max_images debe ser un entero ≥ 0")

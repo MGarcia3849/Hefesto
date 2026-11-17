@@ -1,0 +1,88 @@
+{
+  "attempts": 1,
+  "base_commit": "18307f4ed9b324b9b416a1a53bc2abc20116d101",
+  "branch": "hefesto/fase-21-guias-web-actuales",
+  "commit": "f0bc438051267fc5bea9354eef84c02af37ab7f3",
+  "contract": [],
+  "created_at": "2026-11-17T11:09:32+00:00",
+  "files": [
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "03935369943ba3c036b49de127948a9befe6e63c0cd12183206a8c0c19d20734"
+    },
+    {
+      "path": "README.md",
+      "sha256": "9eb593c34255c9a25346179f13ff6ebc565025550e6d23a14ba8bcb116231356"
+    },
+    {
+      "path": "catalog/skills.toml",
+      "sha256": "95109b2d7ff6c2402a35ec44d31fde8e1d2cbdc1f039da3abf8c586e56726ac2"
+    },
+    {
+      "path": "hefesto.toml",
+      "sha256": "43c8e567b177f47de39c4d53250924f3bca8d14ce8df2811c642833e2df661ae"
+    },
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "e72e108029da7c2b7996149e1276d5623cb42b9c9c88a9511ed8736e2be7ba76"
+    },
+    {
+      "path": "hefesto/config.py",
+      "sha256": "9cce6a779433a484b310b3f4b3d5329151ab956b1c273e85e31583e0c9fd4ccd"
+    },
+    {
+      "path": "hefesto/web_guidance.py",
+      "sha256": "90923e1fb0f0fd96866f4b676769a34e141f0f1335f8592f5d1f44928381b34c"
+    },
+    {
+      "path": "tests/test_web_guidance_runtime.py",
+      "sha256": "8055b60bb92888e4ca5592d001b9045b3527b11e8c6eba7b84a7f18073ab1a28"
+    }
+  ],
+  "phase": "Fase 21 — Guías web actuales",
+  "prev_sha256": "8072b036fe68172e3b1be8a964e75f942639177c8a05f4bf79192d496f245bf1",
+  "prev_task_id": "TASK-2101",
+  "providers": [
+    "codex:gpt-6-luna",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-17T11:04:56+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:gpt-6-luna"
+    ],
+    "exception": null,
+    "notes": "Wrapper Modern Web Guidance v1.0.0 seguro, contrato intacto, catálogo y roles sin cambios; Reviewer pass.",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "013c0e306dc9",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "2a13bfc951b9",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "013c0e306dc9",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 88,
+  "task_id": "TASK-2102",
+  "title": "CLI y skill de Modern Web Guidance",
+  "verify": {
+    "command": "python -m unittest tests.test_web_guidance_contract tests.test_web_guidance_runtime && python tools/dev.py lint",
+    "duration_seconds": 16.087,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-2102-a1-2026-11-17T110931+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (93 ficheros Python)\n....................................\n----------------------------------------------------------------------\nRan 36 tests in 14.873s\n\nOK",
+    "sha256": "7b3c4e618cc98c2559da0a8a2a64e9c256ccb5420440e000b86f2fe1cdad9227",
+    "trust": "auto"
+  }
+}

@@ -9,6 +9,7 @@ Framework de orquestación multiagente para trabajar con tus suscripciones de **
 - Python ≥ 3.11 (solo librería estándar) y git con `worktree`.
 - Bash para los `verify`: en Windows, el de Git for Windows.
 - Al menos una CLI con sesión iniciada: `claude`, `codex`, `gemini` o `agy`.
+- Modern Web Guidance es opcional: instala explícitamente `modern-web-guidance` v1.0.0 para usar `hefesto web-guidance`; Hefesto nunca lo instala por ti.
 - Plataformas: Linux, macOS, WSL y Windows nativo (ADR-001).
 
 ## Instalación
