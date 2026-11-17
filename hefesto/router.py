@@ -7,6 +7,7 @@ siguiente de la cadena. Solo un fallo real del trabajo cuenta como intento (y es
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import os
 from pathlib import Path
 import sys
 from typing import Any
@@ -364,7 +365,22 @@ def run(project: Path, role: str, instruction: str, task_id: str | None = None, 
                     workdir=eff_workdir, project=project, packet_path=packet_path.resolve(), timeout=timeout,
                     extra={"images": [str(path) for path in visual.reviewer_images(project, cfg, task)]
                            if role == "reviewer" and task is not None and task.kind in ("app", "web") else {}})
-        result = adapters.get(cfg, provider).run(call)
+        binary = providers.binary_for(cfg, provider)
+        cli_name = "http" if provider == "local" else (Path(binary).name.rsplit(".", 1)[0].lower() if binary else provider)
+        from hefesto import progress
+
+        event = {"run_id": run_id, "task_id": task.id if task else None, "role": role,
+                 "provider": provider, "model_id": mid, "cli": cli_name, "pid": os.getpid(),
+                 "orchestrator": progress.current_orchestrator()}
+        log.record(project, "delegations", {"event": "start", **event})
+        try:
+            result = adapters.get(cfg, provider).run(call)
+        except Exception as exc:
+            log.record(project, "delegations", {"event": "end", **event, "success": False,
+                                                  "error_type": type(exc).__name__})
+            raise
+        log.record(project, "delegations", {"event": "end", **event, "success": bool(result.success),
+                                              "error_type": result.error_type or ("failure" if not result.success else None)})
         quota.record_call(provider)
         _record(project, role, task, eff_task_run_id, run_id, mid, result, packet_path)
         if result.error_type in ("quota", "rate_limit"):

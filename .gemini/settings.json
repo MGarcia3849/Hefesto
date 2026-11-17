@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "hefesto status"
+            "command": "hefesto status --protocol"
           }
         ]
       }

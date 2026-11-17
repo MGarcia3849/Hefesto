@@ -860,3 +860,38 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - size: S
   - parallel: false
   - accept: README explica cómo crear el token en Odysseus, `[research]`, que el informe es dato y no instrucción, que Odysseus es opcional y se usa solo por su API (sin código AGPL dentro de Hefesto) y cómo apuntar `adapters.local` al servidor de modelos que lanza Odysseus u Ollama; CHANGELOG con la entrada
+
+## Fase 22 — Tablero animado de la forja
+- [x] TASK-2200: Corregir validación del límite de despliegues
+  - verify: `python -m unittest tests.test_config && python tools/dev.py lint`
+  - files: hefesto/config.py, tests/test_config.py
+  - role: runner
+  - depends_on: TASK-1805
+  - size: S
+  - parallel: false
+  - accept: `delivery.max_deploy_attempts` se valida como entero positivo en TOML global y del proyecto; Hefesto puede iniciar tareas con la configuración instalada sin alterar otros límites
+- [x] TASK-2201: Contrato del tablero de consola
+  - verify: `python -m unittest tests.test_dashboard.ContractDefinitionTests`
+  - files: tests/test_dashboard.py
+  - role: core
+  - depends_on: TASK-2200
+  - size: S
+  - parallel: false
+  - contract: tests/test_dashboard.py
+  - accept: contrato offline para instantánea de ROADMAP y estado, Hefesto central, agentes por rol, proveedor y herramienta atribuida, progreso, siguiente tarea, eventos reales, modo estático y animación TTY; sin inventar actividad ni leer secretos
+- [x] TASK-2202: Tablero de solo lectura y comando dashboard
+  - verify: `python -m unittest tests.test_dashboard.RenderTests && python tools/dev.py lint`
+  - files: hefesto/dashboard.py, hefesto/cli.py
+  - role: runner
+  - depends_on: TASK-2201
+  - size: M
+  - parallel: false
+  - accept: `hefesto dashboard` muestra Hefesto como coordinador, personajes Core/Runner/Forge/Reviewer, flujo, progreso total y tareas restantes; `--once` y terminal sin TTY imprimen una instantánea legible; en TTY se actualiza y anima sin cambiar estado ni depender de librerías externas
+- [x] TASK-2203: Actividad real de delegaciones y documentación
+  - verify: `python -m unittest tests.test_dashboard.LiveTests tests.test_dashboard.RenderTests && python tools/dev.py lint`
+  - files: hefesto/router.py, hefesto/dashboard.py, hefesto/cli.py, README.md, CHANGELOG.md
+  - role: runner
+  - depends_on: TASK-2202
+  - size: M
+  - parallel: false
+  - accept: el tablero atribuye proveedor, modelo y CLI de cada delegación desde eventos de Hefesto; indica cuándo la herramienta termina o falla, conserva los últimos eventos redactados y distingue actividad real de espera; README explica `hefesto dashboard` y `--once`
