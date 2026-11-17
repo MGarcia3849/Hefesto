@@ -870,7 +870,7 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - size: S
   - parallel: false
   - accept: `delivery.max_deploy_attempts` se valida como entero positivo en TOML global y del proyecto; Hefesto puede iniciar tareas con la configuración instalada sin alterar otros límites
-- [ ] TASK-2201: Contrato del tablero de consola
+- [x] TASK-2201: Contrato del tablero de consola
   - verify: `python -m unittest tests.test_dashboard.ContractDefinitionTests`
   - files: tests/test_dashboard.py
   - role: core
