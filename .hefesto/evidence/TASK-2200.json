@@ -1,0 +1,64 @@
+{
+  "attempts": 1,
+  "base_commit": "de37b69ea9e6cf074201acd761c42a4d27c2acf3",
+  "branch": "hefesto/fase-22-tablero-animado-de-la-forja",
+  "commit": "95cdd0067f8a41e10e5d143c9bfd28e482025415",
+  "contract": [],
+  "created_at": "2026-11-17T18:29:34+00:00",
+  "files": [
+    {
+      "path": "hefesto/config.py",
+      "sha256": "2555ae77c91f7349a4962fa8392b4210c9110ea962ebfdb597a49fcb4ec3c3a1"
+    },
+    {
+      "path": "tests/test_config.py",
+      "sha256": "ba6b88b588439704842566ed3587a5c11d291eb1e8d7e78a2ea3a702b5fefe6f"
+    }
+  ],
+  "phase": "Fase 22 — Tablero animado de la forja",
+  "prev_sha256": "11fb96d990f33913a3581748353db607caeaa9a651be5bda4b562a9b20f2160c",
+  "prev_task_id": "TASK-1805",
+  "providers": [
+    "codex:gpt-6-luna",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-17T18:29:28+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:gpt-6-luna"
+    ],
+    "exception": null,
+    "notes": "Entrega max_deploy_attempts validada como entero positivo; 3 tests y lint OK.",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "cc374790d19c",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "4512e32cdde1",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "cc374790d19c",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 100,
+  "task_id": "TASK-2200",
+  "title": "Corregir validación del límite de despliegues",
+  "verify": {
+    "command": "python -m unittest tests.test_config && python tools/dev.py lint",
+    "duration_seconds": 1.268,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-2200-a1-2026-11-17T182933+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (98 ficheros Python)\n...\n----------------------------------------------------------------------\nRan 3 tests in 0.055s\n\nOK",
+    "sha256": "72a8a4511143606bd0d58919bc4c5ad975896b804792443e4d79d5dd71cee6c5",
+    "trust": "auto"
+  }
+}
