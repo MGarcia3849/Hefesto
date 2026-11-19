@@ -25,6 +25,7 @@ from hefesto.util import filtered_env
 ORCHESTRATOR_SHELL = ("hefesto", "graphify", "git status", "git diff", "git log")
 
 ERROR_TYPES = ("missing_binary", "auth", "quota", "rate_limit", "timeout", "invalid_output", "denied_by_policy")
+ERROR_CLASSES = ("transient", "deterministic", "auth", "quota", "security", "approval")
 READ_ONLY_ROLES = ("reviewer", "challenge")
 SUMMARY_CHARS = 1500
 
@@ -32,6 +33,12 @@ BASE_PATTERNS = {
     "auth": re.compile(r"ineligibletiererror|unsupported_client|no longer supported", re.I),
     "rate_limit": re.compile(r"\b503\b|unavailable|service is currently unavailable", re.I),
 }
+
+
+def classify_error(error_type: str | None) -> str:
+    """Clase del fallo; los tipos desconocidos no admiten reintentos automáticos."""
+    return {"timeout": "transient", "quota": "quota", "rate_limit": "quota",
+            "auth": "auth", "denied_by_policy": "approval"}.get(error_type, "deterministic")
 
 
 @dataclass

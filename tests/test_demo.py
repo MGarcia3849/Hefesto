@@ -55,7 +55,7 @@ class DemoTests(HefestoTestCase):
         combined = readme + guide
         for phrase in ("hefesto deliver authorize pr", "hefesto deliver authorize deploy",
                        ".hefesto/deploy.toml", "idempotent", "interrupted", "skipped",
-                       "worktree", "no detecta autom?ticamente"):
+                       "worktree", "no detecta automáticamente"):
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase.lower(), combined.lower())
 

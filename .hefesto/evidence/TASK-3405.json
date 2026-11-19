@@ -1,0 +1,65 @@
+{
+  "attempts": 1,
+  "base_commit": "c3d72478aa2bc6bf4b352f605068e79dd1f03991",
+  "branch": "hefesto/fase-34-replica-funcional-que-tiene-una-app-web-como-lo-hace-y-como-mejorarlo",
+  "commit": "c53e322f9ed142317ff2ed05f569930fe7f26e1e",
+  "contract": [],
+  "created_at": "2026-11-19T15:54:43+00:00",
+  "files": [
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "369aa21e7f80d6d37fbe83b0110d0e224639e564a26c139065442f6275d5b62a"
+    },
+    {
+      "path": "docs/HEFESTO_ADDON_V2_5.md",
+      "sha256": "44a1ef51d9622781df24d0d26923ce2b7d77da933d0f2c6b8146d0bb3cec79d4"
+    }
+  ],
+  "phase": "Fase 34 — Replica funcional: qué tiene una app web, cómo lo hace y cómo mejorarlo",
+  "prev_sha256": "1dd8223498ba1db149c9b00061baf78c6ecb789b90d86c715f6bb88a4ea3ad6d",
+  "prev_task_id": "TASK-3404",
+  "providers": [
+    "codex:gpt-6-luna",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T15:54:41+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:default",
+      "codex:gpt-6-luna"
+    ],
+    "exception": null,
+    "notes": "Documentación de Replica funcional y ADR sobre Craft Anything",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "35b47ac65e11",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "bcfec4a29584",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "35b47ac65e11",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 155,
+  "task_id": "TASK-3405",
+  "title": "Documentación de Replica funcional y ADR sobre Craft Anything",
+  "verify": {
+    "command": "python -m unittest tests.test_replica_plus.DocsTests",
+    "duration_seconds": 0.369,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-3405-a1-2026-11-19T155442+0000.log",
+    "output_summary": "..\n----------------------------------------------------------------------\nRan 2 tests in 0.006s\n\nOK",
+    "sha256": "7d2f8643c700b5b026d01e7b7694d04a5ed45abc1fdb4d716d8d04b82463dd3d",
+    "trust": "human"
+  }
+}

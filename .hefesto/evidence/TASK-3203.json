@@ -1,0 +1,69 @@
+{
+  "attempts": 1,
+  "base_commit": "92d6a46166b5ea1ca20622617bb4d9c9ce86067c",
+  "branch": "hefesto/fase-32-fiabilidad-del-harness",
+  "commit": "9a2545104f957261595e0c7b421865932ee686b2",
+  "contract": [],
+  "created_at": "2026-11-19T12:51:33+00:00",
+  "files": [
+    {
+      "path": "hefesto/acceptance.py",
+      "sha256": "791193c5953128320a64056ee4db8307f26e7bfa973314b32ae86811a14175e0"
+    },
+    {
+      "path": "hefesto/gitops.py",
+      "sha256": "7c43e26073d71bb32a97e7476877e2625a5c8f17360b1c262da36a93afdb7e5e"
+    },
+    {
+      "path": "hefesto/progress.py",
+      "sha256": "5da6b651b9fd606ad029a9758bb79fda39a7b243f80fc370c571336c9295ee06"
+    }
+  ],
+  "phase": "Fase 32 — Fiabilidad del harness",
+  "prev_sha256": "de319260132b6c257d28224c0d48c7e527b9b7632d4f386b34e9604993329dda",
+  "prev_task_id": "TASK-3202",
+  "providers": [
+    "codex:gpt-6.1-sol",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T12:51:22+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:default",
+      "codex:gpt-6.1-sol"
+    ],
+    "exception": null,
+    "notes": "done idempotente tras corte y delegaciones interrumpidas en resume; el Core corrigió la cabeza de la cadena (mayor secuencia)",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "46d2d0dfbefd",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6.1-sol",
+      "role": "forge",
+      "run_id": "cf7d503ac50b",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "46d2d0dfbefd",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 133,
+  "task_id": "TASK-3203",
+  "title": "Reanudación sin efectos repetidos",
+  "verify": {
+    "command": "python -m unittest tests.test_reliability.ResumeTests && python tools/dev.py lint",
+    "duration_seconds": 8.363,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-3203-a1-2026-11-19T125131+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (117 ficheros Python)\n....\n----------------------------------------------------------------------\nRan 4 tests in 6.851s\n\nOK",
+    "sha256": "bcb03e2748e7391fead43fe6fab30e5c60f0bcd895792a4cc790a1383d00f052",
+    "trust": "human"
+  }
+}

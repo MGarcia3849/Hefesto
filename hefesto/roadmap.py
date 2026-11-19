@@ -20,7 +20,9 @@ TASK_KINDS = ("app", "web", "backend", "docs", "infra")
 _KIND_PRIORITY = ("app", "web", "backend", "infra", "docs")
 SIZES = ("S", "M", "L")
 REQUIRED = ("verify", "files", "role")
-KNOWN_FIELDS = REQUIRED + ("depends_on", "size", "parallel", "accept", "contract", "skills", "kind")
+SPEC_FIELDS = ("scope", "out_of_scope", "risks", "requires_approval")
+APPROVAL_KINDS = ("install", "deploy", "animation", "external_data", "architecture")
+KNOWN_FIELDS = REQUIRED + ("depends_on", "size", "parallel", "accept", "contract", "skills", "kind") + SPEC_FIELDS
 
 
 @dataclass
@@ -63,6 +65,23 @@ class Task:
     @property
     def accept(self) -> str:
         return self.fields.get("accept", "").strip()
+
+    @property
+    def scope(self) -> str:
+        return self.fields.get("scope", "").strip()
+
+    @property
+    def out_of_scope(self) -> str:
+        return self.fields.get("out_of_scope", "").strip()
+
+    @property
+    def risks(self) -> str:
+        return self.fields.get("risks", "").strip()
+
+    @property
+    def requires_approval(self) -> list[str]:
+        values = [value.lower() for value in _split_list(self.fields.get("requires_approval", ""))]
+        return [] if values in ([], ["none"], ["-"]) else values
 
     @property
     def contract(self) -> list[str]:
@@ -233,6 +252,9 @@ def validate(rm: Roadmap, project: Path) -> list[str]:
             errors.append(f"{where}: rol `{task.role}` inválido ({', '.join(TASK_ROLES)})")
         if task.fields.get("kind", "").strip() and task.kind not in TASK_KINDS:
             errors.append(f"{where}: kind `{task.kind}` inválido ({', '.join(TASK_KINDS)})")
+        for approval in task.requires_approval:
+            if approval not in APPROVAL_KINDS:
+                errors.append(f"{where}: requires_approval `{approval}` inválido ({', '.join(APPROVAL_KINDS)})")
         if task.size not in SIZES:
             errors.append(f"{where}: size `{task.size}` inválido (S, M, L)")
         for rel in task.files + task.contract:

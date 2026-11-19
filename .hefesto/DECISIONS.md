@@ -1,5 +1,39 @@
 # Decisiones (ADR)
 
+## 2026-11-19 — Ideas de Craft Anything para Replica funcional
+
+**Contexto.** La Fase 34 necesitaba comparar funcionalidades observables de una aplicación web con el proyecto Hefesto, sin hacer una comparación visual ni reconstruir la referencia.
+
+**Decisión.** Se adoptan de Craft Anything únicamente estudiar lo observable y el ciclo estudiar-planificar-comprobar. No se instala Craft Anything: es alpha, compila Rust, ejecuta un agente con permisos amplios y maneja claves de pago. Tampoco se adopta su modo Deep, que hace ingeniería inversa del código ajeno. El alcance solicitado es análisis funcional limitado a una referencia autorizada.
+
+**Consecuencias.** Replica genera inventarios, una matriz de diferencias y propuestas con esfuerzo y riesgo; tras aprobación humana puede añadir tareas al ROADMAP y comprobar después los huecos. El resultado aporta indicios desde superficies observables, no acceso a código, prueba de comportamiento ni réplica de la aplicación.
+
+
+## 2026-11-19 — Telegram adapta patrones de Hermes Agent sin instalarlo
+
+**Contexto.** Hefesto necesita un canal remoto para consultas y solicitudes de trabajo, con identidad verificable, aprobación explícita y continuidad del único ciclo de orquestación.
+
+**Decisión.** Se adaptan patrones de Hermes Agent (MIT): allowlist numérica, long polling, aprobaciones con caducidad y sesión por tema. No se instala Hermes ni se crea un segundo orquestador. Telegram es un canal humano para Hefesto y solo ejecuta operaciones aprobadas; las consultas y apertura de proyectos son directas.
+
+**Consecuencias.** Hefesto conserva su estado, verificaciones y ciclo existentes. Las operaciones pendientes caducan y se ejecutan una sola vez; push y deploy exigen además PIN. La integración no admite voz, y abrir editores requiere el escritorio donde corre Hefesto. El usuario decidió el 2026-11-19 usar un tema por proyecto, General para órdenes globales y permitir aprobar trust, finish, push y deploy desde Telegram.
+
+## 2026-11-19 - Hermes Agent como motor subordinado de Hefesto
+
+**Contexto.** La decisión anterior de adaptar patrones de Hermes sin instalarlo se tomó antes de que el usuario solicitara integrar Hermes para tareas generales.
+
+**Decisión.** Por petición del usuario, Hermes queda como motor subordinado de Hefesto. Se sustituye la decisión anterior de "no se instala Hermes" respecto al motor: Hermes puede instalarse y Hefesto lo configura y llama mediante sus comandos. Se mantiene un solo orquestador (Hefesto) y un solo bot (el bot de Telegram de Hefesto); el gateway de Telegram de Hermes no se activa.
+
+**Consecuencias.** Hefesto conserva estado, aprobación y verificación. Los perfiles `hefesto-lectura` y `hefesto-accion` comparten los inicios de sesión del perfil `default`; sus approvals reducen riesgos, pero no aíslan Hermes del sistema. Las acciones con efectos requieren aprobación de Hefesto. La documentación de instalación, correo, Telegram y límites está en `docs/HERMES.md`.
+
+
+## 2026-11-19 — No instalar Harbor, Deep Agents ni Spec Kit
+
+**Contexto.** Al ampliar Hefesto con especificaciones por tarea, evaluación de escenarios y controles previos al despliegue, se consideraron Harbor, Deep Agents y Spec Kit como dependencias o bases externas.
+
+**Decisión.** No se instalan. Hefesto mantiene un solo orquestador y evita nuevas dependencias de ejecución que dupliquen el ciclo de tareas o introduzcan otra fuente de estado. Se adaptan ideas acotadas: la especificación opcional acompaña a cada tarea; un benchmark propio ejecuta escenarios reproducibles con proveedores falsos. La revisión predespliegue reutiliza el módulo de seguridad existente.
+
+**Consecuencias.** El flujo sigue centralizado en Hefesto, sin coste comercial del benchmark. Las comprobaciones propias tienen límites y no implican paridad con esos proyectos ni certifican cumplimiento normativo.
+
 <!-- Una entrada por decisión: fecha, contexto, decisión y consecuencias. Hefesto añade aquí los desbloqueos y descartes. -->
 
 ## 2026-10-14 — Atribución errónea del revisor en la evidencia de TASK-703
@@ -73,3 +107,7 @@ Contrato defectuoso corregido por el Core dentro de la tarea; se separa en TASK-
 ## 2026-10-17 — Descarte de TASK-1504
 
 Descarte de la tarea en curso TASK-1504.
+
+## 2026-11-19 — Descarte de TASK-3401 y de la rama de la Fase 34
+
+TASK-3401 se inició en una rama de Fase 34 creada desde la Fase 33 (la Fase 34 estaba escrita antes que las de Telegram en el ROADMAP), así que no contenía las fases 35 a 38. Sin cambios en la tarea; el usuario descartó la tarea y la rama, y la Fase 34 se movió al final del ROADMAP para que nazca de la Fase 38.

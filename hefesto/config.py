@@ -6,6 +6,7 @@ Hefesto lee TOML (lo edita el usuario) y escribe solo `settings.json`, nunca TOM
 from __future__ import annotations
 
 import copy
+import math
 import re
 import tomllib
 import urllib.parse
@@ -45,9 +46,12 @@ ENUMS: dict[tuple[str, ...], tuple[str, ...]] = {
     ("execution", "isolation"): ("auto", "branch", "worktree"),
     ("execution", "finish_strategy"): ("squash", "merge"),
     ("visual", "detect_fail_on"): ("warning", "error"),
+    ("security", "predeploy"): ("warn", "block", "off"),
 }
 
 POSITIVE_INTS: tuple[tuple[str, ...], ...] = (
+    ("hermes", "timeout_seconds"),
+    ("replica", "max_pages"),
     ("limits", "max_parallel_tasks"),
     ("limits", "max_attempts"),
     ("limits", "max_tasks_per_loop"),
@@ -272,6 +276,11 @@ def validate(cfg: Config) -> list[str]:
     for layer in cfg.layers[1:]:
         _check_unknown(layer.data, schema, (), errors, str(layer.path))
     data = cfg.data
+    hermes = data.get("hermes", {})
+    if not isinstance(hermes, dict):
+        errors.append("hermes debe ser una tabla")
+    elif not isinstance(hermes.get("office_dir", ""), str):
+        errors.append("hermes.office_dir debe ser texto")
     if data.get("schema_version") != 1:
         errors.append("schema_version debe ser 1")
     security = data.get("security", {})
@@ -311,6 +320,13 @@ def validate(cfg: Config) -> list[str]:
         value = cfg.get(*keys)
         if isinstance(value, bool) or not isinstance(value, int) or value < 1:
             errors.append(f"{'.'.join(keys)} debe ser un entero ≥ 1")
+    retries = cfg.get("limits", "transient_retries")
+    if isinstance(retries, bool) or not isinstance(retries, int) or retries < 0:
+        errors.append("limits.transient_retries debe ser un entero ≥ 0")
+    backoff = cfg.get("limits", "retry_backoff_seconds")
+    if (isinstance(backoff, bool) or not isinstance(backoff, (int, float))
+            or not math.isfinite(backoff) or backoff < 0):
+        errors.append("limits.retry_backoff_seconds debe ser un número finito ≥ 0")
     threshold = cfg.get("quota", "near_limit_threshold")
     if isinstance(threshold, bool) or not isinstance(threshold, (int, float)) or not 0 < threshold <= 1:
         errors.append("quota.near_limit_threshold debe estar en (0, 1]")

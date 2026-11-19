@@ -1,0 +1,65 @@
+{
+  "attempts": 1,
+  "base_commit": "d0cc15b3814ea1bae37fcf3da0590d4ba9155785",
+  "branch": "hefesto/fase-38-robustez-y-documentacion-de-telegram",
+  "commit": "9d6158ac09a7dd2def6d2fc586c9c3c27ac2ce30",
+  "contract": [],
+  "created_at": "2026-11-19T14:14:03+00:00",
+  "files": [
+    {
+      "path": "tests/fakes/fake_telegram.py",
+      "sha256": "63e37e7a35d245bec94f9c7e939e0c9f1bf186999dc725afd856fd2f11725049"
+    },
+    {
+      "path": "tests/test_telegram_e2e.py",
+      "sha256": "e34a2a5166acd488853900ca5d3f38378dc53a6f01b4ede000f2e26c613490a1"
+    }
+  ],
+  "phase": "Fase 38 — Robustez y documentación de Telegram",
+  "prev_sha256": "f5ff51b02348fedea001727fd7e4e422bf4a178defd2bc18bb7f0469683cfc8a",
+  "prev_task_id": "TASK-3702",
+  "providers": [
+    "codex:gpt-6-luna",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T14:13:43+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:default",
+      "codex:gpt-6-luna"
+    ],
+    "exception": null,
+    "notes": "Doce casos de aceptación de Telegram de extremo a extremo",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "2c9f37b5aa11",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "3c43e4a2c1f5",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "2c9f37b5aa11",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 145,
+  "task_id": "TASK-3801",
+  "title": "Pruebas de extremo a extremo con Telegram y proveedores falsos",
+  "verify": {
+    "command": "python -m unittest tests.test_telegram_e2e && python tools/dev.py lint",
+    "duration_seconds": 18.023,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-3801-a1-2026-11-19T141402+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (128 ficheros Python)\n............\n----------------------------------------------------------------------\nRan 12 tests in 16.317s\n\nOK",
+    "sha256": "1afabe70512e2b450071681f85617e90714363270c86dff60c4d08e4a3da94ea",
+    "trust": "auto"
+  }
+}

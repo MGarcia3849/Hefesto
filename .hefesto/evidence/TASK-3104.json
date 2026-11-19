@@ -1,0 +1,57 @@
+{
+  "attempts": 1,
+  "base_commit": "83fff8e4ff63350febfd2621663340b3e9f512ba",
+  "branch": "hefesto/fase-31-benchmark-interno",
+  "commit": "729c18936876fa139e0b0a6be660b2c52d56f40a",
+  "contract": [],
+  "created_at": "2026-11-19T10:09:04+00:00",
+  "files": [
+    {
+      "path": "hefesto/bench.py",
+      "sha256": "454de7a3ebf2c7d6af6433f620ad3f1bb378dcf4e00df9130f837bb39475a766"
+    },
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "47948fb908e6a92bdfc76923c1b84c99418544d03171047471cd0da57285808a"
+    }
+  ],
+  "phase": "Fase 31 — Benchmark interno",
+  "prev_sha256": "028128dfc05ba1e25081e67a106db7efc931945e9c8277d184aa6d815a92608f",
+  "prev_task_id": "TASK-3103",
+  "providers": [
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T10:08:51+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Comparación entre informes solo sobre escenarios comunes, salida legible",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "4c8660c6c126",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "4c8660c6c126",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 130,
+  "task_id": "TASK-3104",
+  "title": "Informe comparable entre versiones",
+  "verify": {
+    "command": "python -m unittest tests.test_bench.ReportTests && python tools/dev.py lint",
+    "duration_seconds": 11.03,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-3104-a1-2026-11-19T100902+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (116 ficheros Python)\n.......\n----------------------------------------------------------------------\nRan 7 tests in 9.517s\n\nOK",
+    "sha256": "0e61bc31349397f87ed75821a72b22dcad00ad8c120f16dd51cf8300ad469a65",
+    "trust": "human"
+  }
+}

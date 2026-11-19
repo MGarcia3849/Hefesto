@@ -249,14 +249,24 @@ def record_path(project: Path, slug: str) -> Path:
     return project / ".hefesto" / "delivery" / f"{slug}.json"
 
 
-def deploy(project: Path, phase: str | None = None) -> DeployResult:
-    return _deploy(project, phase, project)
+def deploy(project: Path, phase: str | None = None, *, approved_operation: str | None = None) -> DeployResult:
+    approved_channel = None
+    if approved_operation is not None:
+        # Solo una operación de Telegram aprobada (con PIN) y en curso sustituye a `hefesto authorize deploy`;
+        # su alcance incluye la huella del destino, así que un destino cambiado invalida la aprobación.
+        from hefesto import telegram_ops
+
+        telegram_ops.verify_running(project, approved_operation, "deploy")
+        approved_channel = "telegram"
+        append_jsonl(project / ".hefesto/logs/approvals.jsonl",
+                     {"at": now_iso(), "action": "deploy", "channel": "telegram", "operation": approved_operation})
+    return _deploy(project, phase, project, approved_channel=approved_channel)
 
 
-def _deploy(project: Path, phase: str | None, cwd: Path) -> DeployResult:
+def _deploy(project: Path, phase: str | None, cwd: Path, *, approved_channel: str | None = None) -> DeployResult:
     closure = phase_closure(project, phase)
     target = load_target(project)
-    if not closure.ready or target is None or not is_authorized(project, "deploy"):
+    if not closure.ready or target is None or not (approved_channel == "telegram" or is_authorized(project, "deploy")):
         raise HefestoError("Fase no cerrada, sin destino o falta autorización vigente para despliegue.", EXIT_BLOCKED)
     from hefesto import approval, gitops, security
 
@@ -271,6 +281,9 @@ def _deploy(project: Path, phase: str | None, cwd: Path) -> DeployResult:
     warnings = security.warning_text(security_report)
     if warnings:
         print(warnings)
+    from hefesto import predeploy
+
+    predeploy.gate(project, cwd)
     fp = target_fingerprint(target)
     path = record_path(project, closure.slug)
     record = _read_record(path, closure)

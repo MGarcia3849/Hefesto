@@ -1,0 +1,79 @@
+{
+  "attempts": 1,
+  "base_commit": "4ba52528c9d422795ba11100682135f6df412207",
+  "branch": "hefesto/fase-40-hermes-como-motor-subordinado-de-hefesto",
+  "commit": "aaef191557222e1b8de07becb5a68aa5bbd422fa",
+  "contract": [],
+  "created_at": "2026-11-19T17:37:23+00:00",
+  "files": [
+    {
+      "path": "hefesto.toml",
+      "sha256": "8705679d656d1246f738d8f9d3cf9e63015399b814af6deafedc95e7eb75338c"
+    },
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "51291bc92a20ae0c6070a88c39a01842f6d151d823dcdec9193bdfff5191a883"
+    },
+    {
+      "path": "hefesto/config.py",
+      "sha256": "13d0ea4cb4f8a925f9c591fa38a603140ed4bd46b569adf7a3ea13bfda50d975"
+    },
+    {
+      "path": "hefesto/hermes_bridge.py",
+      "sha256": "47b48f0e161e3661650fc2f5fd34cdf044738a34cbcca5dd2f3ad375e581b2df"
+    }
+  ],
+  "phase": "Fase 40 — Hermes como motor subordinado de Hefesto",
+  "prev_sha256": "5e3ba58bef7882c95aaaf8b39c63cb5c191280242db89205a75e645e3415a149",
+  "prev_task_id": "TASK-4001",
+  "providers": [
+    "codex:gpt-6.1-sol",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T17:37:19+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:default",
+      "codex:gpt-6.1-sol"
+    ],
+    "exception": null,
+    "notes": "Puente con Hermes; el Core ajustó apply_profile a la CLI real de Hermes v0.23.2",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "e7a61b72b1d9",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6.1-sol",
+      "role": "forge",
+      "run_id": "06897bec3da4",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "21435500fe8d",
+      "success": false
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "e7a61b72b1d9",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 159,
+  "task_id": "TASK-4002",
+  "title": "Puente con Hermes, perfiles y carpeta Oficina",
+  "verify": {
+    "command": "python -m unittest tests.test_hermes_bridge && python tools/dev.py lint",
+    "duration_seconds": 2.804,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-4002-a1-2026-11-19T173722+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (137 ficheros Python)\n.................\n----------------------------------------------------------------------\nRan 17 tests in 1.104s\n\nOK",
+    "sha256": "c392415dc5e486db482d73d515968c1e2dba1334e4e01a59d16ce5188f11d678",
+    "trust": "auto"
+  }
+}

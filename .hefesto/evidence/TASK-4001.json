@@ -1,0 +1,55 @@
+{
+  "attempts": 1,
+  "base_commit": "5fd8b4a240903d3d70728bac4c7d9d25e69c77e4",
+  "branch": "hefesto/fase-40-hermes-como-motor-subordinado-de-hefesto",
+  "commit": "ce4357c10358abb1bc7f758c7a1f10a585ff2a8a",
+  "contract": [
+    "tests/test_hermes_bridge.py"
+  ],
+  "created_at": "2026-11-19T16:36:27+00:00",
+  "files": [
+    {
+      "path": "tests/test_hermes_bridge.py",
+      "sha256": "0e1b5f4f05008ddd4f923ee2273829a3bb97ffaaa62b7dcb0f70016157a898ce"
+    }
+  ],
+  "phase": "Fase 40 — Hermes como motor subordinado de Hefesto",
+  "prev_sha256": "717c6a3691b8fa822d765cd9bc2c482b234e614c4254fabd58274941a3151f22",
+  "prev_task_id": "TASK-3901",
+  "providers": [
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T16:36:25+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Contrato del puente con Hermes Agent",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "f481f9e75190",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "f481f9e75190",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 158,
+  "task_id": "TASK-4001",
+  "title": "Contrato del puente con Hermes Agent",
+  "verify": {
+    "command": "python -m unittest tests.test_hermes_bridge.ContractDefinitionTests",
+    "duration_seconds": 0.316,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-4001-a1-2026-11-19T163626+0000.log",
+    "output_summary": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.010s\n\nOK",
+    "sha256": "1784d5f25fbf9fcab4ce7f43a883a2c086524437e19061804e9cef9dd3ee56ce",
+    "trust": "auto"
+  }
+}

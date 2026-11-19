@@ -264,8 +264,25 @@ def changed_paths(workdir: Path, base: str | None) -> list[str]:
     return sorted(paths)
 
 
+def verified_checkpoint(workdir: Path, task: roadmap.Task, base: str | None) -> str | None:
+    """Recupera un checkpoint de esta tarea solo si su árbol sigue vigente en la rama."""
+    if not guard.branch_allowed(current_branch(workdir)):
+        raise HefestoError("Recuperación bloqueada: la rama actual no es `hefesto/*`.", EXIT_BLOCKED)
+    if not base:
+        return None
+    if git(workdir, "merge-base", "--is-ancestor", base, "HEAD", check=False).returncode != 0:
+        raise HefestoError("No se puede comprobar la base de la tarea en la rama actual.", EXIT_BLOCKED)
+    for line in out(workdir, "log", "--format=%H %s", f"{base}..HEAD").splitlines():
+        commit, _, subject = line.partition(" ")
+        if subject.startswith(f"hefesto({task.id}): ") and subject.endswith(" [verified]"):
+            if not any(_in_scope(path, task.files) for path in changed_paths(workdir, commit)):
+                return commit
+            return None
+    return None
+
+
 def checkpoint(project: Path, workdir: Path, cfg: config.Config, task: roadmap.Task, message: str,
-               extra_paths: tuple[str, ...] = (), include_control: bool = True) -> str:
+               extra_paths: tuple[str, ...] = (), include_control: bool = True, allow_empty: bool = True) -> str:
     """Commit protegido: solo rutas de la tarea + control, sin secretos ni binarios grandes. Devuelve el hash."""
     branch = current_branch(workdir)
     if not guard.branch_allowed(branch):
@@ -305,7 +322,8 @@ def checkpoint(project: Path, workdir: Path, cfg: config.Config, task: roadmap.T
         if staged:
             git(workdir, "reset", "-q", "--", *staged)
         raise HefestoError("Checkpoint bloqueado:\n  - " + "\n  - ".join(problems), EXIT_BLOCKED)
-    git(workdir, "commit", "-q", "--allow-empty", "-m", message)
+    if staged or allow_empty:
+        git(workdir, "commit", "-q", "--allow-empty", "-m", message)
     return out(workdir, "rev-parse", "HEAD")
 
 

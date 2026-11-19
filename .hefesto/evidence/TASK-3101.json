@@ -1,0 +1,55 @@
+{
+  "attempts": 1,
+  "base_commit": "6ac3cecec408d918489fe90f4a213a646d7f49c1",
+  "branch": "hefesto/fase-31-benchmark-interno",
+  "commit": "4e49044c89999fac00aa0e008191d07109942274",
+  "contract": [
+    "tests/test_bench.py"
+  ],
+  "created_at": "2026-11-19T09:41:34+00:00",
+  "files": [
+    {
+      "path": "tests/test_bench.py",
+      "sha256": "aa2bba0720e7edd098730dae857be883c703420b5983c1d5cbc1286cbd438268"
+    }
+  ],
+  "phase": "Fase 31 — Benchmark interno",
+  "prev_sha256": "6b7fa2adbbb75a69fb1b3e9a9017e378c1f8d1b41db85885605fc69b49ebf6df",
+  "prev_task_id": "TASK-3003",
+  "providers": [
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T09:41:32+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Contrato del benchmark simulado",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "c195b738a727",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "c195b738a727",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 127,
+  "task_id": "TASK-3101",
+  "title": "Contrato del benchmark simulado de Hefesto",
+  "verify": {
+    "command": "python -m unittest tests.test_bench.ContractDefinitionTests",
+    "duration_seconds": 0.31,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-3101-a1-2026-11-19T094133+0000.log",
+    "output_summary": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.010s\n\nOK",
+    "sha256": "d1f15860b7af64d5f5263dad758b23b4d2e53cb95c37d2b705869f5068485b21",
+    "trust": "auto"
+  }
+}

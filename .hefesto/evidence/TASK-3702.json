@@ -1,0 +1,85 @@
+{
+  "attempts": 1,
+  "base_commit": "980422f93fcfdc55921ec98e9e2d940aacc20493",
+  "branch": "hefesto/fase-37-desarrollo-seguro-desde-telegram",
+  "commit": "73cf7a6260fac44a9275ecf381bdba42c7525119",
+  "contract": [],
+  "created_at": "2026-11-19T14:04:26+00:00",
+  "files": [
+    {
+      "path": "hefesto/acceptance.py",
+      "sha256": "d572980f567a6af7d93c85bf45f2afceed4af9bd3d88f0ddeeb1c8693a5af19f"
+    },
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "a7263c53ca25457768103fd2772c0ad40c6d890c692af5a439e78dfed39d6423"
+    },
+    {
+      "path": "hefesto/delivery.py",
+      "sha256": "c326ebc9b1ab478d520862772eb143866aa23d131a680ff3e6a70a84a035c756"
+    },
+    {
+      "path": "hefesto/telegram.py",
+      "sha256": "37dfc568f4b801944b36b64aa20377ebdd354e77eaa364743de2076f2423f485"
+    },
+    {
+      "path": "hefesto/telegram_ops.py",
+      "sha256": "035a89eb18e04f6244a6168f8671be8bb08f769a08754c70819398336ac289ff"
+    },
+    {
+      "path": "hefesto/trust.py",
+      "sha256": "573b45bdc61b35591a795e355402ba73393b5a35fb9d73f07765e61a8101442e"
+    },
+    {
+      "path": "tests/test_telegram_barriers.py",
+      "sha256": "50336941ea9a6495b16462e65649b79170d55609a9244b4d7d13164642512703"
+    }
+  ],
+  "phase": "Fase 37 — Desarrollo seguro desde Telegram",
+  "prev_sha256": "35c3faf670fc781b5963b527f1719fbbf771e2dbe13a92d4c99970162d817fc9",
+  "prev_task_id": "TASK-3701",
+  "providers": [
+    "codex:gpt-6.1-sol",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T14:04:02+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:default",
+      "codex:gpt-6.1-sol"
+    ],
+    "exception": null,
+    "notes": "Operaciones aprobables desde Telegram; el Core sustituyó approved_channel por approved_operation verificado contra el almacén de operaciones",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "37ba00931e1f",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6.1-sol",
+      "role": "forge",
+      "run_id": "030109737a2a",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "37ba00931e1f",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 144,
+  "task_id": "TASK-3702",
+  "title": "Operaciones aprobables y ejecución con el orquestador",
+  "verify": {
+    "command": "python -m unittest tests.test_telegram_ops && python tools/dev.py lint",
+    "duration_seconds": 22.07,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-3702-a1-2026-11-19T140425+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (126 ficheros Python)\n...............................\n----------------------------------------------------------------------\nRan 31 tests in 20.456s\n\nOK",
+    "sha256": "199744625ba5932b27b3f5690b6c5548d6c8740efc82118f1a2d7a2211c0900d",
+    "trust": "auto"
+  }
+}

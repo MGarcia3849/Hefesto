@@ -1,0 +1,81 @@
+{
+  "attempts": 1,
+  "base_commit": "7561abc121ebf8022a0f852cf8e67a4791733c7a",
+  "branch": "hefesto/fase-38-robustez-y-documentacion-de-telegram",
+  "commit": "44f375df3cf351c190636b2cdcf94b07b3aade25",
+  "contract": [],
+  "created_at": "2026-11-19T14:42:17+00:00",
+  "files": [
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "27ed79f2360cfdc43bda9918490fcd988d93f1a29b93322fdea938450254213c"
+    },
+    {
+      "path": "hefesto/telegram.py",
+      "sha256": "65cf94567cb3247debd8cf993d972f0c1eee718639770db5499d92f130cab934"
+    },
+    {
+      "path": "hefesto/telegram_intent.py",
+      "sha256": "c93c2dcbe3c686a35af6548cb71b0379172c2dee96db4fa834fc0b66139122f8"
+    },
+    {
+      "path": "hefesto/telegram_ops.py",
+      "sha256": "6876c7cc7c245f2678214c4f1a254bc03609cd82cef60043120dcc99ddb920a0"
+    },
+    {
+      "path": "hefesto/workspaces.py",
+      "sha256": "b529812c47a942015043fb7506d952032a76dbef443db87329d0c3994708c797"
+    },
+    {
+      "path": "tests/test_telegram_editors.py",
+      "sha256": "daf1724e5d0336dec69c6601dd7e1f2b8101c79b74e07b40895855785850a83a"
+    }
+  ],
+  "phase": "Fase 38 — Robustez y documentación de Telegram",
+  "prev_sha256": "09247861ed8856be8963c3dda9a0bac1cf23f9145d42aa5d541876056b090705",
+  "prev_task_id": "TASK-3803",
+  "providers": [
+    "codex:gpt-6.1-sol",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T14:41:42+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:default",
+      "codex:gpt-6.1-sol"
+    ],
+    "exception": null,
+    "notes": "Lenguaje natural, Android Studio/VS Code y clonado de GitHub aprobable",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "2d6d3f2fab71",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6.1-sol",
+      "role": "forge",
+      "run_id": "ee96348a76ae",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "2d6d3f2fab71",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 148,
+  "task_id": "TASK-3805",
+  "title": "Órdenes en lenguaje natural: abrir en Android Studio o VS Code, clonar de GitHub y encargar cambios",
+  "verify": {
+    "command": "python -m unittest tests.test_telegram_editors && python tools/dev.py lint",
+    "duration_seconds": 5.594,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-3805-a1-2026-11-19T144216+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (130 ficheros Python)\n.........................\n----------------------------------------------------------------------\nRan 25 tests in 3.937s\n\nOK",
+    "sha256": "cbd2e3597a384f5c28a18cc0233801aaca7e623ea68451a4efcd26dfe7096281",
+    "trust": "auto"
+  }
+}

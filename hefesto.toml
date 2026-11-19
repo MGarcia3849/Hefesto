@@ -62,6 +62,8 @@ max_attempts = 3
 max_tasks_per_loop = 8
 max_turns_per_task = 15
 timeout_seconds = 600
+transient_retries = 0              # reintentos por entrada; 0 conserva el comportamiento actual
+retry_backoff_seconds = 5          # base del backoff exponencial con jitter para errores transitorios
 verify_timeout_seconds = 900
 orchestrator_timeout_seconds = 3600 # una iteración completa de `loop`
 
@@ -167,6 +169,7 @@ design_refs_commit = "3b605329240ce735b510037cca322f1831fdd7f8"
 
 [security]
 profile = "default"
+predeploy = "warn"                  # warn: solo avisa | block: detiene deploy si el veredicto es BLOCKED | off
 
 [security.profiles.default]
 description = "Reglas generales de seguridad"
@@ -184,3 +187,10 @@ synthetic_only = true
 collections = ["agentes", "avisos", "partes"]
 frameworks = ["ENS", "RGPD", "LOPDGDD"]
 
+
+[replica]
+max_pages = 10
+
+[hermes]
+office_dir = ""                         # vacío: ~/Documents/Hefesto Oficina
+timeout_seconds = 900

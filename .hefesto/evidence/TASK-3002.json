@@ -1,0 +1,81 @@
+{
+  "attempts": 1,
+  "base_commit": "400a9b3dfacb0bb5e3d1cc95be52504f673c5de4",
+  "branch": "hefesto/fase-30-contratos-de-tarea",
+  "commit": "0ad479c9204aa89e828f19b97e65131916b96d84",
+  "contract": [],
+  "created_at": "2026-11-19T09:31:07+00:00",
+  "files": [
+    {
+      "path": ".agents/skills/hefesto-plan/SKILL.md",
+      "sha256": "70dafe1243aa12345c61642002d96d0d3fa7ed4970c181f3d62a26cf1845a58f"
+    },
+    {
+      "path": ".claude/skills/hefesto-plan/SKILL.md",
+      "sha256": "70dafe1243aa12345c61642002d96d0d3fa7ed4970c181f3d62a26cf1845a58f"
+    },
+    {
+      "path": ".gemini/commands/hefesto/plan.toml",
+      "sha256": "6eac21c2c56920d0413bd9f647d14907ac7a38e7f60663c75d74e777e4d7e641"
+    },
+    {
+      "path": "hefesto/packet.py",
+      "sha256": "31de6c0b5f3d0f0a43df22fc0c61c78bb2dc910e270273dddc4b4f9e018219fe"
+    },
+    {
+      "path": "hefesto/roadmap.py",
+      "sha256": "9892aaac622fdbc32c0d6e23bddca59e7e4378db09e1cd810a015f2df89fbc29"
+    },
+    {
+      "path": "prompts/protocol/plan.md",
+      "sha256": "b2672c6e273c8c3ce48dcbc7f7720a3d797d56db511b460d2f483048c0f7c96e"
+    }
+  ],
+  "phase": "Fase 30 — Contratos de tarea",
+  "prev_sha256": "2473f93c19d39b9a998cbcdc0b83f721d1427488606f45766915fb63ad275f49",
+  "prev_task_id": "TASK-3001",
+  "providers": [
+    "codex:gpt-6-luna",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T09:31:03+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:default",
+      "codex:gpt-6-luna"
+    ],
+    "exception": null,
+    "notes": "Campos de especificación en ROADMAP y paquete; corregido acento en mensaje",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "1836e53a182c",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "7925dd9a9e9a",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "1836e53a182c",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 125,
+  "task_id": "TASK-3002",
+  "title": "Campos de especificación en el ROADMAP y en el paquete de tarea",
+  "verify": {
+    "command": "python -m unittest tests.test_task_spec.SpecFieldTests tests.test_task_spec.PacketTests && python tools/dev.py lint",
+    "duration_seconds": 2.672,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-3002-a1-2026-11-19T093106+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (114 ficheros Python)\n.........\n----------------------------------------------------------------------\nRan 9 tests in 1.097s\n\nOK",
+    "sha256": "efeedc60e828338d9bfd00aa585743b10761168ac7d489327ec30bc258c5f07b",
+    "trust": "auto"
+  }
+}

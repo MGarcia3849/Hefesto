@@ -31,6 +31,27 @@ hefesto replica accept <id>
 
 Solo analiza sitios públicos dentro del alcance autorizado. No clona sitios, copia recursos o código, ni aplica cambios al proyecto. La autorización y aceptación requieren confirmación humana interactiva.
 
+### Replica funcional (`hefesto replica`)
+
+Este flujo amplía la réplica analítica: describe qué funcionalidades son observables en una referencia autorizada, cómo parecen implementarse y qué diferencias puede abordar el proyecto propio. El análisis produce indicios, no demuestra que una interacción funcione ni reconstruye la aplicación.
+
+```text
+hefesto replica authorize <id> <url>
+hefesto replica study <id> [--max-pages N]
+hefesto replica features <id>
+hefesto replica approve <id>
+hefesto replica plan <id> [--gap CLAVE ...]
+hefesto replica check <id> --gap CLAVE [--gap CLAVE ...]
+```
+
+`authorize` registra con confirmación humana el alcance público que se permite estudiar. `study` recorre páginas dentro de ese alcance (por defecto, hasta el máximo configurado; `--max-pages` limita el recorrido) y guarda el estudio funcional observado. `features` genera el inventario funcional de la referencia y del proyecto, su matriz comparativa y una propuesta documental. `approve` acepta esa propuesta por un canal humano. `plan` requiere una propuesta aceptada y añade tareas de los huecos seleccionados al ROADMAP; sin `--gap`, contempla los huecos propuestos. `check` vuelve a inventariar el proyecto y comprueba las claves indicadas. No marca tareas como hechas ni implementa código.
+
+El inventario resume **qué tiene la app**: secciones, formularios y sus campos, obligatoriedad y validaciones visibles, acciones, búsqueda, filtros, pasos de flujo, señales de cuentas y estados de carga, error o vacío. También describe **cómo lo hace** mediante tecnologías y patrones visibles, además de peticiones observadas; no conserva cuerpos de petición ni consultas. La referencia se estudia desde lo que entrega y permite observar el navegador, y el proyecto propio mediante su HTML/código local sin ejecutar la app.
+
+La matriz clasifica cada funcionalidad como `tenemos`, `falta`, `parcial`, `mejor_nuestra`, `no_aplica` o `no_verificable`. Las filas incluyen tipo, clave, evidencia de referencia y del proyecto y una nota. Las propuestas sugieren mejoras concretas con estimación de esfuerzo (S/M) y riesgo (bajo/medio), por ejemplo validaciones visibles, nombres accesibles y estados vacíos, de error o carga. Estas estimaciones son orientativas.
+
+**Límites legales y técnicos:** solo se estudia lo observable de una referencia autorizada y dentro del alcance aprobado. Hefesto no lee ni descompila el código de la referencia, no inicia sesión, no envía formularios, no sortea logins ni DRM y no reconstruye la aplicación. El contenido puede variar por sesión, dispositivo o estado; el análisis aporta indicios y no verifica comportamientos ocultos, backend, seguridad, licencias ni cumplimiento legal. La aprobación autoriza el estudio limitado, no la copia o reutilización de recursos protegidos.
+
 ### Seguridad (`hefesto security`)
 
 El escáner lee los ficheros del proyecto localmente y produce un informe reproducible. Los gates de cierre y despliegue bloquean únicamente hallazgos `critical` o `high`, confirmados y dentro de alcance.

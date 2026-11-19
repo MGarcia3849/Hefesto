@@ -1,0 +1,65 @@
+{
+  "attempts": 1,
+  "base_commit": "5c5fae014ae40273f80b0a8dac3e240783385295",
+  "branch": "hefesto/fase-38-robustez-y-documentacion-de-telegram",
+  "commit": "f72724618a8e49f8832d41791c919a8d0b32264a",
+  "contract": [],
+  "created_at": "2026-11-19T14:20:48+00:00",
+  "files": [
+    {
+      "path": "hefesto/telegram.py",
+      "sha256": "de974d72025f96a9ef507ecab2b75eca2d38d0f5f7328d2ed8a8cbaf835570da"
+    },
+    {
+      "path": "tests/test_telegram_e2e.py",
+      "sha256": "1770cd3d17120d8f5bcd8e9798a07cfd12adff2637801f9fa13a9a011e972831"
+    }
+  ],
+  "phase": "Fase 38 — Robustez y documentación de Telegram",
+  "prev_sha256": "ace642e67d1316b55b9d8073213e191ef44c46f82ac8e6a6d0d15ab4a4f121e8",
+  "prev_task_id": "TASK-3801",
+  "providers": [
+    "codex:gpt-6-luna",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T14:20:43+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:default",
+      "codex:gpt-6-luna"
+    ],
+    "exception": null,
+    "notes": "Estado de modelos y voz no disponible",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "b6c3578e03f7",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "eca03d718d9c",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "b6c3578e03f7",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 146,
+  "task_id": "TASK-3802",
+  "title": "Modelos y voz: estado verificado",
+  "verify": {
+    "command": "python -m unittest tests.test_telegram_e2e.ModelsVoiceTests",
+    "duration_seconds": 2.501,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-3802-a1-2026-11-19T142046+0000.log",
+    "output_summary": "...\n----------------------------------------------------------------------\nRan 3 tests in 2.103s\n\nOK",
+    "sha256": "13579cacd1f662007ead7b3d815b460543952f8fab321b7279d0cd3cff836b4b",
+    "trust": "auto"
+  }
+}

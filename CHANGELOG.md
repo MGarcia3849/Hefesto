@@ -4,6 +4,34 @@ Todas las novedades notables de Hefesto se documentan en este archivo.
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## Sin publicar
+
+### Replica funcional
+- Documenta el inventario observable, la matriz de funcionalidades, las propuestas de mejora y los comandos `replica study`, `features`, `approve`, `plan` y `check`, con sus límites legales y técnicos.
+
+### Hermes Agent
+
+### Hermes Agent
+- Integra Hermes como motor subordinado de Hefesto y documenta la instalación estable en Windows, los perfiles y el flujo de aprobación.
+- Documenta el arranque automático del bot de Hefesto al iniciar sesión en Windows.
+
+### Telegram
+- Añade la guía de configuración, allowlist, comandos, aprobaciones, PIN, operación y recuperación del gateway de Telegram.
+- Mantiene un único bot de Hefesto y documenta las operaciones directas y las que requieren aprobación.
+
+### Fase 30 — Especificación de tareas
+- Añade campos opcionales `scope`, `out_of_scope`, `risks` y `requires_approval` al ROADMAP y al paquete; `hefesto doctor` comprueba la coherencia de instrucciones entre CLIs.
+
+### Fase 31 — Benchmark interno
+- Añade `hefesto bench`, un benchmark offline con 12 escenarios y proveedores falsos, informes JSON y comparación entre ejecuciones.
+
+### Fase 32 — Fiabilidad del harness
+- Clasifica errores de delegación, hace explícito el presupuesto de reintentos transitorios y permite reanudar operaciones interrumpidas sin repetir efectos completados.
+
+### Fase 33 — Auditoría predespliegue
+- Añade una revisión local de costes, accesibilidad, acceso a datos, comunicaciones y abuso, integrada en `deploy` mediante `security.predeploy`.
+- Registra el informe y sus límites; los indicios requieren revisión y no equivalen a una certificación normativa.
+
 ## v2.5.0 — 2026-11-19
 
 ### Add-on v2.5

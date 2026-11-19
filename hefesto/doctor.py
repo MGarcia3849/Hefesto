@@ -302,6 +302,17 @@ def run_checks(project: Path | None) -> list[Check]:
     else:
         checks.append(Check(OK, "API keys", "ninguna en el entorno (uso por suscripción)"))
     if project is not None:
+        from hefesto import sync
+
+        try:
+            instruction_problems = sync.coherence_problems(project)
+        except HefestoError as exc:  # proyecto a medio inicializar: doctor no debe romperse por esto
+            instruction_problems = [f"no verificable: {exc}"]
+        if instruction_problems:
+            extra = f" (+{len(instruction_problems) - 1} más)" if len(instruction_problems) > 1 else ""
+            checks.append(Check(WARN, "instrucciones", instruction_problems[0] + extra))
+        else:
+            checks.append(Check(OK, "instrucciones", "coherentes"))
         checks += project_checks(project)
     return checks
 

@@ -1,0 +1,53 @@
+{
+  "attempts": 1,
+  "base_commit": "90d753177732fccc69de60ebf660275a101a2563",
+  "branch": "hefesto/fase-33-auditoria-predespliegue",
+  "commit": "4ad862a79fa13a8080a5e0c98e7b9af36fc3a693",
+  "contract": [],
+  "created_at": "2026-11-19T13:08:38+00:00",
+  "files": [
+    {
+      "path": "hefesto/predeploy.py",
+      "sha256": "4d92787b923014ddbf1a370bc3423c8c1b7627240432cf3e742da7e060eca10c"
+    }
+  ],
+  "phase": "Fase 33 — Auditoría predespliegue",
+  "prev_sha256": "e4b1d53a988ba8655a68c4030510b1b1f0d3bce885a7153d0a502e6805867954",
+  "prev_task_id": "TASK-3302",
+  "providers": [
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T13:08:32+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Accesibilidad estática y comunicaciones en el predespliegue",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "8993fcbc43a4",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "8993fcbc43a4",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 136,
+  "task_id": "TASK-3303",
+  "title": "Accesibilidad y comunicaciones en el predespliegue",
+  "verify": {
+    "command": "python -m unittest tests.test_predeploy.AccessibilityTests tests.test_predeploy.CommsTests && python tools/dev.py lint",
+    "duration_seconds": 4.625,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-3303-a1-2026-11-19T130837+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (119 ficheros Python)\n......\n----------------------------------------------------------------------\nRan 6 tests in 3.069s\n\nOK",
+    "sha256": "5688ccfcbea380e466162677c7cb9f9d3e26d5f05407c22d532820337281b0ac",
+    "trust": "human"
+  }
+}

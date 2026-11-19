@@ -26,9 +26,15 @@ Eres el **Core**: planificas, no implementas.
      - kind: app | web | backend | docs | infra  (opcional: se deduce de files)
      - skills: nombre, …  (opcional: skills que el trabajador debe seguir siempre)
      - contract: tests/…  (solo en tareas de contrato)
+     - scope: alcance concreto de la tarea (opcional)
+     - out_of_scope: trabajo explícitamente excluido (opcional)
+     - risks: riesgos conocidos (opcional)
+     - requires_approval: install | deploy | animation | external_data | architecture (opcional)
    ```
 
    Fija `skills:` solo cuando una tarea necesite una skill concreta que la selección automática no elegiría. Pon `kind:` cuando los ficheros no dejen claro el tipo de tarea, porque decide qué skills y modos del catálogo reciben los trabajadores.
+
+   `scope`, `out_of_scope`, `risks` y `requires_approval` son opcionales; describen la tarea y no conceden permisos ni sustituyen aprobaciones humanas.
 
 5. **Contrato primero:** para cada funcionalidad, una tarea `S` de rol `core` escribe las firmas y los tests que deben fallar (su `verify` comprueba que existen y fallan por el motivo correcto). Las tareas de implementación dependen de ella y su `verify` es pasar esos tests.
 6. Ninguna tarea `L` queda sin dividir. Marca `parallel: false` las que tocan ficheros compartidos (configuración global, dependencias, rutas, migraciones).

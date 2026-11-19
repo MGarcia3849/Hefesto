@@ -1,0 +1,55 @@
+{
+  "attempts": 1,
+  "base_commit": "abe852af5bfa9ccc19c9d87525f197df07787513",
+  "branch": "hefesto/fase-30-contratos-de-tarea",
+  "commit": "7fa75ca1f5d23b27b0b844efab5e23b703ddd033",
+  "contract": [
+    "tests/test_task_spec.py"
+  ],
+  "created_at": "2026-11-19T09:20:58+00:00",
+  "files": [
+    {
+      "path": "tests/test_task_spec.py",
+      "sha256": "1497613005a4c4ef4996a3ce52d4de308985d43a5afbe7b751f40ed63764a447"
+    }
+  ],
+  "phase": "Fase 30 — Contratos de tarea",
+  "prev_sha256": "360d1662a0a09b5fd89b15387a4b7d2755e1d07431160e19334b1aade7d887f8",
+  "prev_task_id": "TASK-2901",
+  "providers": [
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T09:20:48+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Contrato de campos de especificación y coherencia de instrucciones",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "89d3052c5776",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "89d3052c5776",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 124,
+  "task_id": "TASK-3001",
+  "title": "Contrato de campos de especificación opcionales y coherencia de instrucciones",
+  "verify": {
+    "command": "python -m unittest tests.test_task_spec.ContractDefinitionTests",
+    "duration_seconds": 0.346,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-3001-a1-2026-11-19T092057+0000.log",
+    "output_summary": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.010s\n\nOK",
+    "sha256": "8835dcfa9d263de415255581d9cdfbb4f00a7ae7e5f4169dc28ff77e918f3ac5",
+    "trust": "auto"
+  }
+}

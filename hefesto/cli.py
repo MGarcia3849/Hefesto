@@ -86,6 +86,92 @@ def cmd_status(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def cmd_projects(args: argparse.Namespace) -> int:
+    from hefesto import workspaces
+
+    if args.projects_cmd == "add":
+        caps = ("read",) if args.read_only else workspaces.CAPABILITIES
+        registered = workspaces.add_project(args.id, args.path, name=args.name, capabilities=caps)
+        print(f"{registered.id} — {registered.name}")
+    elif args.projects_cmd == "root":
+        workspaces.set_projects_root(args.path)
+        print("Raíz de proyectos configurada.")
+    elif args.projects_cmd == "owner":
+        if args.name:
+            workspaces.set_github_owner(args.name)
+            print(f"Propietario de GitHub configurado: {args.name}")
+        else:
+            print(workspaces.github_owner() or "Sin propietario de GitHub configurado.")
+    elif args.projects_cmd == "remove":
+        workspaces.remove_project(args.id)
+        print("Proyecto eliminado del registro.")
+    else:
+        for registered in workspaces.list_projects():
+            print(f"{registered.id} — {registered.name} — {registered.path}")
+    return EXIT_OK
+
+
+def cmd_hermes(args: argparse.Namespace) -> int:
+    from hefesto import hermes_bridge
+
+    _reject_project_option(args, "hermes")
+    if args.hermes_cmd == "status":
+        print(hermes_bridge.status())
+    elif args.hermes_cmd == "setup":
+        print("Perfiles de Hermes: " + ", ".join(hermes_bridge.setup()))
+    else:
+        result = hermes_bridge.ask(args.instruction)
+        print(result.text)
+        for path in result.files:
+            print(path)
+        return EXIT_OK if result.ok else EXIT_INPUT
+    return EXIT_OK
+
+
+def cmd_telegram(args: argparse.Namespace) -> int:
+    from hefesto import status, telegram, telegram_ops
+
+    if args.telegram_cmd == "autostart":
+        from hefesto import telegram_service
+
+        code, message = telegram_service.autostart(
+            args.autostart_cmd, directory=_project(args) if args.autostart_cmd == "enable" else None)
+        print(message)
+        return code
+
+    if args.telegram_cmd == "pin":
+        import getpass
+        util.require_tty("hefesto telegram pin")
+        pin = getpass.getpass("Nuevo PIN de Telegram: ")
+        if pin != getpass.getpass("Repite el PIN: "):
+            raise HefestoError("Los PIN no coinciden.", EXIT_INPUT)
+        telegram_ops.set_pin(pin)
+        print("PIN de Telegram guardado.")
+        return EXIT_OK
+
+    if args.telegram_cmd == "stop":
+        marker = util.state_home() / "telegram-STOP"
+        marker.parent.mkdir(parents=True, exist_ok=True)
+        marker.touch()
+        print("Telegram: solicitud de parada registrada.")
+        return EXIT_OK
+
+    ok, message = telegram.check()
+    print(message)
+    if not ok:
+        return EXIT_INPUT
+    if args.telegram_cmd == "check":
+        return EXIT_OK
+    proj = _project(args)
+    operations = telegram_ops.Store()
+    gateway = telegram.Gateway(
+        telegram.load_settings(), telegram.https_transport(os.environ[telegram.TOKEN_ENV]),
+        status=lambda: status.render(proj),
+        ops=operations,
+    )
+    return telegram.run(gateway, max_failures=getattr(args, "max_failures", 5))
+
+
 def cmd_hook(args: argparse.Namespace) -> int:
     try:
         from hefesto import guard
@@ -1447,6 +1533,15 @@ def cmd_security(args: argparse.Namespace) -> int:
             status = "vigente" if record["expires"] >= security.today().isoformat() else "caducada"
             print(f"{record['id']} {record['finding']} {status} — {record['person']} — {record['expires']}")
         return EXIT_OK
+    if args.security_cmd == "predeploy":
+        from hefesto import predeploy
+
+        report = predeploy.run(proj, profile=args.profile)
+        rendered = predeploy.render_markdown(report)
+        if args.report:
+            predeploy.write_report(report, Path(args.report))
+        print(rendered, end="")
+        return util.EXIT_BLOCKED if report["verdict"] == "BLOCKED" else EXIT_OK
     report = security.scan(proj, profile=args.profile)
     rendered = security.report_json(report)
     path = security.report_path(proj)
@@ -1468,6 +1563,38 @@ def cmd_replica(args: argparse.Namespace) -> int:
         result = replica.capture_reference(proj, args.id, tuple(args.route or ()))
         print(json.dumps({"reference": str(replica.replica_dir(proj, args.id) / "reference.json"),
                           "items": sum(len(result[s]) for s in replica.SECTIONS)}, ensure_ascii=False))
+    elif args.replica_cmd == "study":
+        from hefesto import replica_features
+
+        result = replica_features.study_reference(proj, args.id, replica_features.PlaywrightBrowser(proj, args.id),
+                                                  max_pages=args.max_pages)
+        print(json.dumps({"reference": str(replica.replica_dir(proj, args.id) / "functional-reference.json"),
+                          "features": len(result["features"]), "notes": result["notes"]}, ensure_ascii=False))
+    elif args.replica_cmd == "features":
+        from hefesto import replica_features
+
+        folder = replica.replica_dir(proj, args.id)
+        try:
+            reference = json.loads((folder / "functional-reference.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            raise HefestoError("Primero ejecuta hefesto replica study ID: falta un estudio funcional válido.",
+                               EXIT_INPUT) from exc
+        if not isinstance(reference, dict) or not isinstance(reference.get("features"), list):
+            raise HefestoError("El estudio funcional de referencia no es válido.", EXIT_INPUT)
+        inventory = replica_features.study_project(proj, args.id)
+        matrix = replica_features.feature_matrix(reference, inventory)
+        util.atomic_write_json(folder / "functional-matrix.json", matrix)
+        proposal = getattr(replica_features, "propose", None)
+        if callable(proposal):
+            proposal(proj, args.id)
+        print(json.dumps({"matrix": str(folder / "functional-matrix.json"), "counts": matrix["counts"]},
+                         ensure_ascii=False, indent=2))
+    elif args.replica_cmd == "inventory" and not args.page:
+        from hefesto import replica_features
+
+        result = replica_features.study_project(proj, args.id)
+        print(json.dumps({"project": str(replica.replica_dir(proj, args.id) / "functional-project.json"),
+                          "features": len(result["features"])}, ensure_ascii=False))
     elif args.replica_cmd == "inventory":
         pages: dict[str, str] = {}
         for value in args.page:
@@ -1486,6 +1613,24 @@ def cmd_replica(args: argparse.Namespace) -> int:
         result = replica.accept(proj, args.id)
         if result:
             print(json.dumps(result, ensure_ascii=False, indent=2))
+    elif args.replica_cmd == "approve":
+        from hefesto import replica_features
+
+        if replica_features.accept(proj, args.id):
+            print(f"Propuesta funcional {args.id} aceptada.")
+        else:
+            print(f"Propuesta funcional {args.id} no aceptada.")
+    elif args.replica_cmd == "plan":
+        from hefesto import replica_features
+
+        ids = replica_features.plan(proj, args.id, gaps=args.gap or None)
+        print(json.dumps({"tasks": ids}, ensure_ascii=False, indent=2))
+    elif args.replica_cmd == "check":
+        from hefesto import replica_features
+
+        code, message = replica_features.check(proj, args.id, args.gap)
+        print(message)
+        return code
     return EXIT_OK
 
 
@@ -1647,6 +1792,46 @@ def build_parser() -> argparse.ArgumentParser:
     c = csub.add_parser("show", help="configuración efectiva y la capa de origen de cada valor")
     c.add_argument("--json", action="store_true")
     c.set_defaults(func=cmd_config_show)
+
+    p = sub.add_parser("projects", help="registro local de proyectos")
+    psub = p.add_subparsers(dest="projects_cmd", required=True)
+    c = psub.add_parser("root")
+    c.add_argument("path")
+    c.set_defaults(func=cmd_projects)
+    c = psub.add_parser("owner", help="propietario de GitHub donde buscar proyectos por nombre")
+    c.add_argument("name", nargs="?")
+    c.set_defaults(func=cmd_projects)
+    c = psub.add_parser("add")
+    c.add_argument("id")
+    c.add_argument("path")
+    c.add_argument("--name")
+    c.add_argument("--read-only", action="store_true")
+    c.set_defaults(func=cmd_projects)
+    c = psub.add_parser("list")
+    c.set_defaults(func=cmd_projects)
+    c = psub.add_parser("remove")
+    c.add_argument("id")
+    c.set_defaults(func=cmd_projects)
+
+    p = sub.add_parser("hermes", help="motor Hermes subordinado y carpeta Oficina")
+    hsub = p.add_subparsers(dest="hermes_cmd", required=True)
+    for action in ("status", "setup", "ask"):
+        c = hsub.add_parser(action)
+        if action == "ask":
+            c.add_argument("instruction")
+        c.set_defaults(func=cmd_hermes)
+
+    p = sub.add_parser("telegram", help="gateway de Telegram con operaciones aprobables (long polling)")
+    tsub = p.add_subparsers(dest="telegram_cmd", required=True)
+    c = tsub.add_parser("autostart", help="gateway automático al iniciar sesión en Windows")
+    asub = c.add_subparsers(dest="autostart_cmd", required=True)
+    for action in ("enable", "disable", "status", "start"):
+        asub.add_parser(action).set_defaults(func=cmd_telegram)
+    for action in ("check", "run", "pin", "stop"):
+        c = tsub.add_parser(action)
+        if action == "run":
+            c.add_argument("--max-failures", type=int, default=5)
+        c.set_defaults(func=cmd_telegram)
 
     p = sub.add_parser("status", help="estado, tarea, intentos, rama, rol activo y siguiente acción")
     p.add_argument("--protocol", action="store_true", help="imprime también el contenido del protocolo (AGENTS.md)")
@@ -1971,6 +2156,10 @@ def build_parser() -> argparse.ArgumentParser:
     c.set_defaults(func=cmd_security)
     c = ssub.add_parser("exceptions", help="lista las excepciones vigentes y caducadas")
     c.set_defaults(func=cmd_security)
+    c = ssub.add_parser("predeploy", help="genera un informe local predespliegue")
+    c.add_argument("--profile", choices=("auto", "web-general", "public-sector-sensitive"), default="auto")
+    c.add_argument("--report")
+    c.set_defaults(func=cmd_security)
 
     p = sub.add_parser("replica", help="analiza una referencia web autorizada sin copiarla ni aplicar cambios")
     rsub = p.add_subparsers(dest="replica_cmd", metavar="ACCIÓN", required=True)
@@ -1978,12 +2167,22 @@ def build_parser() -> argparse.ArgumentParser:
     c.add_argument("id"); c.add_argument("url"); c.set_defaults(func=cmd_replica)
     c = rsub.add_parser("capture", help="captura extractos de texto saneados")
     c.add_argument("id"); c.add_argument("--route", action="append", default=[]); c.set_defaults(func=cmd_replica)
-    c = rsub.add_parser("inventory", help="inventaría páginas HTML del proyecto")
-    c.add_argument("id"); c.add_argument("--page", action="append", required=True); c.set_defaults(func=cmd_replica)
+    c = rsub.add_parser("study", help="estudia funcionalidades públicas dentro del alcance autorizado")
+    c.add_argument("id"); c.add_argument("--max-pages", type=int); c.set_defaults(func=cmd_replica)
+    c = rsub.add_parser("features", help="compara funcionalidades de la referencia y el proyecto")
+    c.add_argument("id"); c.set_defaults(func=cmd_replica)
+    c = rsub.add_parser("inventory", help="inventaría el código o las páginas HTML indicadas")
+    c.add_argument("id"); c.add_argument("--page", action="append", default=[]); c.set_defaults(func=cmd_replica)
     c = rsub.add_parser("propose", help="compara inventarios y genera una propuesta documental")
     c.add_argument("id"); c.set_defaults(func=cmd_replica)
     c = rsub.add_parser("accept", help="acepta el análisis para planificar tareas")
     c.add_argument("id"); c.set_defaults(func=cmd_replica)
+    c = rsub.add_parser("approve", help="acepta una propuesta funcional desde un canal humano")
+    c.add_argument("id"); c.set_defaults(func=cmd_replica)
+    c = rsub.add_parser("plan", help="añade al ROADMAP tareas pendientes para cerrar huecos aceptados")
+    c.add_argument("id"); c.add_argument("--gap", action="append", default=[]); c.set_defaults(func=cmd_replica)
+    c = rsub.add_parser("check", help="comprueba de nuevo si los huecos funcionales están cerrados")
+    c.add_argument("id"); c.add_argument("--gap", action="append", required=True); c.set_defaults(func=cmd_replica)
 
     p = sub.add_parser("research", help="investiga con el servicio Odysseus configurado")
     p.add_argument("question", help="pregunta de investigación")
@@ -2017,7 +2216,29 @@ def build_parser() -> argparse.ArgumentParser:
     c.add_argument("path", nargs="?", help="ruta dentro del proyecto")
     c.set_defaults(func=cmd_web_guidance)
 
+    p = sub.add_parser("bench", help="benchmark offline con proveedores falsos")
+    p.add_argument("--scenario", action="append", help="escenario (repetible)")
+    p.add_argument("--report", help="guarda el informe JSON")
+    p.add_argument("--compare", help="compara con un informe anterior")
+    p.set_defaults(func=cmd_bench)
+
     return parser
+
+
+def cmd_bench(args: argparse.Namespace) -> int:
+    from hefesto import bench
+
+    old = bench.load_report(Path(args.compare)) if args.compare else None
+    report = bench.run(args.scenario)
+    for result in report["scenarios"]:
+        print(f"{result['id']}: {result['status']} ({result['duration_s']:.3f}s) — {result['notes']}")
+    print(f"Proveedores: fake; resumen: {report['summary']}")
+    if args.report:
+        bench.write_report(report, Path(args.report))
+    diff = bench.compare(old, report) if old is not None else None
+    if diff:
+        print(bench.render_compare(diff))
+    return int(any(r["status"] != "pass" for r in report["scenarios"]) or bool(diff and diff["critical"]))
 
 
 def main(argv: list[str] | None = None) -> int:

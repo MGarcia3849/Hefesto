@@ -29,6 +29,11 @@ SKILLS_DIR = FRAMEWORK_ROOT / "skills"
 STEPS = ("plan", "next", "retro")
 WORKER_ROLES = ("runner", "forge", "visual", "reviewer")
 NOTICE = "Generado por `hefesto sync`. No lo edites: los cambios a mano se detectan como conflicto."
+CRITICAL_RULES = (
+    ("state.json", "state.json"),
+    ("git push", "git push"),
+    ("hefesto finish", "hefesto finish"),
+)
 
 ROLE_DESCRIPTIONS = {
     "runner": "Implementación rutinaria de una tarea de Hefesto con contexto mínimo. Úsalo para tareas S/M ya contratadas.",
@@ -307,6 +312,30 @@ def run(project: Path, check: bool = False) -> list[Change]:
     if not check:
         atomic_write_json(manifest_path(project), manifest)
     return changes
+
+
+def coherence_problems(project: Path) -> list[str]:
+    """Devuelve incoherencias de instrucciones sin modificar el proyecto."""
+    problems: list[str] = []
+    protocol = next((project / rel for rel in ("AGENTS.md", ".hefesto/AGENTS.md")
+                     if (project / rel).is_file()), None)
+    if protocol is None:
+        problems.append("Falta el protocolo AGENTS.md (raíz o .hefesto/AGENTS.md).")
+    else:
+        text = protocol.read_text(encoding="utf-8", errors="replace")
+        for required, name in CRITICAL_RULES:
+            if required not in text:
+                problems.append(f"{protocol.relative_to(project).as_posix()} no contiene la regla crítica {name}.")
+
+    for name in ("CLAUDE.md", "GEMINI.md"):
+        path = project / name
+        if path.is_file() and "AGENTS.md" not in path.read_text(encoding="utf-8", errors="replace"):
+            problems.append(f"{name} debe importar AGENTS.md.")
+
+    for change in run(project, check=True):
+        if change.action != "unchanged":
+            problems.append(f"{change.path}: sync detecta {change.action}.")
+    return problems
 
 
 def summary(changes: list[Change]) -> str:

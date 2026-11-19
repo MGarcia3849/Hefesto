@@ -1,7 +1,7 @@
 # Entrega final — Hefesto v2.1.0
-## Fase 20: entrega aut?noma por proyecto
+## Fase 20: entrega autónoma por proyecto
 
-La autonom?a cubre el cierre de una fase y su entrega a un destino declarado por el proyecto. Una persona configura el destino y autoriza `pr` y `deploy` una vez en una terminal; despu?s, `hefesto deliver run` puede completar y reanudar los pasos autorizados. Los agentes (`HEFESTO_ROLE` definido) no pueden otorgar autorizaciones, ni siquiera con `--yes`.
+La autonomía cubre el cierre de una fase y su entrega a un destino declarado por el proyecto. Una persona configura el destino y autoriza `pr` y `deploy` una vez en una terminal; después, `hefesto deliver run` puede completar y reanudar los pasos autorizados. Los agentes (`HEFESTO_ROLE` definido) no pueden otorgar autorizaciones, ni siquiera con `--yes`.
 
 ### Preparar el destino
 
@@ -19,7 +19,7 @@ idempotent = false
 timeout_seconds = 600
 ```
 
-`command`, `healthcheck` y `rollback` son listas argv; Hefesto invoca cada programa sin shell. `name`, `environment` y `command` son obligatorios. Las dem?s claves son opcionales; `idempotent` es `false` por defecto y el timeout son 600 segundos. No se infiere el destino desde archivos de hosting, dependencias o URLs. Sin un archivo v?lido no existe destino desplegable: el PR puede completarse y despliegue queda `skipped`; Hefesto no despliega a un hosting supuesto.
+`command`, `healthcheck` y `rollback` son listas argv; Hefesto invoca cada programa sin shell. `name`, `environment` y `command` son obligatorios. Las demás claves son opcionales; `idempotent` es `false` por defecto y el timeout son 600 segundos. No se infiere el destino desde archivos de hosting, dependencias o URLs. Sin un archivo válido no existe destino desplegable: el PR puede completarse y despliegue queda `skipped`; Hefesto no despliega a un hosting supuesto.
 
 ### Autorizar y ejecutar
 
@@ -30,20 +30,20 @@ hefesto deliver run
 hefesto deliver status
 ```
 
-Cada permiso humano se persiste en `.hefesto/delivery.json`. El de `deploy` incluye una huella SHA-256 de toda la configuraci?n y queda inv?lido si esta cambia. `hefesto deliver revoke pr|deploy` retira un permiso. El permiso de PR autoriza a `hefesto deliver` a subir la rama de fase y abrir o adoptar su PR. El agente delegado nunca ejecuta `git push` directamente; el flujo tampoco integra la rama principal ni crea tags o releases.
+Cada permiso humano se persiste en `.hefesto/delivery.json`. El de `deploy` incluye una huella SHA-256 de toda la configuración y queda inválido si esta cambia. `hefesto deliver revoke pr|deploy` retira un permiso. El permiso de PR autoriza a `hefesto deliver` a subir la rama de fase y abrir o adoptar su PR. El agente delegado nunca ejecuta `git push` directamente; el flujo tampoco integra la rama principal ni crea tags o releases.
 
-`deliver run` exige tareas completas con evidencia y ninguna tarea en curso para esa rama. Reutiliza un PR abierto de la fase antes de crear uno nuevo. `.hefesto/delivery/<fase>.json` guarda fase, rama y pasos; los pasos `done` no se repiten. El despliegue solo corre desde el worktree de fase si permanece en la rama verificada y est? limpio. Ejecuta el comando y, si se indic?, healthcheck; ante fallo intenta rollback si est? configurado. `.hefesto/logs/deliveries.jsonl` conserva estados, c?digos y salida redactada. El m?ximo de intentos es 2 por defecto y se puede configurar con `[delivery] max_deploy_attempts`.
+`deliver run` exige tareas completas con evidencia y ninguna tarea en curso para esa rama. Reutiliza un PR abierto de la fase antes de crear uno nuevo. `.hefesto/delivery/<fase>.json` guarda fase, rama y pasos; los pasos `done` no se repiten. El despliegue solo corre desde el worktree de fase si permanece en la rama verificada y está limpio. Ejecuta el comando y, si se indicó, healthcheck; ante fallo intenta rollback si está configurado. `.hefesto/logs/deliveries.jsonl` conserva estados, códigos y salida redactada. El máximo de intentos es 2 por defecto y se puede configurar con `[delivery] max_deploy_attempts`.
 
-### Pausas y recuperaci?n
+### Pausas y recuperación
 
-- Sin autorizaci?n PR, se detiene antes de desplegar. Sin destino, PR puede terminar y `deploy` queda `skipped`.
+- Sin autorización PR, se detiene antes de desplegar. Sin destino, PR puede terminar y `deploy` queda `skipped`.
 - Si un proceso muere durante el despliegue, se reintenta al reanudar solo cuando `idempotent = true`. En otro caso queda `interrupted` y se pausa sin ejecutar de nuevo. Una persona inspecciona el destino y vuelve a ejecutar `hefesto deliver authorize deploy` para rearmarlo.
-- Un fallo se reintenta hasta el l?mite. Tras agotarlo, una nueva autorizaci?n humana de `deploy` reinicia los intentos y rearma pasos `failed` o `interrupted` de fases abiertas.
+- Un fallo se reintenta hasta el límite. Tras agotarlo, una nueva autorización humana de `deploy` reinicia los intentos y rearma pasos `failed` o `interrupted` de fases abiertas.
 - Si el worktree ya no coincide con la rama registrada o tiene cambios, no se despliega; primero hay que resolver el estado y volver a verificar la fase.
 
 ### Demo offline
 
-`python tools/dev.py smoke` ejecuta un flujo en un proyecto temporal con CLIs falsas; no contacta proveedores comerciales ni consume cuota. `python tools/dev.py demo` tambi?n usa fakes, pero no prueba credenciales, permisos remotos, PR reales ni el hosting de un proyecto. La verificaci?n local de esta entrega es:
+`python tools/dev.py smoke` ejecuta un flujo en un proyecto temporal con CLIs falsas; no contacta proveedores comerciales ni consume cuota. `python tools/dev.py demo` también usa fakes, pero no prueba credenciales, permisos remotos, PR reales ni el hosting de un proyecto. La verificación local de esta entrega es:
 
 ```bash
 python -m unittest tests.test_delivery_contract

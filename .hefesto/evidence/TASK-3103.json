@@ -1,0 +1,61 @@
+{
+  "attempts": 1,
+  "base_commit": "611f8300ee9ea11faa749f885cfd97f13e455542",
+  "branch": "hefesto/fase-31-benchmark-interno",
+  "commit": "4219187e9fca2bd7458ea71791790e19a1b9c77c",
+  "contract": [],
+  "created_at": "2026-11-19T10:06:01+00:00",
+  "files": [
+    {
+      "path": "hefesto/bench.py",
+      "sha256": "6144b305d9546f30078c4f940451f2239c4db09beb376fcac6cdf7a220f1bad6"
+    }
+  ],
+  "phase": "Fase 31 — Benchmark interno",
+  "prev_sha256": "9451a1a2584e3e6101db2dd994814b0b8fadb358faab8fb73646ca8b9fccd8df",
+  "prev_task_id": "TASK-3102",
+  "providers": [
+    "codex:gpt-6-luna",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T10:05:20+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:default",
+      "codex:gpt-6-luna"
+    ],
+    "exception": null,
+    "notes": "Escenarios de guarda; el Core los endureció para que cada bloqueo se deba al motivo probado",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "8f44f67b987c",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "501d7dac7ed9",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "8f44f67b987c",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 129,
+  "task_id": "TASK-3103",
+  "title": "Escenarios de seguridad, revisión, cuota y aprobaciones",
+  "verify": {
+    "command": "python -m unittest tests.test_bench.GuardScenarioTests && python tools/dev.py lint",
+    "duration_seconds": 38.611,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-3103-a1-2026-11-19T100600+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (116 ficheros Python)\n...\n----------------------------------------------------------------------\nRan 3 tests in 37.048s\n\nOK",
+    "sha256": "2edff64163a88af7ece2504debf93ddad2c1ea16991d4d789d417459d844b1cd",
+    "trust": "human"
+  }
+}

@@ -262,10 +262,19 @@ def done(project: Path, task_id: str) -> tuple[int, str]:
         from hefesto import security
 
         security_report = security.gate(project, workdir, data.get("task_base") or "HEAD", "done")
+        chain_errors = evidence.verify_chain(project, data.get("evidence_head"))
+        if chain_errors:
+            return EXIT_BLOCKED, "Evidencias inválidas: " + "; ".join(chain_errors)
         path = roadmap.roadmap_path(project)
         roadmap.set_marker(path, task_id, "x")
         try:
-            commit = gitops.checkpoint(project, workdir, cfg, task, f"hefesto({task_id}): {task.title} [verified]")
+            commit = gitops.verified_checkpoint(workdir, task, data.get("task_base"))
+            if commit is None:
+                commit = gitops.checkpoint(project, workdir, cfg, task, f"hefesto({task_id}): {task.title} [verified]")
+            else:
+                from hefesto import approval
+
+                approval.gate(project, workdir, data.get("task_base") or "HEAD", task.kind, "checkpoint", consume=True)
         except HefestoError:
             roadmap.set_marker(path, task_id, "~")
             raise
@@ -293,12 +302,20 @@ def done(project: Path, task_id: str) -> tuple[int, str]:
         }
         if visual_record is not None:
             record["visual"] = visual_record
-        ev_path, head = evidence.write(project, record)
+        existing = evidence.latest_evidence(project, task_id)
+        if existing and existing[1].get("commit") == commit:
+            ev_path = existing[0]
+            # load_all ordena por nombre de fichero; la cabeza de la cadena es la de mayor secuencia.
+            last_path, last_record = max(evidence.load_all(project), key=lambda item: int(item[1].get("seq", 0)))
+            head = {"seq": last_record["seq"], "sha256": evidence.file_sha256(last_path),
+                    "task_id": last_record["task_id"]}
+        else:
+            ev_path, head = evidence.write(project, record)
         is_local = bool(getattr(cfg, "settings", None) and cfg.settings.get("install_mode") == "local")
         if not is_local:
             try:
                 gitops.checkpoint(project, workdir, cfg, task, f"hefesto({task_id}): evidence",
-                                  extra_paths=(ev_path.relative_to(project).as_posix(),))
+                                  extra_paths=(ev_path.relative_to(project).as_posix(),), allow_empty=False)
             except HefestoError as exc:
                 log.event(project, "evidence", f"evidencia de {task_id} escrita pero sin commit: {exc}")
                 raise
@@ -426,7 +443,18 @@ def _is_contract_task(project: Path, workdir: Path, task_id: str) -> bool:
         return False
 
 
-def finish(project: Path, phase: str | None, pr: bool, yes: bool = False) -> tuple[int, str]:
+def finish(project: Path, phase: str | None, pr: bool, yes: bool = False,
+           *, approved_operation: str | None = None) -> tuple[int, str]:
+    if approved_operation is not None:
+        # Telegram como canal humano: solo con una operación aprobada y en curso, verificada en su almacén.
+        from hefesto import telegram_ops
+
+        action = "push" if pr else "finish"
+        telegram_ops.verify_running(project, approved_operation, action)
+        yes = True
+        util.append_jsonl(project / ".hefesto/logs/approvals.jsonl",
+                          {"at": util.now_iso(), "action": action, "channel": "telegram",
+                           "operation": approved_operation})
     cfg = config.load(project)
     data = state.load(project)
     rm = roadmap.load_valid(project)

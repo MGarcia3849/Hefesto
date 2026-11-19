@@ -1,5 +1,20 @@
 # Hefesto
 
+## Add-ons v2.6 y v2.7
+
+Consulta [la guía de especificaciones, fiabilidad, benchmark y auditoría predespliegue](docs/HEFESTO_ADDON_V2_6_V2_7.md). Incluye `hefesto bench` y `--compare`, además de `hefesto security predeploy` y la opción `security.predeploy`.
+
+### Hermes Agent
+
+
+### Hermes Agent
+
+Consulta [la guía de integración de Hermes](docs/HERMES.md) para instalarlo en Windows, configurar sus perfiles subordinados y usarlo desde Telegram.
+
+### Telegram
+
+Consulta la [guía de configuración y uso de Telegram](docs/TELEGRAM.md) para allowlists, comandos, aprobaciones, PIN y operación en Windows.
+
 Framework de orquestación multiagente para trabajar con tus suscripciones de **Claude**, **ChatGPT (Codex)** y **Google (Gemini)**, sin usar la API de pago. El estado, los intentos, la verificación y los commits los gestiona la CLI `hefesto`, con lógica determinista y cubierta por tests. Ningún prompt es fuente de verdad.
 
 > Estado: **v2.5.0 — framework multiagente determinista**. La especificación completa está en [`HEFESTO_V2_1.md`](HEFESTO_V2_1.md) y las desviaciones, en [`DECISIONS.md`](DECISIONS.md).
@@ -95,20 +110,20 @@ codex "$hefesto-next"                 # el nuevo orquestador empieza con `hefest
 
 `hefesto resume` muestra la tarea, los intentos, las delegaciones ya hechas (para no repetirlas), las notas, el último error y el `git diff --stat`.
 
-### Entrega aut?noma de una fase
+### Entrega autónoma de una fase
 
-Cuando todas las tareas de una fase est?n completadas y tienen evidencia, Hefesto puede abrir un PR y, si el proyecto declara un destino, desplegar la versi?n verificada. Una persona autoriza cada acci?n una sola vez; los permisos quedan en `.hefesto/delivery.json`:
+Cuando todas las tareas de una fase están completadas y tienen evidencia, Hefesto puede abrir un PR y, si el proyecto declara un destino, desplegar la versión verificada. Una persona autoriza cada acción una sola vez; los permisos quedan en `.hefesto/delivery.json`:
 
 ```bash
 hefesto deliver authorize pr
-hefesto deliver authorize deploy   # despu?s de configurar el destino
+hefesto deliver authorize deploy   # después de configurar el destino
 hefesto deliver run
 hefesto deliver status
 ```
 
-El destino vive en `.hefesto/deploy.toml`, dentro de `[target]`, e incluye `name`, `environment` y `command` como lista argv (nunca una cadena de shell). Puede incluir `healthcheck`, `rollback`, `url`, `idempotent` y `timeout_seconds`. La autorizaci?n de despliegue queda ligada a la huella de la configuraci?n y caduca si cambia. Hefesto no detecta autom?ticamente el hosting; sin destino, abre el PR y deja `deploy: skipped`.
+El destino vive en `.hefesto/deploy.toml`, dentro de `[target]`, e incluye `name`, `environment` y `command` como lista argv (nunca una cadena de shell). Puede incluir `healthcheck`, `rollback`, `url`, `idempotent` y `timeout_seconds`. La autorización de despliegue queda ligada a la huella de la configuración y caduca si cambia. Hefesto no detecta automáticamente el hosting; sin destino, abre el PR y deja `deploy: skipped`.
 
-La entrega reutiliza un PR abierto de la rama de fase antes de crear otro. El despliegue usa el worktree de fase solo si coincide con la rama verificada y est? limpio. `.hefesto/delivery/<fase>.json` permite reanudar sin repetir pasos `done`. Un despliegue interrumpido solo se reintenta autom?ticamente si `idempotent = true`; si no, requiere autorizaci?n humana nueva. Los fallos se reintentan hasta `[delivery] max_deploy_attempts` (2 por defecto); al agotarse, una persona puede revisar y rearmar el paso. La entrega no integra el PR en la rama principal. Consulta [`docs/ENTREGA.md`](docs/ENTREGA.md) para la gu?a completa.
+La entrega reutiliza un PR abierto de la rama de fase antes de crear otro. El despliegue usa el worktree de fase solo si coincide con la rama verificada y está limpio. `.hefesto/delivery/<fase>.json` permite reanudar sin repetir pasos `done`. Un despliegue interrumpido solo se reintenta automáticamente si `idempotent = true`; si no, requiere autorización humana nueva. Los fallos se reintentan hasta `[delivery] max_deploy_attempts` (2 por defecto); al agotarse, una persona puede revisar y rearmar el paso. La entrega no integra el PR en la rama principal. Consulta [`docs/ENTREGA.md`](docs/ENTREGA.md) para la guía completa.
 
 ### Modo autónomo
 

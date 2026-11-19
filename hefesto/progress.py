@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 from typing import Any
 
-from hefesto import acceptance, config, gitops, providers, quota, state
+from hefesto import acceptance, config, gitops, lock, providers, quota, state
 from hefesto.guard import redact
 from hefesto.util import EXIT_INPUT, HefestoError, append_jsonl, now_iso, read_jsonl
 
@@ -59,7 +59,23 @@ def resume_data(project: Path) -> dict[str, Any]:
     out: dict[str, Any] = {"status": data["status"], "task": None, "next_action": data["next_action"],
                            "last_error": data.get("last_error"), "notes": [], "runs": [], "review": None,
                            "diff_stat": "", "branch": data.get("branch"), "workdir": data.get("workdir"),
-                           "graph": "", "memory": []}
+                           "graph": "", "memory": [], "interrupted": []}
+    pending: dict[str, dict[str, Any]] = {}
+    for event in read_jsonl(project / ".hefesto" / "logs" / "delegations.jsonl"):
+        run_id = event.get("run_id")
+        if not isinstance(run_id, str) or not run_id:
+            continue
+        if event.get("event") == "start":
+            pending[run_id] = event
+        elif event.get("event") == "end":
+            pending.pop(run_id, None)
+    for run_id, event in pending.items():
+        try:
+            alive = lock.pid_alive(int(event.get("pid") or 0))
+        except (TypeError, ValueError, OverflowError):
+            alive = False
+        if not alive:
+            out["interrupted"].append(run_id)
     notes = read_jsonl(progress_path(project))
     task_obj = None
     if data.get("current_task_id"):
@@ -105,6 +121,8 @@ def render_resume(info: dict[str, Any]) -> str:
             state_txt = "ok" if run["success"] else (run.get("error_type") or "falló")
             lines.append(f"  - {run['run_id']} {run['role']:<8} {run['model_id']:<16} {state_txt}: {run['summary'][:160]}")
     review = info.get("review")
+    if info.get("interrupted"):
+        lines.append("delegaciones interrumpidas (no se dan por hechas): " + ", ".join(info["interrupted"]))
     if review:
         lines.append(f"revisión registrada: {review.get('verdict')} por {review.get('reviewer')}")
     if info["notes"]:

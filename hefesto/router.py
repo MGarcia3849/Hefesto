@@ -9,16 +9,22 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import os
 from pathlib import Path
+import random
 import sys
+import time
 from typing import Any
 
 from hefesto import acceptance, adapters, config, guard, log, packet, preflight, providers, quota, roadmap, state, visual
-from hefesto.adapters.base import AdapterResult, Call
+from hefesto.adapters.base import AdapterResult, Call, classify_error
 from hefesto.util import EXIT_BLOCKED, EXIT_INPUT, EXIT_OK, EXIT_UNAVAILABLE, HefestoError, read_jsonl
 from hefesto.workflow import new_run_id
 
 ROLES = config.ROLES
 CHALLENGE_ROLE_ORDER = ("reviewer", "core", "forge", "runner", "visual")
+
+
+def _sleep(seconds: float) -> None:
+    time.sleep(seconds)
 
 
 @dataclass
@@ -377,23 +383,36 @@ def run(project: Path, role: str, instruction: str, task_id: str | None = None, 
         event = {"run_id": run_id, "task_id": task.id if task else None, "role": role,
                  "provider": provider, "model_id": mid, "cli": cli_name, "pid": os.getpid(),
                  "orchestrator": progress.current_orchestrator()}
-        log.record(project, "delegations", {"event": "start", **event})
-        try:
-            result = adapters.get(cfg, provider).run(call)
+        retries = int(cfg.get("limits", "transient_retries", default=0))
+        backoff = float(cfg.get("limits", "retry_backoff_seconds", default=5))
+        for attempt in range(retries + 1):
+            log.record(project, "delegations", {"event": "start", **event})
             try:
-                approval.gate(project, eff_workdir, motion_base, task.kind if task else "code", "delegation")
-            except HefestoError as exc:
-                result.success = False
-                result.error_type = "denied_by_policy"
-                result.summary = str(exc)
-        except Exception as exc:
-            log.record(project, "delegations", {"event": "end", **event, "success": False,
-                                                  "error_type": type(exc).__name__})
-            raise
-        log.record(project, "delegations", {"event": "end", **event, "success": bool(result.success),
-                                              "error_type": result.error_type or ("failure" if not result.success else None)})
-        quota.record_call(provider)
-        _record(project, role, task, eff_task_run_id, run_id, mid, result, packet_path)
+                result = adapters.get(cfg, provider).run(call)
+                try:
+                    approval.gate(project, eff_workdir, motion_base, task.kind if task else "code", "delegation")
+                except HefestoError as exc:
+                    result.success = False
+                    result.error_type = "denied_by_policy"
+                    result.summary = str(exc)
+            except Exception as exc:
+                log.record(project, "delegations", {"event": "end", **event, "success": False,
+                                                      "error_type": type(exc).__name__,
+                                                      "error_class": classify_error(type(exc).__name__)})
+                raise
+            error_class = None if result.success else classify_error(result.error_type)
+            log.record(project, "delegations", {"event": "end", **event, "success": bool(result.success),
+                                                  "error_type": result.error_type or ("failure" if not result.success else None),
+                                                  "error_class": error_class})
+            quota.record_call(provider)
+            _record(project, role, task, eff_task_run_id, run_id, mid, result, packet_path)
+            if error_class != "transient" or retries == 0:
+                break
+            if attempt == retries:
+                hops.append(Hop(entry, mid, "transient: presupuesto de reintentos agotado"))
+                return None
+            hops.append(Hop(entry, mid, f"transient: reintento {attempt + 1}/{retries}"))
+            _sleep(backoff * 2**attempt + random.uniform(0, backoff))
         if result.error_type in ("quota", "rate_limit"):
             until = quota.cooldown_until(result.reset_hint or result.summary, default_cooldown)
             quota.mark_cooldown(provider, until, result.error_type, result.summary, model=model_key)

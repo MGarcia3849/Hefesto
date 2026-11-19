@@ -1,0 +1,65 @@
+{
+  "attempts": 1,
+  "base_commit": "a8ccf9a0b3f8a9db0dc8737a0e5e10914ac584fa",
+  "branch": "hefesto/fase-33-auditoria-predespliegue",
+  "commit": "dc2a3e1454ec6d3f867a0772aef14ce291a0dee7",
+  "contract": [],
+  "created_at": "2026-11-19T13:13:52+00:00",
+  "files": [
+    {
+      "path": "hefesto.toml",
+      "sha256": "90e5d57251914f9f73f3782c9cd6085dc7b8f60cb89c0988edc64e51e8736f4f"
+    },
+    {
+      "path": "hefesto/config.py",
+      "sha256": "28da976ab556efa6ebaf39cc75eb10c7551ca31d22ea06f6657ae41fe3a02467"
+    },
+    {
+      "path": "hefesto/delivery.py",
+      "sha256": "21d38da24562778bcb0c9e778737c11fcf4ff97953c1782ce846f47b9ff67c5e"
+    },
+    {
+      "path": "hefesto/predeploy.py",
+      "sha256": "b4cc04ec73d045b41c21a5a3de0e4e4b74caa80b70b45daae11e3408a557ed5f"
+    }
+  ],
+  "phase": "Fase 33 — Auditoría predespliegue",
+  "prev_sha256": "58cd3068adf65dfa9c410255e901db345b5de0223743f62ebd09732770787550",
+  "prev_task_id": "TASK-3303",
+  "providers": [
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T13:13:21+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Predespliegue en deploy con modos warn (defecto), block y off",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "721a41d25476",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "721a41d25476",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 137,
+  "task_id": "TASK-3304",
+  "title": "Predespliegue dentro de deploy en modo aviso configurable",
+  "verify": {
+    "command": "python -m unittest tests.test_predeploy.DeployGateTests tests.test_delivery_runtime && python tools/dev.py lint",
+    "duration_seconds": 28.395,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-3304-a1-2026-11-19T131350+0000.log",
+    "output_summary": "Predespliegue: REVIEW_REQUIRED (modo block). Indicios, no certificaci�n de cumplimiento.\nPredespliegue: BLOCKED (modo block). Indicios, no certificaci�n de cumplimiento.\nPredespliegue: BLOCKED (modo warn). Indicios, no certificaci�n de cumplimiento.\nPredespliegue: REVIEW_REQUIRED (modo warn). Indicios, no certificaci�n de cumplimiento.\nlint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (119 ficheros Python)\n...........\n----------------------------------------------------------------------\nRan 11 tests in 26.722s\n\nOK",
+    "sha256": "21588c575fce7c8743afae54502e6c349d379eede0bf273b91ce76b9535c379e",
+    "trust": "human"
+  }
+}

@@ -1076,3 +1076,351 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - size: S
   - parallel: false
   - accept: `.gitignore` ignora `.hefesto/backups/` y las skills que `hefesto sync` copia desde `~/hefesto/skills/promoted` a `.claude/skills/` y `.agents/skills/`, salvo las `hefesto-*` generadas; los ficheros ya versionados no se ven afectados
+
+## Fase 30 — Contratos de tarea
+- [x] TASK-3001: Contrato de campos de especificación opcionales y coherencia de instrucciones
+  - verify: `python -m unittest tests.test_task_spec.ContractDefinitionTests`
+  - files: tests/test_task_spec.py
+  - role: core
+  - depends_on: TASK-2901
+  - size: S
+  - parallel: false
+  - contract: tests/test_task_spec.py
+  - accept: tests que fijan los campos opcionales `scope`, `out_of_scope`, `risks` y `requires_approval` (este último solo con valores conocidos: install, deploy, animation, external_data, architecture); un ROADMAP sin ellos sigue siendo válido; un valor desconocido en `requires_approval` invalida el ROADMAP; los campos llegan al paquete de tarea; y una contradicción entre AGENTS.md y los ficheros generados por `sync` se detecta
+- [x] TASK-3002: Campos de especificación en el ROADMAP y en el paquete de tarea
+  - verify: `python -m unittest tests.test_task_spec.SpecFieldTests tests.test_task_spec.PacketTests && python tools/dev.py lint`
+  - files: hefesto/roadmap.py, hefesto/packet.py, prompts/protocol/plan.md, .claude/skills/hefesto-plan/SKILL.md, .agents/skills/hefesto-plan/SKILL.md, .gemini/commands/hefesto/plan.toml, .hefesto/generated.json
+  - role: runner
+  - depends_on: TASK-3001
+  - size: M
+  - parallel: false
+  - accept: los cuatro campos son opcionales y compatibles con todos los ROADMAP existentes; `requires_approval` se valida; el paquete muestra alcance, no alcance, riesgos y aprobaciones pendientes; el paso `plan` generado documenta los campos nuevos
+- [x] TASK-3003: Comprobación de coherencia de instrucciones multi-CLI
+  - verify: `python -m unittest tests.test_task_spec.CoherenceTests tests.test_sync && python tools/dev.py lint`
+  - files: hefesto/sync.py, hefesto/doctor.py
+  - role: runner
+  - depends_on: TASK-3001
+  - size: S
+  - parallel: true
+  - accept: `hefesto doctor` avisa si AGENTS.md, CLAUDE.md o los ficheros generados se desvían de la fuente única o se contradicen en reglas críticas (push, edición de estado, trust); no cambia el comportamiento de `sync`
+
+## Fase 31 — Benchmark interno
+- [x] TASK-3101: Contrato del benchmark simulado de Hefesto
+  - verify: `python -m unittest tests.test_bench.ContractDefinitionTests`
+  - files: tests/test_bench.py
+  - role: core
+  - depends_on: TASK-3002
+  - size: S
+  - parallel: false
+  - contract: tests/test_bench.py
+  - accept: tests que fijan `hefesto bench` con 12 escenarios aislados (bug fácil, cambio medio, multiarchivo, fallo con escalado y circuit breaker, corte forzado y reanudación, concurrencia, secretos y comando prohibido, inyección de prompt, revisión que rechaza, cuota agotada con fallback, aprobaciones, no regresión de Replica/Seguridad/Visual); solo proveedores falsos y coste comercial cero; informe JSON versionado con resultado por escenario y métricas observables (verificadas, falsas finalizaciones, reintentos, bloqueos, duración); limpieza segura
+- [x] TASK-3102: Motor del benchmark y escenarios de flujo
+  - verify: `python -m unittest tests.test_bench.EngineTests tests.test_bench.FlowScenarioTests && python tools/dev.py lint`
+  - files: hefesto/bench.py, hefesto/cli.py, tests/fixtures/bench/
+  - role: forge
+  - depends_on: TASK-3101
+  - size: M
+  - parallel: false
+  - accept: `hefesto bench` crea cada escenario en un directorio temporal con estado inicial conocido, ejecuta los seis escenarios de flujo (1–6) con proveedores falsos y limpia al terminar; nunca invoca un proveedor real
+- [x] TASK-3103: Escenarios de seguridad, revisión, cuota y aprobaciones
+  - verify: `python -m unittest tests.test_bench.GuardScenarioTests && python tools/dev.py lint`
+  - files: hefesto/bench.py, tests/fixtures/bench/
+  - role: runner
+  - depends_on: TASK-3102
+  - size: M
+  - parallel: false
+  - accept: escenarios 7–12 con datos sintéticos: secreto y comando prohibido bloqueados, salida inyectada tratada como dato, cambio defectuoso rechazado, fallback por cuota, parada hasta aprobación y no regresión de Replica/Seguridad/Visual
+- [x] TASK-3104: Informe comparable entre versiones
+  - verify: `python -m unittest tests.test_bench.ReportTests && python tools/dev.py lint`
+  - files: hefesto/bench.py, hefesto/cli.py
+  - role: runner
+  - depends_on: TASK-3103
+  - size: S
+  - parallel: false
+  - accept: `hefesto bench --report RUTA` y `--compare ANTERIOR.json` muestran diferencias por escenario y métrica sin inventar consumos; regresiones de seguridad o integridad de estado salen como críticas; avisa de muestras pequeñas
+
+## Fase 32 — Fiabilidad del harness
+- [x] TASK-3201: Contrato de clasificación de errores, presupuesto de reintentos y reanudación idempotente
+  - verify: `python -m unittest tests.test_reliability.ContractDefinitionTests`
+  - files: tests/test_reliability.py
+  - role: core
+  - depends_on: TASK-3104
+  - size: S
+  - parallel: false
+  - contract: tests/test_reliability.py
+  - accept: tests que fijan la clasificación de errores de delegación (transitorio, determinista, autenticación, cuota, seguridad, aprobación pendiente), que solo los transitorios se reintentan dentro de un presupuesto con backoff, y que reanudar tras un corte no repite delegaciones completadas ni checkpoints; solo cubre los huecos que el benchmark haya demostrado
+- [x] TASK-3202: Clasificación de errores y reintentos con presupuesto
+  - verify: `python -m unittest tests.test_reliability.ErrorClassTests tests.test_reliability.RetryBudgetTests && python tools/dev.py lint`
+  - files: hefesto/router.py, hefesto/loop.py, hefesto/adapters/base.py, hefesto/config.py, hefesto.toml
+  - role: forge
+  - depends_on: TASK-3201
+  - size: M
+  - parallel: false
+  - accept: cada fallo de delegación queda clasificado y registrado con run_id, tarea, rol y adaptador; los deterministas no se reintentan; los transitorios respetan `limits` con backoff; el circuit breaker y el escalado actuales no cambian
+- [x] TASK-3203: Reanudación sin efectos repetidos
+  - verify: `python -m unittest tests.test_reliability.ResumeTests && python tools/dev.py lint`
+  - files: hefesto/acceptance.py, hefesto/gitops.py, hefesto/evidence.py, hefesto/progress.py
+  - role: forge
+  - depends_on: TASK-3202
+  - size: M
+  - parallel: false
+  - accept: tras un corte en cualquier punto del ciclo, `resume` continúa desde el último punto seguro sin repetir delegaciones completadas ni checkpoints, y no da por hecho un efecto externo sin comprobarlo
+
+## Fase 33 — Auditoría predespliegue
+- [x] TASK-3301: Contrato de la auditoría predespliegue A–E
+  - verify: `python -m unittest tests.test_predeploy.ContractDefinitionTests`
+  - files: tests/test_predeploy.py
+  - role: core
+  - depends_on: TASK-3203
+  - size: S
+  - parallel: false
+  - contract: tests/test_predeploy.py
+  - accept: tests de los diez criterios del add-on v2.7: fixture seguro pasa, secreto sembrado detectado sin aparecer en claro, regla abierta bloquea, acceso entre usuarios rechazado en emulador, reintentos sin límite señalados, fallo de accesibilidad produce hallazgo con la revisión manual indicada, sin marketing es `not_applicable`, control no ejecutado es `not_tested` y nunca `passed`, sin despliegues ni envíos externos, sin regresiones; veredicto global PASS, REVIEW_REQUIRED o BLOCKED
+- [x] TASK-3302: Informe predespliegue con datos, costes y abuso
+  - verify: `python -m unittest tests.test_predeploy.ReportTests tests.test_predeploy.DataAccessTests tests.test_predeploy.CostAbuseTests && python tools/dev.py lint`
+  - files: hefesto/predeploy.py, hefesto/security.py, hefesto/cli.py
+  - role: runner
+  - depends_on: TASK-3301
+  - size: M
+  - parallel: false
+  - accept: `hefesto security predeploy` reutiliza el escaneo, los controles y `rules_test` existentes; añade la detección estática de integraciones de pago, polling y reintentos sin límite; los estados se mapean a los actuales sin crear otra fuente de verdad; informe JSON y Markdown redactados
+- [x] TASK-3303: Accesibilidad y comunicaciones en el predespliegue
+  - verify: `python -m unittest tests.test_predeploy.AccessibilityTests tests.test_predeploy.CommsTests && python tools/dev.py lint`
+  - files: hefesto/predeploy.py
+  - role: runner
+  - depends_on: TASK-3302
+  - size: M
+  - parallel: false
+  - accept: axe-core solo si el proyecto ya lo tiene con Playwright, si no `not_tested` con la checklist manual; las comunicaciones comerciales se detectan por inventario y, si no hay, el control queda `not_applicable` con motivo; nada se instala
+- [x] TASK-3304: Predespliegue dentro de deploy en modo aviso configurable
+  - verify: `python -m unittest tests.test_predeploy.DeployGateTests tests.test_delivery_runtime && python tools/dev.py lint`
+  - files: hefesto/delivery.py, hefesto/predeploy.py, hefesto/config.py, hefesto.toml
+  - role: forge
+  - depends_on: TASK-3303
+  - size: S
+  - parallel: false
+  - accept: `security.predeploy = "warn"` por defecto solo avisa; `"block"` detiene el despliegue ante BLOCKED; `"off"` lo desactiva; el gate de seguridad actual no cambia
+- [x] TASK-3305: Documentación de los add-ons v2.6 y v2.7 y ADR de dependencias rechazadas
+  - verify: `python -m unittest tests.test_predeploy.DocsTests tests.test_bench.DocsTests`
+  - files: README.md, CHANGELOG.md, docs/HEFESTO_ADDON_V2_6_V2_7.md, .hefesto/DECISIONS.md
+  - role: runner
+  - depends_on: TASK-3304
+  - size: S
+  - parallel: false
+  - kind: docs
+  - accept: documenta campos de especificación, `hefesto bench`, la fiabilidad nueva y `security predeploy` con comandos reales y límites (indicios, no cumplimiento jurídico); ADR que explica por qué no se instalan Harbor, Deep Agents ni Spec Kit
+
+## Fase 35 — Gateway de Telegram mínimo
+- [x] TASK-3501: Contrato del gateway de Telegram de solo lectura
+  - verify: `python -m unittest tests.test_telegram.ContractDefinitionTests`
+  - files: tests/test_telegram.py
+  - role: core
+  - depends_on: TASK-3305
+  - size: S
+  - parallel: false
+  - contract: tests/test_telegram.py
+  - accept: tests con una API de Telegram falsa en proceso (sin red) que fijan: token solo desde la variable HEFESTO_TELEGRAM_TOKEN y nunca en logs, respuestas ni repositorio; allowlist de IDs numéricos de usuario (y de chat para grupos) en la configuración de usuario, denegar por defecto y sin dar información del sistema a quien no está autorizado, sin fiarse del nombre de usuario; long polling saliente sin puertos abiertos; comandos /start, /help, /status y /projects de solo lectura; mensajes troceados a 4096 caracteres y redactados; límite de frecuencia por usuario; registro de auditoría con sesión, actor, comando y resultado sin datos sensibles; texto reenviado o de herramientas tratado como dato
+- [x] TASK-3502: Gateway de Telegram con allowlist y comandos de solo lectura
+  - verify: `python -m unittest tests.test_telegram.GatewayTests tests.test_telegram.SecurityTests && python tools/dev.py lint`
+  - files: hefesto/telegram.py, hefesto/cli.py, hefesto/config.py, hefesto.toml
+  - role: forge
+  - depends_on: TASK-3501
+  - size: M
+  - parallel: false
+  - accept: `hefesto telegram run` hace long polling con la Bot API oficial por HTTPS usando solo la biblioteca estándar; `hefesto telegram check` valida token y allowlist sin mostrar el token; las respuestas reutilizan `hefesto status` y la lista de proyectos; nada escribe en proyectos
+
+## Fase 36 — Gestor de proyectos
+- [x] TASK-3601: Contrato del registro de proyectos y la sesión de Telegram
+  - verify: `python -m unittest tests.test_workspaces.ContractDefinitionTests`
+  - files: tests/test_workspaces.py
+  - role: core
+  - depends_on: TASK-3502
+  - size: S
+  - parallel: false
+  - contract: tests/test_workspaces.py
+  - accept: tests que fijan un registro de proyectos en HEFESTO_HOME (id, nombre, ruta absoluta canónica, capacidades) que solo se edita desde la terminal; rechazo de rutas fuera del registro, traversal y enlaces simbólicos; un tema de Telegram por proyecto (decisión del usuario 2026-11-19): en un grupo con temas (forum) autorizado, /bind ID dentro de un tema lo vincula a ese proyecto por (chat_id, message_thread_id), todo lo que se escribe en ese tema va a ese proyecto y las respuestas vuelven al mismo tema, y el tema General (o un chat privado) sirve para órdenes globales y para elegir proyecto con /project ID; vínculos persistentes y recuperables tras reinicio; «cerrar» desactiva la asociación sin matar procesos ni perder cambios; estado con rama, cambios sin confirmar y tarea en curso; `code <ruta>` solo si hay escritorio y la CLI existe, si no un aviso honesto sin fallar la selección; una sola tarea de escritura por proyecto a la vez
+- [x] TASK-3602: Registro de proyectos, selección y apertura en VS Code
+  - verify: `python -m unittest tests.test_workspaces && python tools/dev.py lint`
+  - files: hefesto/workspaces.py, hefesto/telegram.py, hefesto/cli.py
+  - role: runner
+  - depends_on: TASK-3601
+  - size: M
+  - parallel: false
+  - accept: `hefesto projects add|list|remove` (solo terminal) y los comandos de Telegram /projects, /project, /bind y /unbind con un tema por proyecto; reutiliza el lock y el estado de Hefesto para la exclusión de escritura; no ejecuta git reset, clean ni cambios de rama con trabajo sin guardar
+
+## Fase 37 — Desarrollo seguro desde Telegram
+- [x] TASK-3701: Contrato de operaciones aprobables y ejecución por el orquestador
+  - verify: `python -m unittest tests.test_telegram_ops.ContractDefinitionTests`
+  - files: tests/test_telegram_ops.py
+  - role: core
+  - depends_on: TASK-3602
+  - size: S
+  - parallel: false
+  - contract: tests/test_telegram_ops.py
+  - accept: tests que fijan que una petición de trabajo en lenguaje natural crea una operación con ID, alcance exacto (proyecto, acción, instrucción), autor, chat y caducidad, y no hace nada hasta /approve ID del mismo usuario autorizado; aprobaciones de un solo uso, que caducan, no se reutilizan para otra operación y se rechazan con /reject; al aprobar, la operación se ejecuta con el orquestador existente (hefesto run o hefesto loop en el proyecto activo, en rama hefesto/*) y devuelve estado, rama, ficheros, resumen del diff y pruebas, señalando fallos; /diff y /tasks de solo lectura; /stop detiene nuevas acciones con el mecanismo STOP existente; por decisión del usuario (2026-11-19) trust, finish, push y deploy también se pueden aprobar desde Telegram como canal humano: la operación muestra el alcance exacto (comando de verify y su hash, rama y destino), solo la aprueba un usuario de la allowlist con /approve ID, es de un solo uso, caduca (300 s por defecto) y push y deploy exigen además un PIN configurado desde la terminal y guardado como hash; el canal `telegram` queda en la evidencia y en la auditoría; las animaciones siguen pidiendo permiso expreso; dos operaciones de escritura sobre el mismo proyecto no se pisan; tras un reinicio la operación queda recuperable o marcada como fallida, nunca como éxito
+- [x] TASK-3702: Operaciones aprobables y ejecución con el orquestador
+  - verify: `python -m unittest tests.test_telegram_ops && python tools/dev.py lint`
+  - files: hefesto/telegram.py, hefesto/telegram_ops.py, hefesto/cli.py, hefesto/approval.py, hefesto/trust.py, hefesto/acceptance.py, hefesto/delivery.py, tests/test_telegram_barriers.py
+  - role: forge
+  - depends_on: TASK-3701
+  - size: M
+  - parallel: false
+  - accept: operaciones guardadas en HEFESTO_STATE_DIR con escritura atómica; la ejecución reutiliza router, loop, guard, approval y security sin un segundo motor de agentes; progreso breve sin inundar el chat
+
+## Fase 38 — Robustez y documentación de Telegram
+- [x] TASK-3801: Pruebas de extremo a extremo con Telegram y proveedores falsos
+  - verify: `python -m unittest tests.test_telegram_e2e && python tools/dev.py lint`
+  - files: tests/test_telegram_e2e.py, tests/fakes/fake_telegram.py
+  - role: runner
+  - depends_on: TASK-3702
+  - size: M
+  - parallel: false
+  - accept: recorre los doce casos de aceptación del documento de integración con un servidor de Bot API falso local y proveedores falsos: no autorizado, listar proyectos, abrir, cambiar, corregir con rama y tests, resultado, despliegue denegado, ruta fuera del registro, inyección desde el repositorio, escrituras concurrentes, reinicio a mitad y animación que pide permiso
+- [x] TASK-3802: Modelos y voz: estado verificado
+  - verify: `python -m unittest tests.test_telegram_e2e.ModelsVoiceTests`
+  - files: hefesto/telegram.py, tests/test_telegram_e2e.py
+  - role: runner
+  - depends_on: TASK-3801
+  - size: S
+  - parallel: false
+  - accept: /status informa del proveedor usado y de que la suscripción de ChatGPT se usa solo mediante la CLI oficial de Codex con su propio login (sin reutilizar tokens de otras aplicaciones); el adaptador local queda como alternativa configurable; las notas de voz responden que no están disponibles hasta integrar una transcripción auditada y no se descargan
+- [x] TASK-3803: Arranque y parada en Windows y registro estructurado
+  - verify: `python -m unittest tests.test_telegram_e2e.OperationsTests && python tools/dev.py lint`
+  - files: hefesto/telegram.py, hefesto/cli.py, docs/telegram.env.example, tests/test_telegram_e2e.py
+  - role: runner
+  - depends_on: TASK-3802
+  - size: S
+  - parallel: false
+  - accept: `hefesto telegram run` se detiene limpiamente con Ctrl+C y con `hefesto stop`; reintentos de red con backoff y sin bucles infinitos; logs estructurados redactados; `docs/telegram.env.example` sin credenciales reales con HEFESTO_TELEGRAM_TOKEN (el guardián protege los ficheros de entorno de la raíz)
+- [x] TASK-3805: Órdenes en lenguaje natural: abrir en Android Studio o VS Code, clonar de GitHub y encargar cambios
+  - verify: `python -m unittest tests.test_telegram_editors && python tools/dev.py lint`
+  - files: hefesto/workspaces.py, hefesto/telegram.py, hefesto/telegram_ops.py, hefesto/telegram_intent.py, hefesto/cli.py, tests/test_telegram_editors.py
+  - role: forge
+  - depends_on: TASK-3803
+  - size: M
+  - parallel: false
+  - accept: petición del usuario (2026-11-19): `/open studio` abre el proyecto activo en Android Studio (lanzador configurable o detectado: studio64.exe, studio o la ruta del instalador) solo si hay escritorio, sin shell y sin cerrar nada, y `/open` sin argumento sigue abriendo VS Code; `/clone URL` solo acepta https://github.com/<propietario>/<repo>(.git) y crea una operación aprobable (sin PIN, con caducidad y de un solo uso) que, al aprobarse, clona con `git clone` sin shell dentro de una carpeta raíz de proyectos configurada desde la terminal (`hefesto projects root RUTA`), sin sobrescribir una carpeta existente, y registra el proyecto con un id derivado del nombre; nunca acepta rutas, credenciales en la URL ni otros hosts; la operación falla de forma honesta si no hay raíz configurada o la red falla; lenguaje natural (petición del usuario 2026-11-19): un intérprete determinista en hefesto/telegram_intent.py entiende órdenes como «abre el proyecto manjair en android studio y haz estos cambios» o «abre el proyecto solgrif solution en vsc y arréglalo»: identifica el proyecto por nombre aproximado (normaliza mayúsculas, tildes, espacios y guiones) entre los registrados y, si no está, entre los repositorios del propietario configurado en GitHub (vía `gh repo list` sin shell), el editor (android studio, studio, vs code, vsc, visual studio code) y el encargo restante; abrir un proyecto ya registrado se hace directamente; clonar uno de GitHub y encargar cambios crean operaciones aprobables (/approve ID) con el resumen de lo entendido; si el nombre es ambiguo o no existe, pregunta con las opciones en lugar de adivinar; el texto del mensaje nunca se ejecuta como comando
+- [x] TASK-3804: Documentación de la integración con Telegram y ADR sobre Hermes Agent
+  - verify: `python -m unittest tests.test_telegram_e2e.DocsTests`
+  - files: README.md, CHANGELOG.md, docs/TELEGRAM.md, .hefesto/DECISIONS.md, tests/test_telegram_e2e.py
+  - role: runner
+  - depends_on: TASK-3805
+  - size: S
+  - parallel: false
+  - kind: docs
+  - accept: guía de configuración del bot, allowlist, comandos, permisos, límites, arranque y parada en Windows, recuperación de errores y lista de funciones completas, pendientes y decisiones que requieren permiso; ADR: se adaptan patrones de Hermes Agent (MIT) sin instalarlo ni crear un segundo orquestador
+- [x] TASK-3806: Comando para configurar el propietario de GitHub
+  - verify: `python -m unittest tests.test_telegram_editors && python tools/dev.py lint`
+  - files: hefesto/cli.py, hefesto/workspaces.py, tests/test_telegram_editors.py, docs/TELEGRAM.md
+  - role: runner
+  - depends_on: TASK-3804
+  - size: S
+  - parallel: false
+  - accept: `hefesto projects owner NOMBRE` (solo terminal) guarda `github_owner` con workspaces.set_github_owner y `hefesto projects owner` sin argumento muestra el actual; la guía de Telegram lo documenta
+
+## Fase 34 — Replica funcional: qué tiene una app web, cómo lo hace y cómo mejorarlo
+- [x] TASK-3401: Contrato del análisis funcional de Replica
+  - verify: `python -m unittest tests.test_replica_plus.ContractDefinitionTests`
+  - files: tests/test_replica_plus.py
+  - role: core
+  - depends_on: TASK-3806
+  - size: S
+  - parallel: false
+  - contract: tests/test_replica_plus.py
+  - accept: (va después de la integración con Telegram, fases 35 a 38) alcance: solo lo observable de una referencia autorizada al usarla en el navegador (fuera de alcance leer o descompilar su código o JavaScript, saltarse logins, DRM o límites, e instalar Craft Anything); tests que fijan un recorrido acotado dentro del alcance; un inventario de funcionalidades de la referencia (qué tiene: secciones, formularios con sus campos y validaciones visibles, acciones, búsqueda y filtros, flujos de varios pasos, cuentas y permisos visibles, estados vacío, carga y error); un apartado de cómo lo hace solo con señales públicas (tecnologías detectables, llamadas de red observadas con método, ruta y tipo de contenido sin cuerpos ni datos personales, patrones de interacción); el mismo inventario de funcionalidades del proyecto propio a partir de su código; una matriz por funcionalidad (la referencia la tiene, nosotros la tenemos, parcial, la nuestra es mejor, no aplica, no verificable) con evidencia; propuestas de mejora tanto de lo que nos falta como de lo que la referencia hace mal; `hefesto replica plan` que convierte una propuesta aceptada en tareas pendientes del ROADMAP sin aplicar código; y `hefesto replica check` que comprueba qué huecos se han cerrado; inventarios y matrices actuales siguen siendo válidos
+- [x] TASK-3402: Inventario funcional de la referencia y de cómo lo hace
+  - verify: `python -m unittest tests.test_replica_plus.ReferenceTests tests.test_addon_replica && python tools/dev.py lint`
+  - files: hefesto/replica_features.py, hefesto/cli.py, hefesto.toml, hefesto/config.py
+  - role: forge
+  - depends_on: TASK-3401
+  - size: M
+  - parallel: false
+  - accept: `replica capture` recorre como máximo las páginas configuradas dentro del alcance, detecta funcionalidades a partir del DOM renderizado y su interacción visible, y registra cómo lo hace solo con señales públicas (cabeceras, marcadores de tecnologías, llamadas de red observadas sin cuerpos ni datos personales); nunca descarga ni guarda scripts o código fuente, no envía formularios con datos ni inicia sesión; respeta el alcance y las redirecciones como hoy
+- [x] TASK-3403: Inventario funcional del proyecto propio y matriz por funcionalidad
+  - verify: `python -m unittest tests.test_replica_plus.ProjectTests tests.test_replica_plus.MatrixTests tests.test_addon_replica && python tools/dev.py lint`
+  - files: hefesto/replica_features.py, hefesto/cli.py
+  - role: forge
+  - depends_on: TASK-3402
+  - size: M
+  - parallel: false
+  - accept: `replica inventory` extrae del código del proyecto rutas, pantallas, formularios y sus validaciones, acciones y llamadas a servicios; la matriz compara funcionalidad por funcionalidad con los estados del contrato y evidencia de ambos lados; las matrices antiguas siguen siendo válidas
+- [x] TASK-3404: Propuestas de mejora y ciclo planificar-comprobar
+  - verify: `python -m unittest tests.test_replica_plus.ProposalTests tests.test_replica_plus.PlanCheckTests tests.test_addon_replica && python tools/dev.py lint`
+  - files: hefesto/replica_features.py, hefesto/cli.py
+  - role: runner
+  - depends_on: TASK-3403
+  - size: M
+  - parallel: false
+  - accept: `replica propose` explica por funcionalidad qué falta, qué tenemos peor o mejor y cómo mejorar lo que la referencia hace mal, con esfuerzo y riesgo estimados; `hefesto replica plan ID` exige una propuesta aceptada y añade tareas pendientes con verify `hefesto replica check ID --gap CLAVE`, sin aplicar código ni marcar nada; `hefesto replica check ID` reinventaría el proyecto y sale con 0 solo cuando los huecos pedidos están cerrados
+- [x] TASK-3405: Documentación de Replica funcional y ADR sobre Craft Anything
+  - verify: `python -m unittest tests.test_replica_plus.DocsTests`
+  - files: README.md, CHANGELOG.md, docs/HEFESTO_ADDON_V2_5.md, .hefesto/DECISIONS.md
+  - role: runner
+  - depends_on: TASK-3404
+  - size: S
+  - parallel: false
+  - kind: docs
+  - accept: documenta el inventario funcional, el apartado de cómo lo hace, la matriz por funcionalidad, las propuestas, `replica plan` y `replica check` con sus límites legales y técnicos; ADR que explica qué ideas de Craft Anything se adoptan (estudiar solo lo observable, ciclo estudiar-planificar-comprobar) y por qué no se instala ni se adopta su modo Deep
+- [x] TASK-3406: Corregir caracteres corruptos en la documentación y evitar que vuelvan
+  - verify: `python -m unittest tests.test_docs_encoding tests.test_release_version`
+  - files: CHANGELOG.md, README.md, docs/HEFESTO_ADDON_V2_5.md, docs/ENTREGA.md, .hefesto/DECISIONS.md, tests/test_docs_encoding.py
+  - role: runner
+  - depends_on: TASK-3405
+  - size: S
+  - parallel: false
+  - kind: docs
+  - accept: ninguna palabra con «?» en lugar de una letra acentuada (límites, técnicos, qué, está, Decisión…) en los Markdown del repositorio; un test recorre README, CHANGELOG, docs y .hefesto/DECISIONS.md y falla si encuentra letra-?-letra o palabras terminadas en «?» seguidas de espacio o signo; la suite completa vuelve a pasar
+
+## Fase 39 — Hefesto siempre activo
+- [x] TASK-3901: Arranque automático del gateway de Telegram al iniciar sesión
+  - verify: `python -m unittest tests.test_telegram_service && python tools/dev.py lint`
+  - files: hefesto/telegram_service.py, hefesto/cli.py, tests/test_telegram_service.py, docs/TELEGRAM.md
+  - role: forge
+  - depends_on: TASK-3406
+  - size: M
+  - parallel: false
+  - accept: petición del usuario (2026-11-19): que Hefesto quede siempre pendiente en el ordenador, independiente de VS Code y de la terminal, y pueda abrir proyectos y editores en el escritorio; `hefesto telegram autostart enable` (solo terminal humana y solo si `hefesto telegram check` es correcto) registra en el Programador de tareas de Windows, mediante un XML importado con `schtasks /Create /XML` sin shell, una tarea del usuario actual con disparador al iniciar sesión, sesión interactiva (para poder abrir ventanas en su escritorio), sin privilegios elevados, sin límite de tiempo, una sola instancia, reinicio automático tras fallo y ventana oculta, que ejecuta `hefesto telegram run` con salida a un log en el directorio de estado; `autostart status` informa si está registrada y en marcha, `autostart start` la lanza sin esperar al siguiente inicio de sesión y `autostart disable` la elimina; el token sigue leyéndose de la variable de entorno del usuario y nunca se escribe en el XML, el script ni el log; en sistemas que no son Windows responde con un aviso honesto (o, en Linux, una unidad systemd de usuario si es sencillo); la guía de Telegram lo documenta
+
+## Fase 40 — Hermes como motor subordinado de Hefesto
+- [x] TASK-4001: Contrato del puente con Hermes Agent
+  - verify: `python -m unittest tests.test_hermes_bridge.ContractDefinitionTests`
+  - files: tests/test_hermes_bridge.py
+  - role: core
+  - depends_on: TASK-3901
+  - size: S
+  - parallel: false
+  - contract: tests/test_hermes_bridge.py
+  - accept: decisión del usuario (2026-11-19): Hefesto integra Hermes Agent para hacer todo lo que hace Hermes (Office, correo de cualquier proveedor, navegador, ficheros, terminal) con un único bot de Telegram, el de Hefesto; tests con un `hermes` falso que fijan: detección del binario (PATH o %LOCALAPPDATA%\hermes\bin) y aviso honesto si falta; `hefesto hermes setup` (solo terminal) que crea dos perfiles de Hermes sin secretos: `hefesto-lectura` (sin herramientas de envío ni borrado, aprobaciones en modo de una sola orden denegadas, lista de comandos prohibidos) y `hefesto-accion` (para operaciones aprobadas); `ask(instruccion, modo, carpeta)` que invoca `hermes chat --oneshot` con `--query-file -` (la instrucción por stdin, nunca en la línea de comandos), `--format stream-json`, el perfil del modo y la carpeta Oficina como directorio, con timeout, sin shell, y devuelve texto, ficheros creados y código de salida a partir del evento `result`; la salida de Hermes se trata como dato y se redacta; el modo acción solo se usa con una operación de Telegram aprobada y en curso; nunca se activa el gateway de Telegram de Hermes ni un proveedor de pago
+- [x] TASK-4002: Puente con Hermes, perfiles y carpeta Oficina
+  - verify: `python -m unittest tests.test_hermes_bridge && python tools/dev.py lint`
+  - files: hefesto/hermes_bridge.py, hefesto/cli.py, hefesto/config.py, hefesto.toml
+  - role: forge
+  - depends_on: TASK-4001
+  - size: M
+  - parallel: false
+  - accept: `hefesto hermes status|setup|ask` implementados según el contrato; la carpeta Oficina es configurable y por defecto `Documentos/Hefesto Oficina`; ningún secreto se escribe en los perfiles
+- [x] TASK-4003: Peticiones generales desde Telegram con Hermes
+  - verify: `python -m unittest tests.test_hermes_telegram && python tools/dev.py lint`
+  - files: hefesto/telegram.py, hefesto/telegram_intent.py, hefesto/telegram_ops.py, hefesto/workspaces.py, tests/test_hermes_telegram.py
+  - role: forge
+  - depends_on: TASK-4002
+  - size: M
+  - parallel: false
+  - accept: el intérprete distingue peticiones de proyecto (siguen el ciclo de Hefesto) de peticiones generales (redactar en Word, leer o contestar correo, buscar, gestionar ficheros); las generales se ejecutan directamente con el perfil de lectura y borrador y devuelven el resultado o el borrador por Telegram; si Hermes crea un documento en la carpeta Oficina, se puede abrir en Word u otra app; enviar correos, borrar, mover fuera de Oficina, instalar o ejecutar comandos con efectos crean una operación `assist` aprobable que muestra exactamente lo que se hará y, al aprobarse, se ejecuta con el perfil de acción (PIN para enviar correos o tocar fuera de Oficina); sin Hermes instalado, responde cómo instalarlo
+- [x] TASK-4004: Documentación de Hermes integrado y ADR que sustituye la decisión anterior
+  - verify: `python -m unittest tests.test_hermes_telegram.DocsTests tests.test_docs_encoding`
+  - files: docs/HERMES.md, docs/TELEGRAM.md, README.md, CHANGELOG.md, .hefesto/DECISIONS.md, tests/test_hermes_telegram.py
+  - role: runner
+  - depends_on: TASK-4003
+  - size: S
+  - parallel: false
+  - kind: docs
+  - accept: guía de instalación de Hermes en Windows (script oficial, canal estable), inicio de sesión con la suscripción de ChatGPT (`hermes auth add openai-codex`) y aviso de que Claude por suscripción solo funciona con Max; configuración del correo (Gmail, Outlook o Microsoft 365) dentro de Hermes sin que Hefesto guarde contraseñas; qué va directo y qué pide /approve; límites honestos; ADR fechado 2026-11-19 que sustituye «no se instala Hermes» por «Hermes como motor subordinado, por decisión del usuario», manteniendo un solo orquestador y un solo bot
+- [x] TASK-4005: Corregir la frase con texto corrupto en el test de la guía de entrega
+  - verify: `python -m unittest tests.test_demo.DemoTests.test_delivery_guide_covers_authorization_target_and_recovery tests.test_docs_encoding`
+  - files: tests/test_demo.py
+  - role: runner
+  - depends_on: TASK-4004
+  - size: S
+  - parallel: false
+  - accept: el test buscaba «no detecta autom?ticamente», la forma corrupta que TASK-3406 corrigió en README.md; ahora busca «no detecta automáticamente» y la suite completa vuelve a pasar

@@ -1,0 +1,61 @@
+{
+  "attempts": 1,
+  "base_commit": "ef4e770ceb355816676344c95ea69511664f4e03",
+  "branch": "hefesto/fase-34-replica-funcional-que-tiene-una-app-web-como-lo-hace-y-como-mejorarlo",
+  "commit": "69479515f0a66b0e9594a23adc8755872c7419c9",
+  "contract": [
+    "tests/test_replica_plus.py"
+  ],
+  "created_at": "2026-11-19T15:19:58+00:00",
+  "files": [
+    {
+      "path": "tests/test_replica_plus.py",
+      "sha256": "b186c6839d3f7842a31c0135cfcf7989e7039c50adc84ef574c3324f1a2a63ae"
+    }
+  ],
+  "phase": "Fase 34 — Replica funcional: qué tiene una app web, cómo lo hace y cómo mejorarlo",
+  "prev_sha256": "c7e3c14a3fc3124f6fc85cab588ffb0925a97a759ead7b37f1318526ffc29b46",
+  "prev_task_id": "TASK-3806",
+  "providers": [
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T15:19:54+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Contrato de Replica funcional; primera revisión fail por DocsTests (criterio aclarado: los cubre TASK-3405)",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "193d3894954a",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "b2bfc7f1c602",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "193d3894954a",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 151,
+  "task_id": "TASK-3401",
+  "title": "Contrato del análisis funcional de Replica",
+  "verify": {
+    "command": "python -m unittest tests.test_replica_plus.ContractDefinitionTests",
+    "duration_seconds": 0.349,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-3401-a1-2026-11-19T151955+0000.log",
+    "output_summary": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.012s\n\nOK",
+    "sha256": "06049adb276fd51284e3e3a481d055f6794798b98c2e2ffa5375d9ee3c4e6162",
+    "trust": "human"
+  }
+}

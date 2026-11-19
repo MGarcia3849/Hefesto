@@ -1,0 +1,77 @@
+{
+  "attempts": 1,
+  "base_commit": "5769324f63dab40add3241939313fe59c0b5b133",
+  "branch": "hefesto/fase-40-hermes-como-motor-subordinado-de-hefesto",
+  "commit": "a4c4849dfd9ffbb0c3832fe37c145682705dc47c",
+  "contract": [],
+  "created_at": "2026-11-19T17:53:09+00:00",
+  "files": [
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "6abc6dbc3bdcb7513fbf2696dafc51a5a95e62feb527462f02c5fd3a7b7758b3"
+    },
+    {
+      "path": "README.md",
+      "sha256": "c5a6fc8f3041f0b282926ddf9da0322910e528003138a47198bcaf409c0ae68a"
+    },
+    {
+      "path": "docs/HERMES.md",
+      "sha256": "713fcfff769ab4f83274cb1562bab84ce4a9550600170169d2fa2f1e655c23db"
+    },
+    {
+      "path": "docs/TELEGRAM.md",
+      "sha256": "b731a8f5eed1931bae4c9f4b436972360929dd4f29ae1426c6e5eda03e5f7f5d"
+    },
+    {
+      "path": "tests/test_hermes_telegram.py",
+      "sha256": "f3112a0f8a53686839263fa89de879022a98f3f7e1b37f68c12e60af426d79e7"
+    }
+  ],
+  "phase": "Fase 40 — Hermes como motor subordinado de Hefesto",
+  "prev_sha256": "0540d270667f287fecbf53de8f94917078643909d1e1ab8740ec335167a16c49",
+  "prev_task_id": "TASK-4003",
+  "providers": [
+    "codex:gpt-6-luna",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T17:53:06+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:default",
+      "codex:gpt-6-luna"
+    ],
+    "exception": null,
+    "notes": "Guía de Hermes integrado y ADR sustitutorio",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "3ac1305a33f9",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "05882f8da5ab",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "3ac1305a33f9",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 161,
+  "task_id": "TASK-4004",
+  "title": "Documentación de Hermes integrado y ADR que sustituye la decisión anterior",
+  "verify": {
+    "command": "python -m unittest tests.test_hermes_telegram.DocsTests tests.test_docs_encoding",
+    "duration_seconds": 0.385,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-4004-a1-2026-11-19T175307+0000.log",
+    "output_summary": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.018s\n\nOK",
+    "sha256": "196138e5fcb7e0068575cb8b3d0164bb1712ef1c06f6686531ae0d1a49ffbec6",
+    "trust": "auto"
+  }
+}

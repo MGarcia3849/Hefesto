@@ -1,0 +1,65 @@
+{
+  "attempts": 1,
+  "base_commit": "9c1305497d4acdf0be7fa751347330f3798676be",
+  "branch": "hefesto/fase-38-robustez-y-documentacion-de-telegram",
+  "commit": "edc41233b5cbb3af44ca40e91d3ba8c85ef9a548",
+  "contract": [],
+  "created_at": "2026-11-19T14:52:41+00:00",
+  "files": [
+    {
+      "path": "docs/TELEGRAM.md",
+      "sha256": "3d163a99cc376bd4b021978d661c2277cc0b32cce309830ba9c89dbe56b09807"
+    },
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "87b037933cdabfddf60a902853ce1f448220906aed645b75867d276cca9af465"
+    },
+    {
+      "path": "hefesto/workspaces.py",
+      "sha256": "22f18aa84979b5865f0fbd2177467068307d0fc5f4d0c4f8bcf42c45248a75b7"
+    },
+    {
+      "path": "tests/test_telegram_editors.py",
+      "sha256": "53096cca4bcb5c702d11a23e1fe6cff75b9792d074cf95fa76f81f5a762af699"
+    }
+  ],
+  "phase": "Fase 38 — Robustez y documentación de Telegram",
+  "prev_sha256": "5240b821735f6b82dd6ca564516882ee03cfd5ca0b932d115b28e6be3b7c5df0",
+  "prev_task_id": "TASK-3804",
+  "providers": [
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T14:52:33+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Comando projects owner para el propietario de GitHub",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "f0f6cd00e56a",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "f0f6cd00e56a",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 150,
+  "task_id": "TASK-3806",
+  "title": "Comando para configurar el propietario de GitHub",
+  "verify": {
+    "command": "python -m unittest tests.test_telegram_editors && python tools/dev.py lint",
+    "duration_seconds": 5.838,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-3806-a1-2026-11-19T145239+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (130 ficheros Python)\n...........................\n----------------------------------------------------------------------\nRan 27 tests in 4.164s\n\nOK",
+    "sha256": "cbd2e3597a384f5c28a18cc0233801aaca7e623ea68451a4efcd26dfe7096281",
+    "trust": "auto"
+  }
+}

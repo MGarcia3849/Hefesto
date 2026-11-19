@@ -1,0 +1,55 @@
+{
+  "attempts": 1,
+  "base_commit": "04dedfd5fa5ec938cbb58c17c90ff1f4c1d6cae1",
+  "branch": "hefesto/fase-37-desarrollo-seguro-desde-telegram",
+  "commit": "e047a540104ebc2ef46da3a23860c4f252395ddd",
+  "contract": [
+    "tests/test_telegram_ops.py"
+  ],
+  "created_at": "2026-11-19T13:45:50+00:00",
+  "files": [
+    {
+      "path": "tests/test_telegram_ops.py",
+      "sha256": "06854eef4ae9ff07bcf6d9e9e6709343b5c62852c607fb5e18e14f29e15146c0"
+    }
+  ],
+  "phase": "Fase 37 — Desarrollo seguro desde Telegram",
+  "prev_sha256": "97999bfa3b3981df503df4e7d3653e8757a49578f689bb8876928c1a1b66eb35",
+  "prev_task_id": "TASK-3602",
+  "providers": [
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T13:45:47+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Contrato de operaciones aprobables desde Telegram",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "e20175070155",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "e20175070155",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 143,
+  "task_id": "TASK-3701",
+  "title": "Contrato de operaciones aprobables y ejecución por el orquestador",
+  "verify": {
+    "command": "python -m unittest tests.test_telegram_ops.ContractDefinitionTests",
+    "duration_seconds": 0.321,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-3701-a1-2026-11-19T134548+0000.log",
+    "output_summary": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.012s\n\nOK",
+    "sha256": "75b19b8a04446fed9aceac467641ca382fa6dbc836688873aeecb441d3d33797",
+    "trust": "auto"
+  }
+}

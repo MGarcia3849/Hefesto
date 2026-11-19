@@ -1,0 +1,73 @@
+{
+  "attempts": 1,
+  "base_commit": "06b19e74cb6467162f6f3835cea7651e2cac7edf",
+  "branch": "hefesto/fase-38-robustez-y-documentacion-de-telegram",
+  "commit": "de8e8a06c88ced92dd5a309b7742c033d46a7742",
+  "contract": [],
+  "created_at": "2026-11-19T14:47:55+00:00",
+  "files": [
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "e4cd0b6d2de6fe68a131caaba7fc35c4a50506b5bdd36424d2db8117399d5e9e"
+    },
+    {
+      "path": "README.md",
+      "sha256": "f2a10e1e5dcf9ff0a4496025236e3cb2cb8414b529ff6f88db509c1b963132f8"
+    },
+    {
+      "path": "docs/TELEGRAM.md",
+      "sha256": "ffbb8651a9e38142d22bd39b479af1d473281fbe5b9144b4376b626d6ddd05d4"
+    },
+    {
+      "path": "tests/test_telegram_e2e.py",
+      "sha256": "6ace06ea388f56a863860a8c3b17d5e25370682e9dfb1b02d012df711e15f129"
+    }
+  ],
+  "phase": "Fase 38 — Robustez y documentación de Telegram",
+  "prev_sha256": "55e4e1464876d5e1f6d0bf7f2af0f3698f4f8eb9e05ded7f04050d45b189304f",
+  "prev_task_id": "TASK-3805",
+  "providers": [
+    "codex:gpt-6-luna",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T14:47:53+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:default",
+      "codex:gpt-6-luna"
+    ],
+    "exception": null,
+    "notes": "Guía de Telegram, README, CHANGELOG y ADR sobre Hermes; el Core añadió DocsTests",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "3132e6ec7602",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "9ff03d3717e7",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "3132e6ec7602",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 149,
+  "task_id": "TASK-3804",
+  "title": "Documentación de la integración con Telegram y ADR sobre Hermes Agent",
+  "verify": {
+    "command": "python -m unittest tests.test_telegram_e2e.DocsTests",
+    "duration_seconds": 0.352,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-3804-a1-2026-11-19T144754+0000.log",
+    "output_summary": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.007s\n\nOK",
+    "sha256": "f26899962757f7ce618f75e7f5b542a53abbf97e4cf92041918fdc64c68fb96a",
+    "trust": "auto"
+  }
+}

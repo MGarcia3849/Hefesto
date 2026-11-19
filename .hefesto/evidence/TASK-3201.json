@@ -1,0 +1,55 @@
+{
+  "attempts": 1,
+  "base_commit": "03ab8c23c4cf8bf890fec03b2ccbec54a0edbc91",
+  "branch": "hefesto/fase-32-fiabilidad-del-harness",
+  "commit": "ab323e9719c7457dae0acf5ddd70e086b4e98678",
+  "contract": [
+    "tests/test_reliability.py"
+  ],
+  "created_at": "2026-11-19T10:14:22+00:00",
+  "files": [
+    {
+      "path": "tests/test_reliability.py",
+      "sha256": "207ebe5469a818303a317779e86c2ba27ecce0153bf743a1f7a5dc6ecd5c1141"
+    }
+  ],
+  "phase": "Fase 32 — Fiabilidad del harness",
+  "prev_sha256": "669d9f5dcb0dcd039f6035a91e890676e9f43c47e7051f39b4c0d5949f0870d8",
+  "prev_task_id": "TASK-3104",
+  "providers": [
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T10:14:20+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Contrato de fiabilidad; ResumeTests reproduce el doble commit tras un corte",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "d54e3348fab6",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "d54e3348fab6",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 131,
+  "task_id": "TASK-3201",
+  "title": "Contrato de clasificación de errores, presupuesto de reintentos y reanudación idempotente",
+  "verify": {
+    "command": "python -m unittest tests.test_reliability.ContractDefinitionTests",
+    "duration_seconds": 0.363,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-3201-a1-2026-11-19T101421+0000.log",
+    "output_summary": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.048s\n\nOK",
+    "sha256": "742853b0bbd7741810220ec5bb1e1c03947ae06227b96b0fbbf3e73b93faa892",
+    "trust": "human"
+  }
+}

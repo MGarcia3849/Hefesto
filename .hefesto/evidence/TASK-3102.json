@@ -1,0 +1,65 @@
+{
+  "attempts": 1,
+  "base_commit": "9555d2ad00983fb6bbaedd261d8efe6bd3dd6a9e",
+  "branch": "hefesto/fase-31-benchmark-interno",
+  "commit": "b799bedffc15d737804e8359c25a7df8030da547",
+  "contract": [],
+  "created_at": "2026-11-19T09:52:20+00:00",
+  "files": [
+    {
+      "path": "hefesto/bench.py",
+      "sha256": "83b8d458640fa7ae3b9cec751b68f43ac6baa8b0131a6c56cf49d27203c00920"
+    },
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "16140d84c68440b4414ffa8629d410ce4d7affea95f4ec7524e00781b119c907"
+    }
+  ],
+  "phase": "Fase 31 — Benchmark interno",
+  "prev_sha256": "cf9de3e94274246d03b9f2b799b7c800eb2b54baef3ba24361ecfe16aad2a6ef",
+  "prev_task_id": "TASK-3101",
+  "providers": [
+    "codex:gpt-6.1-sol",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T09:51:35+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:default",
+      "codex:gpt-6.1-sol"
+    ],
+    "exception": null,
+    "notes": "Motor y escenarios de flujo; observación: crash-resume no simula un corte real, se endurece en TASK-3203",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "e00a2a171c91",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6.1-sol",
+      "role": "forge",
+      "run_id": "0e31f850ff03",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "e00a2a171c91",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 128,
+  "task_id": "TASK-3102",
+  "title": "Motor del benchmark y escenarios de flujo",
+  "verify": {
+    "command": "python -m unittest tests.test_bench.EngineTests tests.test_bench.FlowScenarioTests && python tools/dev.py lint",
+    "duration_seconds": 43.193,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-3102-a1-2026-11-19T095219+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (116 ficheros Python)\n..........\n----------------------------------------------------------------------\nRan 10 tests in 41.609s\n\nOK",
+    "sha256": "7e8fcf61b64dfb2527dd92eaff1de487234f1c8ea26a839a8cc29ee3b27517b7",
+    "trust": "auto"
+  }
+}

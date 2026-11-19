@@ -1,0 +1,65 @@
+{
+  "attempts": 1,
+  "base_commit": "674a7f25dc8051321b84d3f8f35ccf465d28bfbb",
+  "branch": "hefesto/fase-33-auditoria-predespliegue",
+  "commit": "3559f4c4f36ec8f1f882dbc838e2f90f8b2ac8a8",
+  "contract": [],
+  "created_at": "2026-11-19T13:05:15+00:00",
+  "files": [
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "8a192c1a755cbaad4524499e64b37c0ebe8eab188365eaa300b9f7fdc9f3ec02"
+    },
+    {
+      "path": "hefesto/predeploy.py",
+      "sha256": "4d41adbf433c911d05bdad576b6e0564e0310af868cba439e43741acb4895b22"
+    }
+  ],
+  "phase": "Fase 33 — Auditoría predespliegue",
+  "prev_sha256": "dd401663a7a01b67397a5bfafc6289a86d8fed01d38927276a46c6ef325f18e7",
+  "prev_task_id": "TASK-3301",
+  "providers": [
+    "codex:gpt-6-luna",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T13:05:04+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:default",
+      "codex:gpt-6-luna"
+    ],
+    "exception": null,
+    "notes": "Predespliegue A-E; el Core corrigió bloqueo por regla abierta, secretos en data-access, analizador fallido, duplicados y alcance del bucle",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "48d7a9633453",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "597e5ab9ea39",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "48d7a9633453",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 135,
+  "task_id": "TASK-3302",
+  "title": "Informe predespliegue con datos, costes y abuso",
+  "verify": {
+    "command": "python -m unittest tests.test_predeploy.ReportTests tests.test_predeploy.DataAccessTests tests.test_predeploy.CostAbuseTests && python tools/dev.py lint",
+    "duration_seconds": 9.447,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-3302-a1-2026-11-19T130514+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (119 ficheros Python)\n...............\n----------------------------------------------------------------------\nRan 15 tests in 7.884s\n\nOK",
+    "sha256": "aa92e7cb84c5968ff4d3a5445c176611a04a2628e147d04a793350cd183965c4",
+    "trust": "human"
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "attempts": 1,
+  "base_commit": "7ac5c7d79b5432ed52868ed3a0b67ac73c1214e7",
+  "branch": "hefesto/fase-40-hermes-como-motor-subordinado-de-hefesto",
+  "commit": "5b98743dcbf179d8779d9483bb2610c405bb6e93",
+  "contract": [],
+  "created_at": "2026-11-19T18:15:04+00:00",
+  "files": [
+    {
+      "path": "tests/test_demo.py",
+      "sha256": "3ca922e426e87ff019e260d4999afd8f1b3061511c4406469f81775804269356"
+    }
+  ],
+  "phase": "Fase 40 — Hermes como motor subordinado de Hefesto",
+  "prev_sha256": "db08d0ee56f606d6efd6530faeca696e6d6671b06d661261496e965d56fd12ed",
+  "prev_task_id": "TASK-4004",
+  "providers": [
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T18:15:02+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Frase del test alineada con el README corregido",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "6c746cd3da77",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "6c746cd3da77",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 162,
+  "task_id": "TASK-4005",
+  "title": "Corregir la frase con texto corrupto en el test de la guía de entrega",
+  "verify": {
+    "command": "python -m unittest tests.test_demo.DemoTests.test_delivery_guide_covers_authorization_target_and_recovery tests.test_docs_encoding",
+    "duration_seconds": 0.311,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-4005-a1-2026-11-19T181503+0000.log",
+    "output_summary": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.016s\n\nOK",
+    "sha256": "ba4086336b9d027d5b34d100f2218472ec0ac0b58ca3ac5ff4d7eb2276e92ae7",
+    "trust": "auto"
+  }
+}

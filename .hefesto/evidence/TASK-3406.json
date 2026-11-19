@@ -1,0 +1,69 @@
+{
+  "attempts": 1,
+  "base_commit": "eb7a065a5eea08727284a6ebf42b0abf90ccfb73",
+  "branch": "hefesto/fase-34-replica-funcional-que-tiene-una-app-web-como-lo-hace-y-como-mejorarlo",
+  "commit": "dd05e63c9c0ab2d5e4fc219af5a352e9b3cd7c04",
+  "contract": [],
+  "created_at": "2026-11-19T16:21:29+00:00",
+  "files": [
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "9764dad1528b9953989559fdc6257f0d349094195aff5b46136a34a6efa02338"
+    },
+    {
+      "path": "README.md",
+      "sha256": "41198218219e00159e096f321e6ea01cfc2688b8e3d2f459bb6a784a511289ca"
+    },
+    {
+      "path": "docs/ENTREGA.md",
+      "sha256": "69b3b4b5a5fa61bba464b7f63af85920a92f553d2486fdcc77342d1053a15a17"
+    },
+    {
+      "path": "docs/HEFESTO_ADDON_V2_5.md",
+      "sha256": "b53dfc841b127626fd8c0617a6989b88d4b29ee31cb59e3e24aacdd9c0801185"
+    },
+    {
+      "path": "tests/test_docs_encoding.py",
+      "sha256": "a92374ef2d6d540120541fea0c941797be771c503610ed25dd1de5e9d2580f01"
+    }
+  ],
+  "phase": "Fase 34 — Replica funcional: qué tiene una app web, cómo lo hace y cómo mejorarlo",
+  "prev_sha256": "1c1f587e70e755211e4fefc46e52e6483fc3cd2a30fb4f3de265bfd00a764860",
+  "prev_task_id": "TASK-3405",
+  "providers": [
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T16:21:26+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Caracteres corruptos corregidos y detector; añadida la raya señalada por el revisor",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "7d0711fa68bf",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "7d0711fa68bf",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 156,
+  "task_id": "TASK-3406",
+  "title": "Corregir caracteres corruptos en la documentación y evitar que vuelvan",
+  "verify": {
+    "command": "python -m unittest tests.test_docs_encoding tests.test_release_version",
+    "duration_seconds": 0.22,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-3406-a1-2026-11-19T162127+0000.log",
+    "output_summary": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.011s\n\nOK",
+    "sha256": "6156f593a72dceb39e1444c8918eb336c5b65889944eca1fa4c90dd3cd2a9ab9",
+    "trust": "auto"
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "attempts": 1,
+  "base_commit": "c45c9a793e53afdf943b0a2e79ce7b17c143eb48",
+  "branch": "hefesto/fase-33-auditoria-predespliegue",
+  "commit": "fc82e9274add98ccbd808690dc553ab72ed07a46",
+  "contract": [
+    "tests/test_predeploy.py"
+  ],
+  "created_at": "2026-11-19T12:56:13+00:00",
+  "files": [
+    {
+      "path": "tests/test_predeploy.py",
+      "sha256": "5b9760481990fae033534b131e8abf45875e9f9600381ba845d0854080248f69"
+    }
+  ],
+  "phase": "Fase 33 — Auditoría predespliegue",
+  "prev_sha256": "1ed03e65830a9a78c107ee289df27fa7d9fdd4bcb3ba69767936e522546ebf7a",
+  "prev_task_id": "TASK-3203",
+  "providers": [
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T12:56:11+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Contrato de la auditoría predespliegue A–E",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "fb6a05f6d375",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "fb6a05f6d375",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 134,
+  "task_id": "TASK-3301",
+  "title": "Contrato de la auditoría predespliegue A–E",
+  "verify": {
+    "command": "python -m unittest tests.test_predeploy.ContractDefinitionTests",
+    "duration_seconds": 0.308,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-3301-a1-2026-11-19T125612+0000.log",
+    "output_summary": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.011s\n\nOK",
+    "sha256": "e04a3a4329617ede43c499c4794ef0e631e229174d0db397cbcd7c321e1b9f9b",
+    "trust": "human"
+  }
+}

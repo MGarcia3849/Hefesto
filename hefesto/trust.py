@@ -58,6 +58,20 @@ def status(project: Path, task: roadmap.Task) -> str:
     return "trusted" if entry.get("sha256") == verify_hash(task.verify) else "changed"
 
 
+def approve_tasks(project: Path, expected: dict[str, str], channel: str) -> list[str]:
+    """Concede únicamente los hashes exactos de una operación humana aprobada."""
+    data = load(project)
+    approved = []
+    for task in roadmap.load_valid(project).tasks:
+        hashed = verify_hash(task.verify)
+        if task.verify and expected.get(task.id) == hashed:
+            data["verify"][task.id] = {"sha256": hashed, "approved_at": now_iso(), "channel": channel}
+            approved.append(task.id)
+    if approved:
+        atomic_write_json(trust_path(project), data)
+    return approved
+
+
 def _split_pipeline(command: str) -> list[list[str]] | None:
     """Parse only quoted words, exact redirects and the four supported separators."""
     subcommands: list[list[str]] = []

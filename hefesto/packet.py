@@ -487,6 +487,12 @@ def build(project: Path, cfg: config.Config, role: str, instruction: str, task: 
                 f"- verify (debe salir con 0): `{task.verify}`"]
         if task.accept:
             meta.append(f"- criterios de aceptación: {task.accept}")
+        for value, label in ((task.scope, "alcance"), (task.out_of_scope, "fuera de alcance"),
+                             (task.risks, "riesgos")):
+            if value:
+                meta.append(f"- {label}: {value}")
+        if task.requires_approval:
+            meta.append(f"- aprobaciones pendientes: {', '.join(task.requires_approval)}")
         if task.depends_on:
             meta.append(f"- depende de: {', '.join(task.depends_on)}")
         sections.append(Section("Tarea", P_ESSENTIAL, [("", "\n".join(meta))]))

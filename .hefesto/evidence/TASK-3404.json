@@ -1,0 +1,65 @@
+{
+  "attempts": 1,
+  "base_commit": "bd237822de343d1fa703d67ba572fc2c0cab4cd3",
+  "branch": "hefesto/fase-34-replica-funcional-que-tiene-una-app-web-como-lo-hace-y-como-mejorarlo",
+  "commit": "abe564f4f5694bb1b20604856337f0b71be1a5f7",
+  "contract": [],
+  "created_at": "2026-11-19T15:48:12+00:00",
+  "files": [
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "f0188682ce2e0cd95daaaa1fad667e84b9c39ac9f8996fd34da047972f0074db"
+    },
+    {
+      "path": "hefesto/replica_features.py",
+      "sha256": "3c9d4f433b89345765c161dcaf09553a7b1fb90107e5a617023fec836deb8632"
+    }
+  ],
+  "phase": "Fase 34 — Replica funcional: qué tiene una app web, cómo lo hace y cómo mejorarlo",
+  "prev_sha256": "01c5a4d183635a24f3cab9d35d84244572b9483178930ad12ff4cfe3b7e10a09",
+  "prev_task_id": "TASK-3403",
+  "providers": [
+    "codex:gpt-6-luna",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T15:47:31+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:default",
+      "codex:gpt-6-luna"
+    ],
+    "exception": null,
+    "notes": "Propuestas, aprobación humana, plan y check de Replica funcional",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "75cdca611890",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "dcc4ca2ee89c",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "75cdca611890",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 154,
+  "task_id": "TASK-3404",
+  "title": "Propuestas de mejora y ciclo planificar-comprobar",
+  "verify": {
+    "command": "python -m unittest tests.test_replica_plus.ProposalTests tests.test_replica_plus.PlanCheckTests tests.test_addon_replica && python tools/dev.py lint",
+    "duration_seconds": 39.23,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-3404-a1-2026-11-19T154811+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (132 ficheros Python)\n.........................................................\n----------------------------------------------------------------------\nRan 57 tests in 37.522s\n\nOK",
+    "sha256": "0af714f5396b8f090cb628316b58241e6a09a1f42e8371c4303d70f34185391e",
+    "trust": "human"
+  }
+}

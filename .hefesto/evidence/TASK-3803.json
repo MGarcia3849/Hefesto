@@ -1,0 +1,73 @@
+{
+  "attempts": 1,
+  "base_commit": "5b1fb0851a25d08fb2e2900d793979df2ead2431",
+  "branch": "hefesto/fase-38-robustez-y-documentacion-de-telegram",
+  "commit": "6009b8b3c33cfb7accaa518af4fc60c9a92ea893",
+  "contract": [],
+  "created_at": "2026-11-19T14:28:25+00:00",
+  "files": [
+    {
+      "path": "docs/telegram.env.example",
+      "sha256": "dbf0a561ac988a3bea7d7121ea5b4975c5ab5fcdf7f47b65a5fab7b46f9900ac"
+    },
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "5d8c860aeaefc887a5a1a85d8c65377a87915b211bb26e9a103d907eccc32c66"
+    },
+    {
+      "path": "hefesto/telegram.py",
+      "sha256": "debc1d4923850a5a982ab725505d53e061a7943f612e580df8133e1f2f46ac1d"
+    },
+    {
+      "path": "tests/test_telegram_e2e.py",
+      "sha256": "9a6c52c63de22bcb6192f78e881d3355b4dd9449199c1f37951a462072a2e7b0"
+    }
+  ],
+  "phase": "Fase 38 — Robustez y documentación de Telegram",
+  "prev_sha256": "ecce65a6f31b50588a318fca768a19eafea75247eb32e574d4d7fe115cc729c2",
+  "prev_task_id": "TASK-3802",
+  "providers": [
+    "codex:gpt-6-luna",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T14:28:21+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:default",
+      "codex:gpt-6-luna"
+    ],
+    "exception": null,
+    "notes": "Arranque, parada y reintentos del gateway",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "6f13c893ae42",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "e9283276ab40",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "6f13c893ae42",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 147,
+  "task_id": "TASK-3803",
+  "title": "Arranque y parada en Windows y registro estructurado",
+  "verify": {
+    "command": "python -m unittest tests.test_telegram_e2e.OperationsTests && python tools/dev.py lint",
+    "duration_seconds": 1.791,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-3803-a1-2026-11-19T142824+0000.log",
+    "output_summary": "Telegram: operaciones interrumpidas: OP-1\nTelegram: operaciones interrumpidas: OP-1\nTelegram: detenido.\nTelegram: operaciones interrumpidas: OP-1\nTelegram: detenido.\nTelegram: operaciones interrumpidas: OP-1\nTelegram: detenido.\nlint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (128 ficheros Python)\n..Telegram: se alcanz� el m�ximo de fallos de red.\n.....\n----------------------------------------------------------------------\nRan 7 tests in 0.072s\n\nOK",
+    "sha256": "78f8f3fcf8d5140c43dcdf67236276540269d575c3aa80167111a07a3559c731",
+    "trust": "auto"
+  }
+}

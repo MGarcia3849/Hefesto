@@ -1,0 +1,55 @@
+{
+  "attempts": 1,
+  "base_commit": "5690cce05d07ec3f2845503566b5b782267d09ba",
+  "branch": "hefesto/fase-36-gestor-de-proyectos",
+  "commit": "24ca4c5647a8c49edcfee6a4f3e2841dca97dc73",
+  "contract": [
+    "tests/test_workspaces.py"
+  ],
+  "created_at": "2026-11-19T13:34:54+00:00",
+  "files": [
+    {
+      "path": "tests/test_workspaces.py",
+      "sha256": "99fe196d7254b14402331941889b41239be2f31fc038aa8f26e14dca737c17cc"
+    }
+  ],
+  "phase": "Fase 36 — Gestor de proyectos",
+  "prev_sha256": "872673a733dd89abc31c8d3312c766324d78ebf48f92cecedbe1fe2f65bcd08b",
+  "prev_task_id": "TASK-3502",
+  "providers": [
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T13:34:52+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Contrato del registro de proyectos y un tema por proyecto",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "447b5393600f",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "447b5393600f",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 141,
+  "task_id": "TASK-3601",
+  "title": "Contrato del registro de proyectos y la sesión de Telegram",
+  "verify": {
+    "command": "python -m unittest tests.test_workspaces.ContractDefinitionTests",
+    "duration_seconds": 0.309,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-3601-a1-2026-11-19T133453+0000.log",
+    "output_summary": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.011s\n\nOK",
+    "sha256": "d114b1d6631b6313526ddbb0c04dc78d046cad011386e4aa9527939882d49f4c",
+    "trust": "auto"
+  }
+}

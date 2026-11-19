@@ -1,0 +1,73 @@
+{
+  "attempts": 1,
+  "base_commit": "2835925278a710fa59842f3b7914378f4e0a0365",
+  "branch": "hefesto/fase-40-hermes-como-motor-subordinado-de-hefesto",
+  "commit": "0017e1039bec4d9aa333c906f44359cc0fa43a93",
+  "contract": [],
+  "created_at": "2026-11-19T17:46:59+00:00",
+  "files": [
+    {
+      "path": "hefesto/telegram.py",
+      "sha256": "23299e43ce00c66ff12f830efc7a8f448a20d292a279e2f88dff0353ff8b28c3"
+    },
+    {
+      "path": "hefesto/telegram_intent.py",
+      "sha256": "b903d249f46974bab62b83b4010e2f2456d7f0b28a22667611bd3043e9cd9d84"
+    },
+    {
+      "path": "hefesto/telegram_ops.py",
+      "sha256": "59133a2474b99a65f2efe286a348b40d47ec183ce5d8b4da26063688d7b4e46c"
+    },
+    {
+      "path": "tests/test_hermes_telegram.py",
+      "sha256": "e85451e5c2c1fa34a41d6136e7a092ccb4760948933198adbc281f4d3b071663"
+    }
+  ],
+  "phase": "Fase 40 — Hermes como motor subordinado de Hefesto",
+  "prev_sha256": "4af2e2ed01e058feba24bbe433558f7fd33215586fb03e1b9a77779ebc182840",
+  "prev_task_id": "TASK-4002",
+  "providers": [
+    "codex:gpt-6.1-sol",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T17:46:53+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:default",
+      "codex:gpt-6.1-sol"
+    ],
+    "exception": null,
+    "notes": "Peticiones generales con Hermes desde Telegram",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "af28739b97d9",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6.1-sol",
+      "role": "forge",
+      "run_id": "253e1a018482",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "af28739b97d9",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 160,
+  "task_id": "TASK-4003",
+  "title": "Peticiones generales desde Telegram con Hermes",
+  "verify": {
+    "command": "python -m unittest tests.test_hermes_telegram && python tools/dev.py lint",
+    "duration_seconds": 3.474,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-4003-a1-2026-11-19T174657+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (138 ficheros Python)\n...................\n----------------------------------------------------------------------\nRan 19 tests in 1.736s\n\nOK",
+    "sha256": "e7fe09099ae3bf5d58f08f7bf039cfefc7eb42c1d7e44727a0e8822ccc5819bd",
+    "trust": "auto"
+  }
+}

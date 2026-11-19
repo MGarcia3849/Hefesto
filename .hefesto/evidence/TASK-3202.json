@@ -1,0 +1,73 @@
+{
+  "attempts": 1,
+  "base_commit": "430f7904b8b6efb83ff0641ccc9d034416a42576",
+  "branch": "hefesto/fase-32-fiabilidad-del-harness",
+  "commit": "ae2a54548601bc9567401cbebab664f87958b505",
+  "contract": [],
+  "created_at": "2026-11-19T12:38:18+00:00",
+  "files": [
+    {
+      "path": "hefesto.toml",
+      "sha256": "cc6e4d68df3b16dec69b52f2ed16f930ca2578243e5f4e2669be8c0053ae7a0e"
+    },
+    {
+      "path": "hefesto/adapters/base.py",
+      "sha256": "1783715cde04160c9b6cedde4991946257845e0ae68dfe7a72558cf1aadb45e2"
+    },
+    {
+      "path": "hefesto/config.py",
+      "sha256": "82c89fcda1b3d37b708efe3663b545ba18c5988b4fd75a9749e8329896e88f32"
+    },
+    {
+      "path": "hefesto/router.py",
+      "sha256": "3cfa8d1c8d2a45886e1c8cb85fd08f9115ffde50c34f4621d07568bde4f507fa"
+    }
+  ],
+  "phase": "Fase 32 — Fiabilidad del harness",
+  "prev_sha256": "ffe0cc3925d1d989fcab9b87e2b861d37f07003d3c3c896f2b24b0197db66fa7",
+  "prev_task_id": "TASK-3201",
+  "providers": [
+    "codex:gpt-6.1-sol",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T12:37:40+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:default",
+      "codex:gpt-6.1-sol"
+    ],
+    "exception": null,
+    "notes": "Clasificación de errores y reintentos transitorios con presupuesto 0 por defecto",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "c9058408fb73",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6.1-sol",
+      "role": "forge",
+      "run_id": "19f74c008eac",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "c9058408fb73",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 132,
+  "task_id": "TASK-3202",
+  "title": "Clasificación de errores y reintentos con presupuesto",
+  "verify": {
+    "command": "python -m unittest tests.test_reliability.ErrorClassTests tests.test_reliability.RetryBudgetTests && python tools/dev.py lint",
+    "duration_seconds": 30.142,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-3202-a1-2026-11-19T123811+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (117 ficheros Python)\n..........\n----------------------------------------------------------------------\nRan 10 tests in 24.957s\n\nOK",
+    "sha256": "5aa791bdb3c7f768fa5b924dae64e9358d3d1e0240906557e6d241f840676f3d",
+    "trust": "human"
+  }
+}

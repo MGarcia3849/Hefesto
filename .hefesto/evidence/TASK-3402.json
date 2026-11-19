@@ -1,0 +1,73 @@
+{
+  "attempts": 1,
+  "base_commit": "6ce7a4f5df24f40e1487684f404d2e08125cd002",
+  "branch": "hefesto/fase-34-replica-funcional-que-tiene-una-app-web-como-lo-hace-y-como-mejorarlo",
+  "commit": "7c9397ea8cbf9e5b9cf19597567377e52bfad973",
+  "contract": [],
+  "created_at": "2026-11-19T15:29:37+00:00",
+  "files": [
+    {
+      "path": "hefesto.toml",
+      "sha256": "ec77ec13c958e416b4dec6da7d979e496e6498bf10a9034aaa8942074cbf5952"
+    },
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "7c071d2b0466013a96741eb500394d9cc04f85919aba5a2a474ddc478af70f32"
+    },
+    {
+      "path": "hefesto/config.py",
+      "sha256": "fbd988ca1443ac65ea4c821ad90fdd108ac601c2052ef74d206280cb65c22f65"
+    },
+    {
+      "path": "hefesto/replica_features.py",
+      "sha256": "f770928d0c992895e86454d8239d9dcaaecd44cbc7ca20e0469da21d22ba5b9a"
+    }
+  ],
+  "phase": "Fase 34 — Replica funcional: qué tiene una app web, cómo lo hace y cómo mejorarlo",
+  "prev_sha256": "0f8bbd5fffd467eb91c6786e4e58a3feecf3ff937d3b804c09bf9dfb92d9d9cf",
+  "prev_task_id": "TASK-3401",
+  "providers": [
+    "codex:gpt-6.1-sol",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T15:28:54+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:default",
+      "codex:gpt-6.1-sol"
+    ],
+    "exception": null,
+    "notes": "Estudio funcional de la referencia",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "893ac378e43c",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6.1-sol",
+      "role": "forge",
+      "run_id": "e13d1317da29",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "893ac378e43c",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 152,
+  "task_id": "TASK-3402",
+  "title": "Inventario funcional de la referencia y de cómo lo hace",
+  "verify": {
+    "command": "python -m unittest tests.test_replica_plus.ReferenceTests tests.test_addon_replica && python tools/dev.py lint",
+    "duration_seconds": 40.395,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-3402-a1-2026-11-19T152935+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (132 ficheros Python)\n........................................................\n----------------------------------------------------------------------\nRan 56 tests in 38.705s\n\nOK",
+    "sha256": "0e0fe32040160273ee99c6d876aac80ec93422d66cc5c546335ed6ab244887da",
+    "trust": "human"
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "attempts": 1,
+  "base_commit": "1a4b6dcde047ed5a997ff0bf2c0973b84364a68a",
+  "branch": "hefesto/fase-35-gateway-de-telegram-minimo",
+  "commit": "5de20d8b05cffb0b975791ef75e2622327f3ce07",
+  "contract": [
+    "tests/test_telegram.py"
+  ],
+  "created_at": "2026-11-19T13:25:34+00:00",
+  "files": [
+    {
+      "path": "tests/test_telegram.py",
+      "sha256": "ae4cfa02e5db51833efecc3945a1b00fa955a4faa49e9204e39dc2024aaceef7"
+    }
+  ],
+  "phase": "Fase 35 — Gateway de Telegram mínimo",
+  "prev_sha256": "e476087a6e06a29b367f8a04f4a5bc4f222af31e807168dc6cdf19e3d07b726c",
+  "prev_task_id": "TASK-3305",
+  "providers": [
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T13:25:31+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Contrato del gateway de Telegram de solo lectura",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "5b3d2a953b24",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "5b3d2a953b24",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 139,
+  "task_id": "TASK-3501",
+  "title": "Contrato del gateway de Telegram de solo lectura",
+  "verify": {
+    "command": "python -m unittest tests.test_telegram.ContractDefinitionTests",
+    "duration_seconds": 0.318,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-3501-a1-2026-11-19T132532+0000.log",
+    "output_summary": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.011s\n\nOK",
+    "sha256": "b1531b93ef823dd8d74871943083d43e9bc15ffa367f445bdc73e0beb0bf2ddf",
+    "trust": "auto"
+  }
+}

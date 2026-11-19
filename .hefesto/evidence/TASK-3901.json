@@ -1,0 +1,73 @@
+{
+  "attempts": 1,
+  "base_commit": "aa5bfd5c55bb00facdd1d7d545ad18afab1314f7",
+  "branch": "hefesto/fase-39-hefesto-siempre-activo",
+  "commit": "ea62812bec025927eae17f7b694aff253fb02973",
+  "contract": [],
+  "created_at": "2026-11-19T16:30:41+00:00",
+  "files": [
+    {
+      "path": "docs/TELEGRAM.md",
+      "sha256": "70384a2a501e326f85f009163fb58934dbd803ebaaeddd6a8462487ca1be163d"
+    },
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "59592714814a9481a41d78eb6bbfeb6b74c0bbb1ee0da045c6e317fd754c85aa"
+    },
+    {
+      "path": "hefesto/telegram_service.py",
+      "sha256": "4b91bc67185e10b746b5e2edd6f82d1556f11d48989f1fd662278e054558a8bb"
+    },
+    {
+      "path": "tests/test_telegram_service.py",
+      "sha256": "0fa1718e75e02b3d0f7d6474f7cf46176ef0805166a37bcbef02d6a49d080a76"
+    }
+  ],
+  "phase": "Fase 39 — Hefesto siempre activo",
+  "prev_sha256": "b0280a4820490533cf405b75dcf58b11e8b643d073c4f12e677c6fb0d8cbd4f4",
+  "prev_task_id": "TASK-3406",
+  "providers": [
+    "codex:gpt-6.1-sol",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T16:30:37+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:default",
+      "codex:gpt-6.1-sol"
+    ],
+    "exception": null,
+    "notes": "Arranque automático del gateway al iniciar sesión",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "038eb8a3049b",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6.1-sol",
+      "role": "forge",
+      "run_id": "e17825d04c87",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "038eb8a3049b",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 157,
+  "task_id": "TASK-3901",
+  "title": "Arranque automático del gateway de Telegram al iniciar sesión",
+  "verify": {
+    "command": "python -m unittest tests.test_telegram_service && python tools/dev.py lint",
+    "duration_seconds": 2.648,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-3901-a1-2026-11-19T163040+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (135 ficheros Python)\n............\n----------------------------------------------------------------------\nRan 12 tests in 0.827s\n\nOK",
+    "sha256": "63500f4956d980a7b14f621e3253869602f3ba0259b688cbbd32c78cc83ec54e",
+    "trust": "auto"
+  }
+}
