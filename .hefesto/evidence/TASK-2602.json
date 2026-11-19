@@ -1,0 +1,68 @@
+{
+  "attempts": 1,
+  "base_commit": "ce8b48d3dc8745938c776a1c304c68df80993a30",
+  "branch": "hefesto/fase-26-propuestas-de-experiencia-visual",
+  "commit": "f37e7cae4051f282a2dd0fff12403b15220aa5aa",
+  "contract": [],
+  "created_at": "2026-11-18T07:09:21+00:00",
+  "files": [
+    {
+      "path": "catalog/skills.toml",
+      "sha256": "844ffe8048a0b15ab78c4fa63fc9edde03dcb4f9bb824b24c1dbe21d343847d7"
+    },
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "1a73b8e4c228ff11d816d3ef14fbb57d2004dd42b64551d136b72ea994d260ea"
+    },
+    {
+      "path": "hefesto/visual_experience.py",
+      "sha256": "a4ce68a3fb9f106c342d8a7b090010609684334a104989a4ff78f1fce2351cd8"
+    }
+  ],
+  "phase": "Fase 26 — Propuestas de experiencia visual",
+  "prev_sha256": "cf7d671060450e194e0937b3bbcceb4c77c296d25f3a45dfd655b962e2ccf1d0",
+  "prev_task_id": "TASK-2601",
+  "providers": [
+    "claude:sonnet",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-18T07:08:50+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:sonnet"
+    ],
+    "exception": null,
+    "notes": "visual_experience.py + CLI; add-on 161/161; lint OK",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "640697223f32",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "claude:sonnet",
+      "role": "visual",
+      "run_id": "64bcc1385a75",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "640697223f32",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 114,
+  "task_id": "TASK-2602",
+  "title": "CLI de inspección y propuesta visual opcional",
+  "verify": {
+    "command": "python -m unittest tests.test_addon_visual && python tools/dev.py lint",
+    "duration_seconds": 29.725,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-2602-a1-2026-11-18T070920+0000.log",
+    "output_summary": "  kind: web\n  effect: animation\n  id: PROP-6B7DE180077C\n  sha256: 4497156a5176972ad112102ca0402144d9964734bfdc777035585782ea96c737\n  description: Latido del aviso urgente\n�mbito exacto de aprobaci�n:\n  project: proyecto-2b196924b031\n  page: web/index.html\n  kind: web\n  effect: video\n  id: PROP-FC190B4F829E\n  sha256: 333ebe7df202413866b7def15a78839d968cd7aeb8da5bc584c18644adff2016\n  description: Latido del aviso urgente\nlint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (109 ficheros Python)\n..................................................\n----------------------------------------------------------------------\nRan 50 tests in 28.071s\n\nOK",
+    "sha256": "c341a51dd493e71ebcd254560cda8a0964a41f397af174fb9242b10438d292c4",
+    "trust": "auto"
+  }
+}

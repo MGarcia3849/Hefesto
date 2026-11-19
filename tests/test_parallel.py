@@ -397,7 +397,22 @@ class ParallelBase(HefestoTestCase):
 class ParallelRunTests(ParallelBase):
     def test_respects_global_and_per_model_limits(self) -> None:
         self.write_roadmap(simple(6))
-        rec = Recorder(delay=0.6)
+
+        def until_four_active(_job: Any, recorder: Recorder) -> None:
+            # Barrera en vez de una ventana fija: bajo carga, crear los worktrees puede tardar más
+            # que el `delay` y el cuarto trabajo arrancaría cuando otro ya ha terminado.
+            # Solo los cuatro primeros esperan; si el planificador no abre el cuarto hueco, expira.
+            deadline = time.monotonic() + 20
+            with recorder.lock:
+                first_wave = len(recorder.jobs) <= 4
+            while first_wave and time.monotonic() < deadline:
+                with recorder.lock:
+                    if recorder.peak_total >= 4:
+                        return None
+                time.sleep(0.02)
+            return None
+
+        rec = Recorder(delay=0.1, behaviour=until_four_active)
         results = self.run_parallel(worker=rec)
         self.assertEqual({r.status for r in results.values()}, {"integrated"})
         self.assertLessEqual(rec.peak_total, 4)

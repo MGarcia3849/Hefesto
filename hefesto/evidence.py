@@ -12,7 +12,8 @@ from typing import Any
 
 from hefesto import log
 from hefesto.guard import redact
-from hefesto.util import EXIT_UNAVAILABLE, HefestoError, atomic_write_text, filtered_env, find_bash, now_iso
+from hefesto.util import (EXIT_UNAVAILABLE, HefestoError, atomic_write_text, child_console_kwargs, filtered_env,
+                          find_bash, now_iso)
 
 SUMMARY_LINES = 20
 SUMMARY_CHARS = 2000
@@ -39,7 +40,8 @@ def run_verify(project: Path, workdir: Path, task_id: str, command: str, timeout
     start = time.monotonic()
     try:
         proc = subprocess.run([bash, "-c", command], cwd=workdir, capture_output=True, text=True, encoding="utf-8",
-                              errors="replace", timeout=timeout, env=filtered_env(strip_credentials=True))
+                              errors="replace", timeout=timeout, env=filtered_env(strip_credentials=True),
+                              **child_console_kwargs())
         code, output = proc.returncode, (proc.stdout or "") + (proc.stderr or "")
     except subprocess.TimeoutExpired as exc:
         partial = exc.stdout or ""

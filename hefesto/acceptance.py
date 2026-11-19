@@ -259,6 +259,9 @@ def done(project: Path, task_id: str) -> tuple[int, str]:
         if changed and (not review_rec or review_rec.get("verdict") != "pass" or review_rec.get("attempt") != data["attempts"]):
             return EXIT_BLOCKED, (f"{task_id} cambia código ({len(changed)} ficheros) y no tiene revisión `pass` del "
                                   f"intento actual: `hefesto review {task_id} --verdict pass|fail …`.")
+        from hefesto import security
+
+        security_report = security.gate(project, workdir, data.get("task_base") or "HEAD", "done")
         path = roadmap.roadmap_path(project)
         roadmap.set_marker(path, task_id, "x")
         try:
@@ -325,6 +328,9 @@ def done(project: Path, task_id: str) -> tuple[int, str]:
             _, graph_msg = packs.run_graphify(workdir, ["update", "."])
 
     msg = f"{task_id} completada: commit {commit[:10]}, evidencia {ev_path.name}."
+    warnings = security.warning_text(security_report)
+    if warnings:
+        msg += "\n" + warnings
     if graph_msg:
         msg = f"{msg} {graph_msg}".strip()
     return EXIT_OK, msg
@@ -426,9 +432,22 @@ def finish(project: Path, phase: str | None, pr: bool, yes: bool = False) -> tup
     rm = roadmap.load_valid(project)
     slug, info = _phase_info(project, data, rm, phase)
     branch, workdir = info["branch"], Path(info["workdir"])
-    if data["status"] == "IN_PROGRESS" and data.get("branch") == branch:
+    order = list(dict.fromkeys(t.phase_slug for t in rm.tasks))
+    included: dict[str, dict[str, Any]] = {}
+    for previous in order[:order.index(slug)] if slug in order else []:
+        previous_info = (data.get("phases") or {}).get(previous)
+        if previous_info is None:
+            continue
+        ancestor = gitops.git(project, "merge-base", "--is-ancestor", previous_info["branch"], branch, check=False)
+        if ancestor.returncode not in (0, 1):
+            return EXIT_BLOCKED, f"No se puede comprobar si {previous_info['branch']} está contenida en {branch}."
+        if ancestor.returncode == 0:
+            included[previous] = previous_info
+    included[slug] = info
+    branches = {entry["branch"] for entry in included.values()}
+    if data["status"] == "IN_PROGRESS" and data.get("branch") in branches:
         return EXIT_CONFLICT, f"Hay una tarea en curso en {branch}: termínala antes de integrar."
-    tasks = [t for t in rm.tasks if t.phase_slug == slug or f"{t.phase_slug}-{t.id.lower()}" == slug]
+    tasks = [t for t in rm.tasks if t.phase_slug in included or f"{t.phase_slug}-{t.id.lower()}" in included]
     pending = [t.id for t in tasks if t.marker != "x"]
     if pending:
         return EXIT_BLOCKED, f"Tareas sin completar en la fase: {', '.join(pending)}."
@@ -445,6 +464,16 @@ def finish(project: Path, phase: str | None, pr: bool, yes: bool = False) -> tup
         util.require_tty("hefesto finish")
 
     main = gitops.main_branch(project, cfg)
+    from hefesto import approval, security
+
+    base = (gitops.out(project, "merge-base", main, branch) if len(included) > 1
+            else info.get("base") or gitops.out(project, "merge-base", main, branch))
+    for kind in {task.kind for task in tasks} or {"code"}:
+        approval.gate(project, workdir, base, kind, "finish")
+    security_report = security.gate(project, workdir, base, "finish")
+    warnings = security.warning_text(security_report)
+    if warnings:
+        print(warnings)
     is_local = bool(getattr(cfg, "settings", None) and cfg.settings.get("install_mode") == "local")
 
     diff_proc = gitops.git(project, "diff", "--name-only", f"{main}...{branch}", check=False)
@@ -475,7 +504,6 @@ def finish(project: Path, phase: str | None, pr: bool, yes: bool = False) -> tup
         gitops.git(project, "worktree", "add", "-q", str(temp_worktree), temp_branch)
         gitops.link_worktree(project, temp_worktree, cfg.get("execution", "worktree_links", default=[]) or [])
 
-        base = info.get("base") or gitops.out(project, "merge-base", main, branch)
         rebase = gitops.git(temp_worktree, "rebase", "--onto", main, base, temp_branch, check=False)
         if rebase.returncode != 0:
             conflicts = gitops.out(temp_worktree, "diff", "--name-only", "--diff-filter=U")
@@ -503,9 +531,13 @@ def finish(project: Path, phase: str | None, pr: bool, yes: bool = False) -> tup
         stat = gitops.out(temp_worktree, "diff", "--stat", f"{main}...{temp_branch}")
         used = sorted({p for t in tasks for p in evidence.show(project, t.id).get("providers", [])})
         omitted = f"\n\nVerify de contrato omitidos: {', '.join(skipped_contract)}" if skipped_contract else ""
-        summary = (f"hefesto: integra {branch}\n\nTareas:\n" + "\n".join(f"- {t.id}: {t.title}" for t in tasks)
+        phase_summary = ("\n\nFases incluidas:\n" + "\n".join(f"- {s}: {entry['branch']}" for s, entry in included.items())
+                         if len(included) > 1 else "")
+        summary = (f"hefesto: integra {branch}" + phase_summary + "\n\nTareas:\n"
+                   + "\n".join(f"- {t.id}: {t.title}" for t in tasks)
                    + omitted
                    + f"\n\nProveedores: {', '.join(used) or 'ninguno registrado'}\n\nCommits:\n{commits}\n\n{stat}\n")
+        util.restore_console()  # la suite pudo dejar la consola en crudo: sin esto el resumen sale ilegible
         print(summary)
         if pr:
             if not yes and not util.confirm(f"¿Subir {branch} a origin y abrir un PR en borrador?", default=False):
@@ -552,23 +584,27 @@ def finish(project: Path, phase: str | None, pr: bool, yes: bool = False) -> tup
                 return EXIT_CONFLICT, f"Error al integrar {branch} en {main}: {merge_err}"
 
             merged = gitops.out(project, "rev-parse", "HEAD")
-            if info.get("isolation") == "worktree":
-                gitops.remove_worktree(project, workdir, force=True)
-                if workdir.exists():
-                    shutil.rmtree(workdir, ignore_errors=True)
-                gitops.git(project, "worktree", "prune", check=False)
-            gitops.git(project, "branch", "-D", branch, check=False)
+            for entry in reversed(list(included.values())):
+                phase_workdir = Path(entry["workdir"])
+                if entry.get("isolation") == "worktree":
+                    gitops.remove_worktree(project, phase_workdir, force=True)
+                    if phase_workdir.exists():
+                        shutil.rmtree(phase_workdir, ignore_errors=True)
+                    gitops.git(project, "worktree", "prune", check=False)
+                gitops.git(project, "branch", "-D", entry["branch"], check=False)
 
             data = state.load(project)
             phases = dict(data.get("phases") or {})
-            phases.pop(slug, None)
+            for included_slug in included:
+                phases.pop(included_slug, None)
             data["phases"] = phases
-            if data.get("branch") == branch:
+            if data.get("branch") in branches or data.get("workdir") in {entry["workdir"] for entry in included.values()}:
                 data.update({"branch": None, "workdir": None, "isolation": None})
             data["next_action"] = "hefesto next"
             state.save(project, data)
-            log.event(project, "finish", f"{branch} integrada en {main}", commit=merged)
+            integrated = ", ".join(entry["branch"] for entry in included.values())
+            log.event(project, "finish", f"{integrated} integrada en {main}", commit=merged)
 
-        return EXIT_OK, f"{branch} integrada en {main} ({strategy}): {merged[:10]}."
+        return EXIT_OK, f"{integrated} integrada en {main} ({strategy}): {merged[:10]}."
     finally:
         _cleanup_temp_finish(project, temp_worktree, temp_branch)

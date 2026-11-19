@@ -1,0 +1,62 @@
+{
+  "attempts": 1,
+  "base_commit": "86a4653502755dbc460b931326dfdf7335463739",
+  "branch": "hefesto/fase-23-consentimiento-y-barreras-del-add-on-v2-5",
+  "commit": "18a9700c64ba130d5a801808a13961a7b68e0a8a",
+  "contract": [
+    "tests/test_addon_approval.py"
+  ],
+  "created_at": "2026-11-18T00:12:07+00:00",
+  "files": [
+    {
+      "path": "tests/test_addon_approval.py",
+      "sha256": "f417ee350753dff3eb83032360356dc778489f27bf22c16a3171fcbff63cdc1f"
+    }
+  ],
+  "phase": "Fase 23 — Consentimiento y barreras del add-on v2.5",
+  "prev_sha256": "b47dc84bb56bae9b9d5a0f7434b13fdafe9fb66bf69a5477279958f8781118e7",
+  "prev_task_id": "TASK-2303",
+  "providers": [
+    "claude:opus",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-18T00:11:43+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Fixture usa la rama principal real; aserciones de seguridad intactas; VisualGateTests 21/21",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "974733733ea7",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "claude:opus",
+      "role": "core",
+      "run_id": "1840c3d5dea4",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "974733733ea7",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 107,
+  "task_id": "TASK-2304",
+  "title": "Hacer portable el fixture Git del contrato visual",
+  "verify": {
+    "command": "python -m unittest tests.test_addon_approval.VisualGateTests",
+    "duration_seconds": 23.104,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-2304-a1-2026-11-18T001207+0000.log",
+    "output_summary": "  project: proyecto-e4253d6a8a00\n  page: web/index.html\n  kind: web\n  effect: animation\n  id: PROP-A068AD6C97A0\n  sha256: b8692fbf0e34189b8c0d24fd32a23c6b24f185d262a70b189f47c55fd64285b6\n  description: Movimiento animation en web/index.html\n�mbito exacto de aprobaci�n:\n  project: proyecto-78ebb41e475c\n  page: web/index.html\n  kind: web\n  effect: animation\n  id: PROP-300DCD9D6053\n  sha256: 0a7f5e05a2e423d2b02870df137edf022a15b75efc89eb801df9724d57b4bfc7\n  description: Movimiento animation en web/index.html\n.....................\n----------------------------------------------------------------------\nRan 21 tests in 22.779s\n\nOK",
+    "sha256": "eaac05d9dac6ebeebc0909c6f37da9d7294681147ba266043455546ae7aef53f",
+    "trust": "auto"
+  }
+}

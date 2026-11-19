@@ -1,5 +1,11 @@
 # Changelog
 
+## Add-on v2.5
+
+- Documenta `approval`, `replica`, `security` y `visual-experience`, sus comandos reales, límites, pruebas y recuperación manual.
+- `hefesto migrate` añade por defecto `visual.motion = static` y los perfiles de seguridad ausentes; preserva los valores existentes y crea primero una copia en `.hefesto/backups/`.
+- Los flujos mantienen sus confirmaciones humanas; Hefesto no hace push, merge ni despliegue automáticos.
+
 ## Fase 22 — Tablero animado de la forja
 
 - Añade `hefesto dashboard` para consultar el progreso y la actividad real de delegaciones; `hefesto dashboard --once` imprime una instantánea estática.

@@ -1,0 +1,76 @@
+{
+  "attempts": 1,
+  "base_commit": "a8ce72c9375fab4a38f11a2cc37cc15ea2bf0f5c",
+  "branch": "hefesto/fase-27-compatibilidad-y-entrega-documentada",
+  "commit": "7e5f8fc435519eb66acf3e9efb40dd13b53b2d61",
+  "contract": [],
+  "created_at": "2026-11-18T07:49:35+00:00",
+  "files": [
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "42fb4f9046f13fa88a06e6324699cbc20c9165397c5f5473170c880ded7805f3"
+    },
+    {
+      "path": "README.md",
+      "sha256": "18cdb2fdb84b5d061e3aa7d85906499cbe63e6acd8ca399123b4b636c1889354"
+    },
+    {
+      "path": "docs/HEFESTO_ADDON_V2_5.md",
+      "sha256": "e0771d735e8b38175dcb8b651cd5641fa8e6855b0152d37ad9cdcd600d5f4b82"
+    },
+    {
+      "path": "hefesto/distribution.py",
+      "sha256": "93bf82c6be8a887aade51236deb6e9a42e3ac45cd51f20dfbde10965e66e2528"
+    },
+    {
+      "path": "tests/test_distribution.py",
+      "sha256": "244621a369d49050027175013b4c27174b104cd3c8f267223d2fa82768240e0d"
+    }
+  ],
+  "phase": "Fase 27 — Compatibilidad y entrega documentada",
+  "prev_sha256": "f71d31f7b4fee904d306d3ff863a7a7ab2ce4e04eab6232a93b82770797ae376",
+  "prev_task_id": "TASK-2702",
+  "providers": [
+    "codex:gpt-6-luna",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-18T07:47:13+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:gpt-6-luna"
+    ],
+    "exception": null,
+    "notes": "Docs add-on v2.5 + migración idempotente; 234 OK, lint, smoke",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "49d68f1795e7",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "8fbcd36bf388",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "49d68f1795e7",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 116,
+  "task_id": "TASK-2701",
+  "title": "Documentación, migración reversible y regresión del add-on",
+  "verify": {
+    "command": "python -m unittest tests.test_addon_approval tests.test_addon_replica tests.test_addon_security tests.test_addon_visual && python tools/dev.py lint && python tools/dev.py smoke",
+    "duration_seconds": 141.27,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-2701-a1-2026-11-18T074935+0000.log",
+    "output_summary": "TASK-001 completada: commit 144cbf9196, evidencia TASK-001.json.\n\n$ hefesto -C C:\\Users\\mggcp\\AppData\\Local\\Temp\\hefesto-smoke-w8jwwibr\\proyecto evidence verify  → 0\nCadena de evidencias íntegra (1 evidencias).\n\n$ hefesto -C C:\\Users\\mggcp\\AppData\\Local\\Temp\\hefesto-smoke-w8jwwibr\\proyecto status  → 0\nhefesto: COMPLETED\n  tarea:     -  intentos: 0\n  rol:       -\n  rama:      hefesto/fase-1-humo\n  roadmap:   1/1 hechas, 0 en curso, 0 bloqueadas, 0 pendientes\n  próxima:   todas las tareas están completadas\n  siguiente: hefesto finish\n\nsmoke: OK\n................................................................................................................................................................................................................\n----------------------------------------------------------------------\nRan 208 tests in 135.296s\n\nOK",
+    "sha256": "e86c4c5fc89ea384a8060a16b27bb0025dd5dc7ff2469c1832a8fa2690e4aa3b",
+    "trust": "auto"
+  }
+}

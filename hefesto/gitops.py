@@ -270,6 +270,12 @@ def checkpoint(project: Path, workdir: Path, cfg: config.Config, task: roadmap.T
     branch = current_branch(workdir)
     if not guard.branch_allowed(branch):
         raise HefestoError(f"Commit bloqueado: la rama `{branch or '(detached)'}` no es `hefesto/*`.", EXIT_BLOCKED)
+    from hefesto import approval, state
+
+    data = state.load(project)
+    base = (data.get("task_base") if data.get("status") == "IN_PROGRESS"
+            and data.get("current_task_id") == task.id else None) or "HEAD"
+    approval.gate(project, workdir, base, task.kind, "checkpoint", consume=True)
     is_local = bool(getattr(cfg, "settings", None) and cfg.settings.get("install_mode") == "local")
     if not is_local and include_control:
         sync_control_files(project, workdir, cfg)
@@ -409,6 +415,31 @@ def _worktree_links_registry(worktree: Path) -> Path | None:
     if not git_dir.is_absolute():
         git_dir = (worktree / git_dir).resolve()
     return git_dir / _LINKS_FILENAME
+
+
+def managed_worktree_links(project: Path, worktree: Path) -> list[str]:
+    """Enlaces registrados y configurados que aún apuntan a su carpeta original."""
+    if project.resolve() == worktree.resolve():
+        return []
+    reg = _worktree_links_registry(worktree)
+    recorded = read_json(reg, default=[]) if reg is not None else []
+    if not isinstance(recorded, list):
+        return []
+    configured = config.load(project).get("execution", "worktree_links", default=[]) or []
+    allowed = {_clean_link_path(raw) for raw in configured}
+    links = []
+    for raw in recorded:
+        rel = _clean_link_path(raw)
+        if rel not in allowed:
+            continue
+        src, dest = project / rel, worktree / rel
+        if (_has_link_ancestor(dest, worktree) or not _is_within(dest.parent, worktree)
+                or _is_link(src) or _has_link_ancestor(src, project) or not _is_within(src, project)):
+            continue
+        if (_is_link(dest) and dest.resolve() == src.resolve()
+                and git(worktree, "check-ignore", "-q", "--", rel, check=False).returncode == 0):
+            links.append(rel)
+    return links
 
 
 def link_worktree(project: Path, worktree: Path, paths: list[str] | tuple[str, ...]) -> list[str]:

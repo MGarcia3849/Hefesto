@@ -267,8 +267,10 @@ def select(
     task: roadmap.Task,
     roots: list[tuple[str, Path]] | None = None,
 ) -> list[SkillChoice]:
+    from hefesto import approval
+
     actual_roots = default_roots(project, cfg) if roots is None else roots
-    installed = discover(actual_roots)
+    installed = [info for info in discover(actual_roots) if approval.skill_allowed(project, task, info.name)]
     by_name = {info.name.casefold(): info for info in installed}
 
     enabled = bool(cfg.get("skills_selection", "enabled", default=True))

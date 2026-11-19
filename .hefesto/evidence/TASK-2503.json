@@ -1,0 +1,72 @@
+{
+  "attempts": 1,
+  "base_commit": "ade280db36eeed350c3b2c898c6134c5f64b30ef",
+  "branch": "hefesto/fase-25-seguridad-y-perfil-centuria",
+  "commit": "6296d8547322b58954a13c493332072561a9452b",
+  "contract": [],
+  "created_at": "2026-11-18T06:51:24+00:00",
+  "files": [
+    {
+      "path": "hefesto/acceptance.py",
+      "sha256": "598f043a431f454209be64b6aca7d4ff0055a449b798a4e3697521ee0930fc30"
+    },
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "fc2ab65aa01e00856f5ff9fbbec8f688e86759705bccbcef6aec95368f0494de"
+    },
+    {
+      "path": "hefesto/delivery.py",
+      "sha256": "a4ea456a472a30e24780016d2b0891243c676b558c2709f1678af8f3119cedea"
+    },
+    {
+      "path": "hefesto/security.py",
+      "sha256": "830f632c80f40baa02681dd967f90db27db2bba603bcb8a2c5c3c7b2e8587e66"
+    }
+  ],
+  "phase": "Fase 25 — Seguridad y perfil Centuria",
+  "prev_sha256": "0ca607c43d2fbb0411970c505cef95e4654ed4c01897b9b28e8b3184839077ad",
+  "prev_task_id": "TASK-2502",
+  "providers": [
+    "codex:gpt-6.1-sol",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-18T06:50:57+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:gpt-6.1-sol"
+    ],
+    "exception": null,
+    "notes": "Gate de seguridad en done/finish/deploy; add-on 158/158; título del hallazgo añadido al mensaje",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "12474217313c",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6.1-sol",
+      "role": "forge",
+      "run_id": "b9d09dbe755c",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "12474217313c",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 112,
+  "task_id": "TASK-2503",
+  "title": "Gate de seguridad antes de cerrar y desplegar",
+  "verify": {
+    "command": "python -m unittest tests.test_addon_security.GateTests && python tools/dev.py lint",
+    "duration_seconds": 25.791,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-2503-a1-2026-11-18T065123+0000.log",
+    "output_summary": "Caducidad: 2026-12-18\nExcepci�n de seguridad: SEC-9f7744300647656f\nPersona: Ana P�rez (responsable de seguridad)\nMotivo: Regla p�blica temporal mientras se migra el tabl�n de avisos\nCaducidad: 2026-11-23\nExcepci�n de seguridad: SEC-9f7744300647656f\nPersona: Ana P�rez (responsable de seguridad)\nMotivo: Regla p�blica temporal mientras se migra el tabl�n de avisos\nCaducidad: 2026-11-28\nExcepci�n de seguridad: SEC-9f7744300647656f\nPersona: Ana P�rez (responsable de seguridad)\nMotivo: Regla p�blica temporal mientras se migra el tabl�n de avisos\nCaducidad: 2026-11-28\nlint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (107 ficheros Python)\n.......................\n----------------------------------------------------------------------\nRan 23 tests in 24.304s\n\nOK",
+    "sha256": "736ff13f821ab7822e8f9ae54924f463b660f322946d02961c3c03d59777901c",
+    "trust": "auto"
+  }
+}

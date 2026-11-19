@@ -1,0 +1,65 @@
+{
+  "attempts": 1,
+  "base_commit": "de122c6fdfba69ff9db314abc3fddd0961349e8b",
+  "branch": "hefesto/fase-27-compatibilidad-y-entrega-documentada",
+  "commit": "b3bb392ff77aefa752fc3883dd0493896def951f",
+  "contract": [],
+  "created_at": "2026-11-18T18:11:41+00:00",
+  "files": [
+    {
+      "path": "hefesto/acceptance.py",
+      "sha256": "e8b7d6b551a68823298a7fdc99887603d02af9400c84f3afde1173d76bc737ee"
+    },
+    {
+      "path": "hefesto/evidence.py",
+      "sha256": "1cc569748c120464c586325c19d9ccd970ae56931f83bcdc2c41bd3413bd6eee"
+    },
+    {
+      "path": "hefesto/util.py",
+      "sha256": "7a2fe53fc14b6ef7cce83f97da03a26fde8b6a7cd271a80b8830b32a03a8b5ab"
+    },
+    {
+      "path": "tests/test_console_isolation.py",
+      "sha256": "9eb679876944c1d409fb6f185acb2491f48980f4e7cb0d980cfd875226af9e2d"
+    }
+  ],
+  "phase": "Fase 27 — Compatibilidad y entrega documentada",
+  "prev_sha256": "13b79df4f1581e542dedcd9c010793ecca9501cc2f3fad06e93a58a2bd4dc3f9",
+  "prev_task_id": "TASK-2705",
+  "providers": [
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-18T18:11:35+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Aislamiento de consola en verify y restauración antes de confirmar; tests OK",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "be1ff5f19e06",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "be1ff5f19e06",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 120,
+  "task_id": "TASK-2706",
+  "title": "Aislar la consola de los verify y restaurarla antes de confirmar",
+  "verify": {
+    "command": "python -m unittest tests.test_console_isolation -v",
+    "duration_seconds": 0.287,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-2706-a1-2026-11-18T181139+0000.log",
+    "output_summary": "test_posix_has_no_creationflags (tests.test_console_isolation.ChildConsoleKwargsTest.test_posix_has_no_creationflags) ... ok\ntest_stdin_is_devnull (tests.test_console_isolation.ChildConsoleKwargsTest.test_stdin_is_devnull) ... ok\ntest_windows_hides_child_console (tests.test_console_isolation.ChildConsoleKwargsTest.test_windows_hides_child_console) ... ok\ntest_confirm_restores_console_before_asking (tests.test_console_isolation.RestoreConsoleTest.test_confirm_restores_console_before_asking) ... ok\ntest_noop_outside_windows (tests.test_console_isolation.RestoreConsoleTest.test_noop_outside_windows) ... ok\ntest_restore_never_raises (tests.test_console_isolation.RestoreConsoleTest.test_restore_never_raises) ... ok\ntest_restore_sets_cooked_bits_on_raw_console (tests.test_console_isolation.RestoreConsoleTest.test_restore_sets_cooked_bits_on_raw_console) ... ok\ntest_run_verify_does_not_inherit_console (tests.test_console_isolation.RunVerifyIsolationTest.test_run_verify_does_not_inherit_console) ... ok\n\n----------------------------------------------------------------------\nRan 8 tests in 0.009s\n\nOK",
+    "sha256": "38be38bbdf0eb364c092faee53b8e0fe0048954985ab8d7e5a157280684a3a19",
+    "trust": "human"
+  }
+}

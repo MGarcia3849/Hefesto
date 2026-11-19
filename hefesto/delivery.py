@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import copy
 import json
 import os
 import subprocess
@@ -16,6 +17,25 @@ from hefesto.util import EXIT_BLOCKED, EXIT_INPUT, EXIT_OK, HefestoError, atomic
 
 TARGET_FILE = ".hefesto/deploy.toml"
 ACTIONS = ("pr", "deploy")
+
+
+def _delivery_config(project: Path) -> config.Config:
+    """Valida las capas, admitiendo el destino argv únicamente en settings del proyecto."""
+    cfg = config.load(project, validate_layers=False)
+    checked = copy.deepcopy(cfg)
+    for layer in checked.layers:
+        if layer.name == "project-settings":
+            delivery = layer.data.get("delivery")
+            if isinstance(delivery, dict):
+                for key in ("command", "name", "environment", "healthcheck", "rollback", "url",
+                            "idempotent", "timeout_seconds"):
+                    delivery.pop(key, None)
+    errors = config.validate(checked)
+    effort = config.effort_errors(checked)
+    errors = [error for error in errors if error not in effort]
+    if errors:
+        raise HefestoError("Configuración inválida:\n  - " + "\n  - ".join(errors), EXIT_INPUT)
+    return cfg
 
 
 @dataclass(frozen=True)
@@ -62,7 +82,7 @@ def load_target(project: Path) -> DeployTarget | None:
     path = project / TARGET_FILE
     if not path.exists():
         # Optional project-local argv configuration; no global setting may select a target.
-        local = config.load(project)
+        local = _delivery_config(project)
         command = local.get("delivery", "command", default=None)
         if command is None:
             # A package's single `deploy` script is an unambiguous existing project destination.
@@ -221,7 +241,7 @@ def ensure_pr(project: Path, phase: str | None = None) -> PrResult:
 
 
 def max_deploy_attempts(project: Path) -> int:
-    value = config.load(project).get("delivery", "max_deploy_attempts", default=2)
+    value = _delivery_config(project).get("delivery", "max_deploy_attempts", default=2)
     return max(1, int(value))
 
 
@@ -238,6 +258,19 @@ def _deploy(project: Path, phase: str | None, cwd: Path) -> DeployResult:
     target = load_target(project)
     if not closure.ready or target is None or not is_authorized(project, "deploy"):
         raise HefestoError("Fase no cerrada, sin destino o falta autorización vigente para despliegue.", EXIT_BLOCKED)
+    from hefesto import approval, gitops, security
+
+    data = state.load(project)
+    info = (data.get("phases") or {}).get(closure.slug) or {}
+    cfg = _delivery_config(project)
+    base = info.get("base") or gitops.out(project, "merge-base", gitops.main_branch(project, cfg), closure.branch)
+    tasks = [t for t in roadmap.load_valid(project).tasks if t.phase_slug == closure.slug]
+    for kind in {t.kind for t in tasks} or {"code"}:
+        approval.gate(project, cwd, base, kind, "deploy")
+    security_report = security.gate(project, cwd, base, "deploy")
+    warnings = security.warning_text(security_report)
+    if warnings:
+        print(warnings)
     fp = target_fingerprint(target)
     path = record_path(project, closure.slug)
     record = _read_record(path, closure)

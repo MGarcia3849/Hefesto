@@ -1,0 +1,53 @@
+{
+  "attempts": 1,
+  "base_commit": "02a439bed94968d7a9490fc0765760145061ece4",
+  "branch": "hefesto/fase-27-compatibilidad-y-entrega-documentada",
+  "commit": "92c0940a4b5a1bcb736e35a9066a7efbbe091a74",
+  "contract": [],
+  "created_at": "2026-11-18T19:21:21+00:00",
+  "files": [
+    {
+      "path": "tests/test_parallel.py",
+      "sha256": "4a4877b31ba133088dde97a69eea4ae32d05d961a707bcdaa7e08071d11444ef"
+    }
+  ],
+  "phase": "Fase 27 — Compatibilidad y entrega documentada",
+  "prev_sha256": "01e9e049ebf5593749cb021c90d86ab542284ff0e34044055531b643fc97d7e8",
+  "prev_task_id": "TASK-2706",
+  "providers": [
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-18T19:20:33+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Barrera determinista en el test de límites de concurrencia",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "c1647336e355",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "c1647336e355",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 121,
+  "task_id": "TASK-2707",
+  "title": "Hacer determinista el test de límites de concurrencia",
+  "verify": {
+    "command": "python -m unittest tests.test_parallel.ParallelRunTests -v",
+    "duration_seconds": 47.079,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-2707-a1-2026-11-18T192120+0000.log",
+    "output_summary": "arallelRunTests.test_conflict_after_rebase_blocks_only_that_task) ... ok\ntest_dependency_starts_from_the_integrated_phase_tip (tests.test_parallel.ParallelRunTests.test_dependency_starts_from_the_integrated_phase_tip) ... ok\ntest_exceptions_and_missing_review_are_failed_attempts (tests.test_parallel.ParallelRunTests.test_exceptions_and_missing_review_are_failed_attempts) ... ok\ntest_failures_escalate_and_block_only_that_task (tests.test_parallel.ParallelRunTests.test_failures_escalate_and_block_only_that_task) ... ok\ntest_max_parallel_one_is_identical_to_serial (tests.test_parallel.ParallelRunTests.test_max_parallel_one_is_identical_to_serial) ... ok\ntest_overlapping_files_never_run_at_the_same_time (tests.test_parallel.ParallelRunTests.test_overlapping_files_never_run_at_the_same_time) ... ok\ntest_rate_limit_halves_the_model_and_requeues_without_counting (tests.test_parallel.ParallelRunTests.test_rate_limit_halves_the_model_and_requeues_without_counting) ... ok\ntest_refuses_while_a_serial_task_is_in_progress (tests.test_parallel.ParallelRunTests.test_refuses_while_a_serial_task_is_in_progress) ... ok\ntest_respects_global_and_per_model_limits (tests.test_parallel.ParallelRunTests.test_respects_global_and_per_model_limits) ... ok\ntest_stale_in_progress_markers_from_a_killed_run_are_reset (tests.test_parallel.ParallelRunTests.test_stale_in_progress_markers_from_a_killed_run_are_reset) ... ok\ntest_stop_with_cancel_running_integrates_nothing_that_finishes_later (tests.test_parallel.ParallelRunTests.test_stop_with_cancel_running_integrates_nothing_that_finishes_later) ... ok\ntest_stop_with_finish_running_integrates_active_and_launches_nothing_new (tests.test_parallel.ParallelRunTests.test_stop_with_finish_running_integrates_active_and_launches_nothing_new) ... ok\ntest_untrusted_verify_is_skipped (tests.test_parallel.ParallelRunTests.test_untrusted_verify_is_skipped) ... ok\n\n----------------------------------------------------------------------\nRan 14 tests in 46.727s\n\nOK",
+    "sha256": "4de3bf74fc7fafafd6eab7cd2b4377f81c023adc8a7f08582e90fb2aafbf2918",
+    "trust": "human"
+  }
+}

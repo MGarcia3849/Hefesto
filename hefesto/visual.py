@@ -646,10 +646,12 @@ def check_pass(project: Path, task: roadmap.Task, diagnosis: str = "critique") -
 
 
 def _pass_instruction(command: str, task: roadmap.Task, report_path: str | None = None) -> str:
+    from hefesto import approval
+
     files = ", ".join(task.files)
     diagnosis = f"Lee el diagnóstico en {report_path} y corrige los problemas que señala. " if report_path else ""
     return (f"impeccable {command} sobre los ficheros de la tarea {task.id}: {files}. "
-            f"{diagnosis}Aplica solo este comando; sin maquetas con clave de API.")
+            f"{diagnosis}Aplica solo este comando; sin maquetas con clave de API. {approval.STATIC_RULE}")
 
 
 def design_pass(project: Path, cfg: config.Config, task: roadmap.Task,
@@ -657,6 +659,11 @@ def design_pass(project: Path, cfg: config.Config, task: roadmap.Task,
                 diagnosis: str = "critique", shortcut: str | None = None) -> PassReport:
     """Diagnóstico → comandos (uno por delegación, con checkpoint) → polish."""
     check_pass(project, task, diagnosis)
+    from hefesto import approval, state
+
+    data = state.load(project)
+    workdir = Path(data.get("workdir") or project)
+    base = data.get("task_base") or "HEAD"
     commands: list[str] | None = None
     if shortcut is not None:
         diagnosis_run, commands = shortcut_plan(shortcut)
@@ -683,6 +690,7 @@ def design_pass(project: Path, cfg: config.Config, task: roadmap.Task,
         report.steps.append(command)
         absolute_report = str(report.report_path.resolve()) if report.report_path else None
         ok, _ = delegate("visual", _pass_instruction(command, task, absolute_report))
+        approval.gate(project, workdir, base, task.kind, "design-pass")
         if not ok:
             report.ok, report.failed = False, command
             return report

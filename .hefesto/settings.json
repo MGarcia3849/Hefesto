@@ -9,6 +9,9 @@
   "config": {
     "github": {
       "pr": true
+    },
+    "limits": {
+      "verify_timeout_seconds": 1800
     }
   }
 }

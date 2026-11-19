@@ -1,0 +1,70 @@
+{
+  "attempts": 1,
+  "base_commit": "ff025e277d0c52120a2475fd8f367df7878d390f",
+  "branch": "hefesto/fase-27-compatibilidad-y-entrega-documentada",
+  "commit": "0ea2eb3d29cd06d2194aded38cffbacb2e0a6b2d",
+  "contract": [],
+  "created_at": "2026-11-18T09:36:10+00:00",
+  "files": [
+    {
+      "path": "hefesto/acceptance.py",
+      "sha256": "b51a0cbacacd2afabd502c6ea39986b336edb8b0e229cfdc21fc169828b39aa9"
+    },
+    {
+      "path": "tests/test_finish_chain.py",
+      "sha256": "febd06f953f8ef8a35218bc5ae252663a1a58d47cfc4a17299416509b44cfa0f"
+    }
+  ],
+  "phase": "Fase 27 — Compatibilidad y entrega documentada",
+  "prev_sha256": "05e9f4a09fe7c2c1e7609f9b36679aa933f9ed142065f4d816a9c41571644410",
+  "prev_task_id": "TASK-2703",
+  "providers": [
+    "codex:gpt-6.1-sol",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-18T09:33:38+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:gpt-6.1-sol"
+    ],
+    "exception": null,
+    "notes": "finish en cadena; 184 tests + lint OK",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "36d585b0734d",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6.1-sol",
+      "role": "forge",
+      "run_id": "5a83509c0064",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "7847aa9719fb",
+      "success": false
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "36d585b0734d",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 118,
+  "task_id": "TASK-2704",
+  "title": "Integrar en un solo finish las fases anteriores contenidas en la rama",
+  "verify": {
+    "command": "python -m unittest tests.test_finish_chain tests.test_git tests.test_worktree_links tests.test_isolation && python tools/dev.py lint",
+    "duration_seconds": 151.284,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-2704-a1-2026-11-18T093609+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (110 ficheros Python)\n.........................................................................\n----------------------------------------------------------------------\nRan 73 tests in 149.625s\n\nOK",
+    "sha256": "053eaaba9e5d9a1ef076e770ea42ff7997e1ec987d34e859dd75cc6ff32d0982",
+    "trust": "auto"
+  }
+}

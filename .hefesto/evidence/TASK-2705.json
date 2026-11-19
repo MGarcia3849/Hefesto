@@ -1,0 +1,48 @@
+{
+  "attempts": 1,
+  "base_commit": "0f633da207845ab24405e4f54d050697f15e62f7",
+  "branch": "hefesto/fase-27-compatibilidad-y-entrega-documentada",
+  "commit": "ce14d6a507b072a4b97c5bf5d9e9fcfac771ef6b",
+  "contract": [],
+  "created_at": "2026-11-18T12:36:17+00:00",
+  "files": [],
+  "phase": "Fase 27 — Compatibilidad y entrega documentada",
+  "prev_sha256": "f614522c58516bb94ea4a419fbe982df3abd62fc5249a7fccb245da3e69d1237",
+  "prev_task_id": "TASK-2704",
+  "providers": [
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-18T12:23:47+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "timeout del proyecto 1800s",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "1ab9aa119f81",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "1ab9aa119f81",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 119,
+  "task_id": "TASK-2705",
+  "title": "Ajustar el timeout de verify a la duración real de la suite",
+  "verify": {
+    "command": "hefesto config validate",
+    "duration_seconds": 0.502,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-2705-a1-2026-11-18T123615+0000.log",
+    "output_summary": "Configuración válida. Capas: default (C:\\Users\\mggcp\\hefesto\\hefesto.toml), project (C:\\Users\\mggcp\\Documents\\GitHub\\Hefesto\\.hefesto\\hefesto.toml), project-settings (C:\\Users\\mggcp\\Documents\\GitHub\\Hefesto\\.hefesto\\settings.json)",
+    "sha256": "ef17b2d40343433ba92eb1ea0843b7736b5a88c3ad5f232909001bc6013a68be",
+    "trust": "human"
+  }
+}

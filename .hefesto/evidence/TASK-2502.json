@@ -1,0 +1,72 @@
+{
+  "attempts": 1,
+  "base_commit": "aeb8a3210760724a64f7a4065ad0038a13c003b3",
+  "branch": "hefesto/fase-25-seguridad-y-perfil-centuria",
+  "commit": "5104f2c5cabba62982a9b67362704b5012e6799d",
+  "contract": [],
+  "created_at": "2026-11-18T06:24:19+00:00",
+  "files": [
+    {
+      "path": "hefesto.toml",
+      "sha256": "758fa88b5f61751bdcda1b886743c48150e2735e88be9a69f720e1c05ee06d00"
+    },
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "0dc14607d51c7167b60a51576603a1aa9c0b951435ca4f97e71b9d14df1dcefe"
+    },
+    {
+      "path": "hefesto/config.py",
+      "sha256": "4f47fdf7c2a4c59b027558ae75b78b24021f212a4661b982d6823ecd5bf7a4cd"
+    },
+    {
+      "path": "hefesto/security.py",
+      "sha256": "040be53cb1e0be5fbabd5e4fb62675bd3b35e58ec16d9a3d3fb65792c1189c05"
+    }
+  ],
+  "phase": "Fase 25 — Seguridad y perfil Centuria",
+  "prev_sha256": "b1b0607ae640df4a8eb80c48bd64c4904fc0211fe3adce60e2c7a867286a72a0",
+  "prev_task_id": "TASK-2501",
+  "providers": [
+    "codex:gpt-6-luna",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-18T06:24:02+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:gpt-6-luna"
+    ],
+    "exception": null,
+    "notes": "security.py pasivo; ScanTests 24/24; lint OK",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "180ac24c27d3",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "b887084dc3aa",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "180ac24c27d3",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 111,
+  "task_id": "TASK-2502",
+  "title": "Escaneo pasivo y perfiles sin datos sensibles",
+  "verify": {
+    "command": "python -m unittest tests.test_addon_security.ScanTests && python tools/dev.py lint",
+    "duration_seconds": 16.076,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-2502-a1-2026-11-18T062419+0000.log",
+    "output_summary": "lint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (107 ficheros Python)\n........................\n----------------------------------------------------------------------\nRan 24 tests in 14.573s\n\nOK",
+    "sha256": "625d5f1dfe882a01675924d6ea2bc7ba0d870270c3dd44038239b8bc7c15367c",
+    "trust": "auto"
+  }
+}

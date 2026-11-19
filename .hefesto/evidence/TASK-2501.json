@@ -1,0 +1,62 @@
+{
+  "attempts": 1,
+  "base_commit": "3bffa93c2ffd18cd65ff48b76e1a23e4c99fb166",
+  "branch": "hefesto/fase-25-seguridad-y-perfil-centuria",
+  "commit": "87c51267ba2e531dd57fb9dc4b863572e2ce7968",
+  "contract": [
+    "tests/test_addon_security.py"
+  ],
+  "created_at": "2026-11-18T06:13:06+00:00",
+  "files": [
+    {
+      "path": "tests/test_addon_security.py",
+      "sha256": "be3af4bbd7f6755db3f0b07c61414c6e950ee1baeaf68e277d4c9e27a1b60a6a"
+    }
+  ],
+  "phase": "Fase 25 — Seguridad y perfil Centuria",
+  "prev_sha256": "799f5728f34644e00f925f30a4bed52fda630c59e9e6d75ef7a0ec54d573d71f",
+  "prev_task_id": "TASK-2402",
+  "providers": [
+    "claude:opus",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-18T06:12:35+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Contrato de seguridad offline y sintético; 11/11",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "6a574f639c42",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "claude:opus",
+      "role": "core",
+      "run_id": "713800852332",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "6a574f639c42",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 110,
+  "task_id": "TASK-2501",
+  "title": "Contrato de hallazgos, perfiles y gate determinista",
+  "verify": {
+    "command": "python -m unittest tests.test_addon_security.ContractDefinitionTests",
+    "duration_seconds": 0.425,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-2501-a1-2026-11-18T061306+0000.log",
+    "output_summary": "...........\n----------------------------------------------------------------------\nRan 11 tests in 0.119s\n\nOK",
+    "sha256": "46d49bebaef701b832519a4fecdffe1255c56b42d9a40ec3770721c6ed0316ff",
+    "trust": "auto"
+  }
+}

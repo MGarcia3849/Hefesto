@@ -153,6 +153,7 @@ enabled = false                         # avisos de escritorio cuando algo neces
 
 [visual]
 enabled = false
+motion = "static"                   # no se configura un modo que autorice movimiento
 base_url = ""
 routes = ["/"]
 viewports = ["390x844", "1280x800"]
@@ -163,4 +164,23 @@ detect_fail_on = "warning"
 max_images = 4
 impeccable_version = "4.6.0"
 design_refs_commit = "3b605329240ce735b510037cca322f1831fdd7f8"
+
+[security]
+profile = "default"
+
+[security.profiles.default]
+description = "Reglas generales de seguridad"
+rules = ["dangerous-eval", "debug-enabled"]
+adapters = []
+synthetic_only = false
+collections = ["documentos"]
+frameworks = []
+
+[security.profiles.centuria-policial]
+description = "Perfil policial con datos sintéticos"
+rules = ["dangerous-eval", "debug-enabled", "personal-data"]
+adapters = []
+synthetic_only = true
+collections = ["agentes", "avisos", "partes"]
+frameworks = ["ENS", "RGPD", "LOPDGDD"]
 

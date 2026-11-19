@@ -127,7 +127,8 @@ def branch_allowed(branch: str) -> bool:
 
 
 PATH_KEYS = ("file_path", "path", "notebook_path", "absolute_path")
-CONTROL_FILES = (".hefesto/state.json", ".hefesto/trust.json", ".hefesto/settings.json", ".hefesto/delivery.json")
+CONTROL_FILES = (".hefesto/state.json", ".hefesto/trust.json", ".hefesto/settings.json", ".hefesto/delivery.json",
+                 ".hefesto/approvals.json")
 
 # Nombres de herramientas de Gemini CLI y Codex → equivalente de Claude Code.
 TOOL_ALIASES = {
@@ -166,7 +167,45 @@ def is_plain_hefesto_invocation(command: str) -> bool:
     return True
 
 
+def _python_verification(command: str) -> bool:
+    """Lista permitida de verificadores simples; cada tramo de && debe ser válido."""
+    if any(c in command.replace("&&", "") for c in ";&|<>`$\n\r#"):
+        return False
+    for segment in command.split("&&"):
+        try:
+            tokens = shlex.split(segment)
+        except ValueError:
+            return False
+        executable = Path(tokens[0]).name.lower() if tokens else ""
+        if not re.fullmatch(r"python(?:\d+(?:\.\d+)?)?(?:\.exe)?|py(?:\.exe)?", executable):
+            return False
+        args = tokens[1:]
+        tests = (args[:2] == ["-m", "unittest"] and all(
+            re.fullmatch(r"(?:tests(?:\.[A-Za-z_][A-Za-z_0-9]*)*|-v|-q|--verbose|--quiet)", arg)
+            for arg in args[2:]))
+        dev = len(args) == 2 and args[0] == "tools/dev.py" and args[1] in {"lint", "test"}
+        if not (tests or dev):
+            return False
+    return True
+
+
 def _check_bash(command: str, patterns: tuple[str, ...]) -> str | None:
+    try:
+        tokens = shlex.split(command)
+    except ValueError:
+        tokens = []
+    # Código Python arbitrario puede construir la ruta o importar _save con un
+    # alias. Solo se exceptúan verificadores reconocidos, sin operadores de shell.
+    python_name = r"(?:python(?:\d+(?:\.\d+)?)?(?:\.exe)?|py(?:\.exe)?)"
+    python_command = re.search(r"(?<![\w./\\])" + python_name + r"(?=[\s'\"]|$)", command, re.I)
+    python_path = any(re.fullmatch(python_name, token.replace("\\", "/").rsplit("/", 1)[-1], re.I)
+                      for token in tokens + re.split(r"[\s'\";&|()]+", command))
+    if python_command or python_path:
+        if not _python_verification(command):
+            return "Python arbitrario puede alterar aprobaciones; usa los verificadores reconocidos de Hefesto."
+    if (any(a == "approval" and b == "approve" for a, b in zip(tokens, tokens[1:]))
+            or re.search(r"\bapproval[\s'\"]+approve\b", command, re.I)):
+        return "Los agentes no pueden aprobar movimiento; `hefesto approval approve` exige un canal humano."
     if is_plain_hefesto_invocation(command):
         return None
     label = dangerous_command(command)
@@ -183,6 +222,8 @@ def _check_bash(command: str, patterns: tuple[str, ...]) -> str | None:
         for seg in re.split(r"&&|\|\||;|\|", command_for_control):
             if control in seg.replace("\\", "/") and re.search(r">|\btee\b|\bsed\s+-i|\bmv\b|\bcp\b|\brm\b", seg):
                 return f"`{control}` solo lo modifica la CLI `hefesto`."
+    if "visual-approvals" in command.casefold():
+        return "El respaldo independiente de aprobaciones solo lo modifica la CLI `hefesto`."
     return None
 
 
@@ -191,6 +232,8 @@ def _check_path(tool: str, value: str, patterns: tuple[str, ...]) -> str | None:
         return f"Hefesto bloquea el acceso a una ruta protegida (`{value}`)."
     if tool in WRITE_TOOLS:
         norm = value.replace("\\", "/")
+        if "visual-approvals" in norm.casefold().split("/"):
+            return "El respaldo independiente de aprobaciones solo lo modifica la CLI `hefesto`."
         if any(norm.endswith(control) for control in CONTROL_FILES):
             return f"`{value}` solo lo modifica la CLI `hefesto`."
     return None

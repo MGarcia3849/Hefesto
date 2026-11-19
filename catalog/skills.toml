@@ -2,6 +2,10 @@
 # Las skills no tienen dueño: el orquestador decide qué rol y qué modo usa cada entrada.
 # Todos los commits están fijados (SHA-1 de 40 hex) y se traen con `hefesto skill sync`,
 # nunca con npx ni instaladores externos.
+# Skills externas de movimiento, opcional y no evaluada (sin entrada [skills.*]: no se instalan con
+# `hefesto skill sync` hasta que una evaluación separada las acepte):
+# - opcional y no evaluada → web-animation-design
+# - opcional y no evaluada → design-motion-principles
 
 # Impeccable v4: craft está deprecado en v4 y overdrive y hooks quedan fuera a propósito;
 # init/shape/live/generate exigen un humano; detect solo como verify;

@@ -1,0 +1,62 @@
+{
+  "attempts": 1,
+  "base_commit": "9e1bb4c16429fb75ebeb0f1fb69a134533dd6d90",
+  "branch": "hefesto/fase-26-propuestas-de-experiencia-visual",
+  "commit": "1346eaadb4edfc0cec7858671c8cad5ca3afa87d",
+  "contract": [
+    "tests/test_addon_visual.py"
+  ],
+  "created_at": "2026-11-18T07:01:58+00:00",
+  "files": [
+    {
+      "path": "tests/test_addon_visual.py",
+      "sha256": "e113292938ec9215551b95afcb25174a33a313f92f0b64af703e3ddd572a150b"
+    }
+  ],
+  "phase": "Fase 26 — Propuestas de experiencia visual",
+  "prev_sha256": "73923691e85608086627dee51b3484a506b95e82f4d150145498e8da36ca52b4",
+  "prev_task_id": "TASK-2503",
+  "providers": [
+    "claude:opus",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-18T07:01:56+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Contrato visual offline; verify OK",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "810659853ab4",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "claude:opus",
+      "role": "core",
+      "run_id": "64d5fcbe0bf4",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "810659853ab4",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 113,
+  "task_id": "TASK-2601",
+  "title": "Contrato de propuestas visuales estáticas",
+  "verify": {
+    "command": "python -m unittest tests.test_addon_visual.ContractDefinitionTests",
+    "duration_seconds": 0.424,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-2601-a1-2026-11-18T070157+0000.log",
+    "output_summary": "..........\n----------------------------------------------------------------------\nRan 10 tests in 0.081s\n\nOK",
+    "sha256": "8bc45769ce99786d5c990a652a715d902b7298feab98e2767ba2bd3d305a8ef9",
+    "trust": "auto"
+  }
+}

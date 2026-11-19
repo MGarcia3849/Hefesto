@@ -1,0 +1,104 @@
+{
+  "attempts": 3,
+  "base_commit": "850a1b45fac126f7c0adfea41c5c099a0e29f976",
+  "branch": "hefesto/fase-23-consentimiento-y-barreras-del-add-on-v2-5",
+  "commit": "31f1e7c5509239f0779f2a5967b61eaf3dc3a98e",
+  "contract": [],
+  "created_at": "2026-11-17T23:47:36+00:00",
+  "files": [
+    {
+      "path": "hefesto/acceptance.py",
+      "sha256": "34d9794cb7b5605f3565685e901b94ebddab7061ee4cce7e0b753008349210d1"
+    },
+    {
+      "path": "hefesto/approval.py",
+      "sha256": "ac9791cbc2a78cabf77bf47a79dc4a6ae415c7b6d9dbe1b15cee49a589335e5a"
+    },
+    {
+      "path": "hefesto/delivery.py",
+      "sha256": "24417a61e5aba67f66d593c73ecc12bbae93390c063075764964cb61f6c58dc0"
+    },
+    {
+      "path": "hefesto/gitops.py",
+      "sha256": "b5ac48f737440b1d9e17b570c91dd656bd8b880d153d547197c1f4c18fae2be4"
+    },
+    {
+      "path": "hefesto/guard.py",
+      "sha256": "62610188318de1c7928866fa9b5a53f5302dfc0d50a33b1a0de2087203fbac55"
+    },
+    {
+      "path": "hefesto/router.py",
+      "sha256": "418d365a2ddc9b1c587baae2c0bc2d25a2a8e6d772b3714cb65f4d9db181f2f2"
+    },
+    {
+      "path": "hefesto/skill_select.py",
+      "sha256": "63a6a7536b36f0ca5c2c11cdd7f751baf491adc797e05bdcadefd460f001261e"
+    },
+    {
+      "path": "hefesto/visual.py",
+      "sha256": "3f3eb6ea18d1c94b4fddb51cbf18da0a76d2ae3250ece0d93822a486108b7f10"
+    },
+    {
+      "path": "tests/test_addon_visual_bypass.py",
+      "sha256": "a1d8b4e7b95ba9aa9959eb989d95729c2d22d27b107a569415d924b79f35db3f"
+    }
+  ],
+  "phase": "Fase 23 — Consentimiento y barreras del add-on v2.5",
+  "prev_sha256": "8c7aaa228b515b26c5b88ea8f75b0c9b7a76deea732b3f2b69dacf1334919acc",
+  "prev_task_id": "TASK-2302",
+  "providers": [
+    "codex:gpt-6.1-sol",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-17T23:46:58+00:00",
+    "attempt": 2,
+    "authors": [
+      "codex:gpt-6.1-sol"
+    ],
+    "exception": null,
+    "notes": "El código no cambió desde la revisión PASS. Verify de intento 2 falló solo porque el fixture git init asumía main; 21/21 pasan con GIT_CONFIG_COUNT=1 init.defaultBranch=main limitado al proceso. Corrección permanente del fixture queda como tarea Core nueva.",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "ee993affe3c8",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6.1-sol",
+      "role": "forge",
+      "run_id": "3d318bcab0aa",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "4e565d118c08",
+      "success": true
+    },
+    {
+      "model_id": "codex:gpt-6.1-sol",
+      "role": "forge",
+      "run_id": "b3aeec5be2e5",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "ee993affe3c8",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 106,
+  "task_id": "TASK-2303",
+  "title": "Bloqueo verificable de movimiento nuevo en el ciclo existente",
+  "verify": {
+    "command": "python -m unittest tests.test_addon_approval.VisualGateTests && python tools/dev.py lint",
+    "duration_seconds": 23.195,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-2303-a3-2026-11-17T234735+0000.log",
+    "output_summary": "  kind: web\n  effect: animation\n  id: PROP-1234F04B2932\n  sha256: 46b551de375d035a3e80d794f1a9491527ee3f2ed64cf704cf04a4cb27b9d77d\n  description: Movimiento animation en web/index.html\n�mbito exacto de aprobaci�n:\n  project: proyecto-e7bee4f4d176\n  page: web/index.html\n  kind: web\n  effect: animation\n  id: PROP-A9C8D63573E8\n  sha256: afe356edec00057fe21dbece922a50307c2b2b973d4d7357a3b33a304c98c863\n  description: Movimiento animation en web/index.html\nlint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (103 ficheros Python)\n.....................\n----------------------------------------------------------------------\nRan 21 tests in 21.844s\n\nOK",
+    "sha256": "0c40eb177f53179fa6b028e7478e8aed39a4f0d004cda7c45b7a84ff4c2da4f3",
+    "trust": "auto"
+  }
+}

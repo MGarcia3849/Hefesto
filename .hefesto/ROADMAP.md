@@ -895,3 +895,164 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - size: M
   - parallel: false
   - accept: el tablero atribuye proveedor, modelo y CLI de cada delegación desde eventos de Hefesto; indica cuándo la herramienta termina o falla, conserva los últimos eventos redactados y distingue actividad real de espera; README explica `hefesto dashboard` y `--once`
+
+## Fase 23 — Consentimiento y barreras del add-on v2.5
+- [x] TASK-2301: Contrato de aprobaciones específicas y movimiento estático por defecto
+  - verify: `python -m unittest tests.test_addon_approval.ContractDefinitionTests`
+  - files: tests/test_addon_approval.py
+  - role: core
+  - depends_on: TASK-2203
+  - size: S
+  - parallel: false
+  - contract: tests/test_addon_approval.py
+  - accept: contrato offline de aprobación humana por proyecto, página, efecto y propuesta; revocación y no reutilización; cambio sin autorización se bloquea aunque venga de una skill o web
+- [x] TASK-2302: Registro protegido de propuestas y aprobaciones
+  - verify: `python -m unittest tests.test_addon_approval.ApprovalStoreTests && python tools/dev.py lint`
+  - files: hefesto/approval.py, hefesto/cli.py, hefesto/config.py, hefesto.toml
+  - role: runner
+  - depends_on: TASK-2301
+  - size: M
+  - parallel: false
+  - accept: aprobación solo por humano en canal fiable; ámbito y huella explícitos; revocación; nunca --yes ni texto del repositorio como autorización; compatible con proyectos instalados
+- [x] TASK-2303: Bloqueo verificable de movimiento nuevo en el ciclo existente
+  - verify: `python -m unittest tests.test_addon_approval.VisualGateTests && python tools/dev.py lint`
+  - files: hefesto/approval.py, hefesto/visual.py, hefesto/router.py, hefesto/guard.py, hefesto/gitops.py, hefesto/acceptance.py, hefesto/delivery.py, hefesto/skill_select.py, tests/test_addon_visual_bypass.py
+  - role: forge
+  - depends_on: TASK-2302
+  - size: M
+  - parallel: false
+  - accept: design pass y delegaciones no pueden introducir animación, vídeo, motion graphic o 3D sin aprobación específica; el checkpoint, finish y deploy rechazan cambios detectados sin permiso; movimiento preexistente conservado
+- [x] TASK-2304: Hacer portable el fixture Git del contrato visual
+  - verify: `python -m unittest tests.test_addon_approval.VisualGateTests`
+  - files: tests/test_addon_approval.py
+  - role: core
+  - depends_on: TASK-2303
+  - size: S
+  - parallel: false
+  - contract: tests/test_addon_approval.py
+  - accept: el fixture crea la rama main explícitamente o usa la rama real, de modo que VisualGateTests pasan sin configuración global de Git y sin debilitar las aserciones de seguridad
+
+## Fase 24 — Replica de análisis legítimo
+- [x] TASK-2401: Contrato de inventarios y matriz trazable
+  - verify: `python -m unittest tests.test_addon_replica.ContractDefinitionTests`
+  - files: tests/test_addon_replica.py
+  - role: core
+  - depends_on: TASK-2303
+  - size: S
+  - parallel: false
+  - contract: tests/test_addon_replica.py
+  - accept: contrato de análisis público autorizado, esquemas versionados, evidencia o no verificable, matriz de seis estados y propuesta sin aplicar código
+- [x] TASK-2402: Inventarios, comparación y propuesta sin escritura de código
+  - verify: `python -m unittest tests.test_addon_replica && python tools/dev.py lint`
+  - files: hefesto/replica.py, hefesto/cli.py
+  - role: runner
+  - depends_on: TASK-2401
+  - size: M
+  - parallel: false
+  - accept: CLI reutiliza navegador existente para alcance público autorizado, valida URL y redirecciones, sanea capturas y secretos, genera comparación reproducible y nunca clona ni aplica sin aprobación
+
+## Fase 25 — Seguridad y perfil Centuria
+- [x] TASK-2501: Contrato de hallazgos, perfiles y gate determinista
+  - verify: `python -m unittest tests.test_addon_security.ContractDefinitionTests`
+  - files: tests/test_addon_security.py
+  - role: core
+  - depends_on: TASK-2303
+  - size: S
+  - parallel: false
+  - contract: tests/test_addon_security.py
+  - accept: contrato de informe reproducible, hallazgos con evidencia y estado, bloqueo solo por críticos o altos confirmados, excepciones humanas y perfil policial con datos sintéticos
+- [x] TASK-2502: Escaneo pasivo y perfiles sin datos sensibles
+  - verify: `python -m unittest tests.test_addon_security.ScanTests && python tools/dev.py lint`
+  - files: hefesto/security.py, hefesto/cli.py, hefesto/config.py, hefesto.toml
+  - role: runner
+  - depends_on: TASK-2501
+  - size: M
+  - parallel: false
+  - accept: escaneo local pasivo con adaptadores opcionales evaluados, redacción, inventario de controles, perfil centuria-policial y pruebas de reglas con emulador y fixtures sintéticos
+- [x] TASK-2503: Gate de seguridad antes de cerrar y desplegar
+  - verify: `python -m unittest tests.test_addon_security.GateTests && python tools/dev.py lint`
+  - files: hefesto/security.py, hefesto/acceptance.py, hefesto/delivery.py, hefesto/cli.py
+  - role: forge
+  - depends_on: TASK-2502
+  - size: M
+  - parallel: false
+  - accept: crítico o alto confirmado y en alcance bloquea cierre y despliegue; excepción exige persona, motivo y caducidad; informes jurídicos quedan NO_VERIFICADO sin revisión especializada
+
+## Fase 26 — Propuestas de experiencia visual
+- [x] TASK-2601: Contrato de propuestas visuales estáticas
+  - verify: `python -m unittest tests.test_addon_visual.ContractDefinitionTests`
+  - files: tests/test_addon_visual.py
+  - role: core
+  - depends_on: TASK-2303
+  - size: S
+  - parallel: false
+  - contract: tests/test_addon_visual.py
+  - accept: propuesta y storyboard estáticos, coste y fallback, sin crear movimiento, y apply denegado sin aprobación puntual
+- [x] TASK-2602: CLI de inspección y propuesta visual opcional
+  - verify: `python -m unittest tests.test_addon_visual && python tools/dev.py lint`
+  - files: hefesto/visual_experience.py, hefesto/cli.py, catalog/skills.toml
+  - role: visual
+  - depends_on: TASK-2601, TASK-2503
+  - size: M
+  - parallel: false
+  - accept: inspect y propose no cambian código ni añaden efectos; approvals muestran el alcance; apply y verify reutilizan el gate; ninguna skill externa se instala sin evaluación separada
+
+## Fase 27 — Compatibilidad y entrega documentada
+- [x] TASK-2702: Reparar regresiones de la suite completa tras el gate de movimiento
+  - verify: `python -m unittest tests.test_foundation tests.test_git tests.test_design_pass tests.test_worktree_links tests.test_addon_approval && python tools/dev.py lint`
+  - files: hefesto/approval.py, hefesto/guard.py, hefesto/gitops.py
+  - role: forge
+  - depends_on: TASK-2503
+  - size: S
+  - parallel: false
+  - accept: el hook no confunde extensiones .py con el intérprete; el gate de movimiento del checkpoint usa el workdir de la tarea pedida (o el proyecto) y no falla si no existe; los enlaces de worktree gestionados por Hefesto se omiten sin abrir su contenido; VisualGateTests y demás aserciones de seguridad intactas
+- [x] TASK-2701: Documentación, migración reversible y regresión del add-on
+  - verify: `python -m unittest tests.test_addon_approval tests.test_addon_replica tests.test_addon_security tests.test_addon_visual && python tools/dev.py lint && python tools/dev.py smoke`
+  - files: README.md, CHANGELOG.md, docs/HEFESTO_ADDON_V2_5.md, hefesto/distribution.py, tests/test_distribution.py
+  - role: runner
+  - depends_on: TASK-2402, TASK-2503, TASK-2602
+  - size: M
+  - parallel: false
+  - accept: documentación de uso, exclusiones, pruebas, migración y rollback; comandos y roles previos intactos; sin push, merge ni despliegue automáticos
+- [x] TASK-2703: Evitar el falso positivo de movimiento en el catálogo de skills
+  - verify: `python -m unittest tests.test_addon_visual tests.test_addon_approval && python tools/dev.py lint`
+  - files: catalog/skills.toml
+  - role: runner
+  - depends_on: TASK-2701
+  - size: S
+  - parallel: false
+  - accept: los comentarios de skills opcionales no evaluadas no casan con el detector de movimiento (approval.detect_motion vacío para el diff de catalog/skills.toml), siguen cumpliendo CatalogTests y `hefesto finish` deja de bloquearse sin aprobar nada ni relajar el detector
+- [x] TASK-2704: Integrar en un solo finish las fases anteriores contenidas en la rama
+  - verify: `python -m unittest tests.test_finish_chain tests.test_git tests.test_worktree_links tests.test_isolation && python tools/dev.py lint`
+  - files: hefesto/acceptance.py, tests/test_finish_chain.py
+  - role: forge
+  - depends_on: TASK-2703
+  - size: M
+  - parallel: false
+  - accept: si la rama de la fase pedida contiene ramas de fases anteriores aún abiertas, `finish` exige que todas sus tareas estén completas y con evidencia, rebasa desde la merge-base con la principal, pasa los gates, la suite y los verify de todas esas fases, lo muestra en el resumen, pide una sola confirmación humana y al integrar cierra todas esas fases en el estado y borra sus ramas; sin fases contenidas el comportamiento es idéntico al actual; una fase anterior que no está contenida en la rama sigue bloqueando como hasta ahora
+- [x] TASK-2705: Ajustar el timeout de verify a la duración real de la suite
+  - verify: `hefesto config validate`
+  - files: .hefesto/settings.json
+  - role: runner
+  - depends_on: TASK-2704
+  - size: S
+  - parallel: false
+  - accept: limits.verify_timeout_seconds del proyecto pasa a 1800 s porque la suite completa ya tarda ~1000-1070 s y `finish` la cortaba a 900 s (exit 124); el valor por defecto distribuido en hefesto.toml no cambia
+
+- [x] TASK-2706: Aislar la consola de los verify y restaurarla antes de confirmar
+  - verify: `python -m unittest tests.test_console_isolation -v`
+  - files: hefesto/evidence.py, hefesto/util.py, hefesto/acceptance.py, tests/test_console_isolation.py
+  - role: runner
+  - depends_on: TASK-2705
+  - size: S
+  - parallel: false
+  - accept: en Windows los verify se lanzan con stdin=DEVNULL y CREATE_NO_WINDOW para que bash/MSYS no deje la consola del usuario en modo crudo (salida sin saltos y entrada sin eco); `util.confirm` reactiva el modo cocinado de la consola (entrada con línea y eco, salida procesada con ajuste de línea) antes de preguntar; en otros sistemas no cambia nada
+
+- [x] TASK-2707: Hacer determinista el test de límites de concurrencia
+  - verify: `python -m unittest tests.test_parallel.ParallelRunTests -v`
+  - files: tests/test_parallel.py
+  - role: runner
+  - depends_on: TASK-2706
+  - size: S
+  - parallel: false
+  - accept: test_respects_global_and_per_model_limits deja de depender de que cuatro trabajos coincidan en una ventana fija de 0,6 s (falló bajo la carga de la suite de finish: 3 != 4); cada trabajo espera, con un límite holgado, a que haya cuatro activos, de modo que el test solo falla si el planificador realmente no abre el cuarto hueco

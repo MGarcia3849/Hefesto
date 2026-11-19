@@ -1,0 +1,62 @@
+{
+  "attempts": 1,
+  "base_commit": "ebe4b575735ff622a78e9cab5377c29e4056a0ef",
+  "branch": "hefesto/fase-23-consentimiento-y-barreras-del-add-on-v2-5",
+  "commit": "6dc5f4a1f33987fde2d8916fe18e4ea5db354b01",
+  "contract": [
+    "tests/test_addon_approval.py"
+  ],
+  "created_at": "2026-11-17T23:12:26+00:00",
+  "files": [
+    {
+      "path": "tests/test_addon_approval.py",
+      "sha256": "a99d05da0bddcdc14014b504622263ad011f045235d4be62313e364fe117c86b"
+    }
+  ],
+  "phase": "Fase 23 — Consentimiento y barreras del add-on v2.5",
+  "prev_sha256": "103ec9e96c432990bfbb35e0d1e098c31488fc517367d3285b866178a1051899",
+  "prev_task_id": "TASK-2203",
+  "providers": [
+    "claude:opus",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-17T22:40:40+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Contrato offline pasa 9 tests; revisor independiente pass. Límite declarado: TTY y entorno no son autenticación fuerte frente a procesos locales de la misma cuenta.",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "a32449b6f59d",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "claude:opus",
+      "role": "core",
+      "run_id": "154adddb120d",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "a32449b6f59d",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 104,
+  "task_id": "TASK-2301",
+  "title": "Contrato de aprobaciones específicas y movimiento estático por defecto",
+  "verify": {
+    "command": "python -m unittest tests.test_addon_approval.ContractDefinitionTests",
+    "duration_seconds": 0.372,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-2301-a1-2026-11-17T231225+0000.log",
+    "output_summary": ".........\n----------------------------------------------------------------------\nRan 9 tests in 0.072s\n\nOK",
+    "sha256": "d96c0dfd927104086ecb580239f6d36a51be9a294750e265328f1042fe38052c",
+    "trust": "auto"
+  }
+}

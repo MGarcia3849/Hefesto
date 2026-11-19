@@ -1,0 +1,74 @@
+{
+  "attempts": 1,
+  "base_commit": "5773b47c28dca9c3a3cf76efa5aaadf3378df917",
+  "branch": "hefesto/fase-27-compatibilidad-y-entrega-documentada",
+  "commit": "5f6d09e3e1333425339da0113b613f5f03b4068f",
+  "contract": [],
+  "created_at": "2026-11-18T07:36:28+00:00",
+  "files": [
+    {
+      "path": "hefesto/approval.py",
+      "sha256": "1a86469ffe884d4e85f1ad5e11df02f227748da2ea6e175cee52bf982946cbac"
+    },
+    {
+      "path": "hefesto/gitops.py",
+      "sha256": "45d8a39d7b8f87c79324431c9de536bcab48a5f23d256e413470cab3f6f94d27"
+    },
+    {
+      "path": "hefesto/guard.py",
+      "sha256": "160dabc2f6ef512ba4092df5a574ba03d587dfc1770b99666b6a680b01b1c6c5"
+    }
+  ],
+  "phase": "Fase 27 — Compatibilidad y entrega documentada",
+  "prev_sha256": "4dbc98f53556f766ee375a0ad7e5f4a37b6696091c3fe4230258bc4f53a4f85b",
+  "prev_task_id": "TASK-2602",
+  "providers": [
+    "codex:gpt-6.1-sol",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-18T07:34:17+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:gpt-6.1-sol"
+    ],
+    "exception": null,
+    "notes": "7 regresiones del gate de movimiento reparadas; suite completa 1089 OK",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "03c69ac453b5",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6.1-sol",
+      "role": "forge",
+      "run_id": "eb3e4ff436ff",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "1b40d3574e3d",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "03c69ac453b5",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 115,
+  "task_id": "TASK-2702",
+  "title": "Reparar regresiones de la suite completa tras el gate de movimiento",
+  "verify": {
+    "command": "python -m unittest tests.test_foundation tests.test_git tests.test_design_pass tests.test_worktree_links tests.test_addon_approval && python tools/dev.py lint",
+    "duration_seconds": 130.047,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-2702-a1-2026-11-18T073628+0000.log",
+    "output_summary": "  kind: web\n  effect: animation\n  id: PROP-6A3B59A8CCEB\n  sha256: 71713ff7759a72f8849c236acb9f8e49afb8682ea3b24ab40bc98d0fc36466cc\n  description: Movimiento animation en web/index.html\n�mbito exacto de aprobaci�n:\n  project: proyecto-91c784d0862a\n  page: web/index.html\n  kind: web\n  effect: animation\n  id: PROP-76F29762447B\n  sha256: cebad6d1e081d2495eb9d34d5e730ecae398b4682fe1d055a48ca58d096c22ad\n  description: Movimiento animation en web/index.html\nlint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (109 ficheros Python)\n...................................................................................................................................\n----------------------------------------------------------------------\nRan 131 tests in 128.449s\n\nOK",
+    "sha256": "a64fec985cc505d3993b03d6bebdff9434f456e516f24a12993d4a2b428b2089",
+    "trust": "auto"
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "attempts": 1,
+  "base_commit": "d13dcab163cc8390da1a5c80b0c2ea1886f1de21",
+  "branch": "hefesto/fase-23-consentimiento-y-barreras-del-add-on-v2-5",
+  "commit": "92d4a723323cba8004eb3810187b88611a15f2a7",
+  "contract": [],
+  "created_at": "2026-11-17T23:20:37+00:00",
+  "files": [
+    {
+      "path": "hefesto.toml",
+      "sha256": "46144db3068462a65b37d91caa50fb4ef55f43b7b77b440145fdf516b6b6ce4a"
+    },
+    {
+      "path": "hefesto/approval.py",
+      "sha256": "13d4ec11a2fe25ba96db674862fb1b89fef9dececcd06c90582f5470d405a59b"
+    },
+    {
+      "path": "hefesto/cli.py",
+      "sha256": "1a34bdd96ea1ef57b3f52502f920b8fefe7cdc47ebdffd140b69962184bd2f5a"
+    }
+  ],
+  "phase": "Fase 23 — Consentimiento y barreras del add-on v2.5",
+  "prev_sha256": "d04702af77e6ad90d46f85c9cdeb0fcde955438b6fa38c68adc27a28ca83908d",
+  "prev_task_id": "TASK-2301",
+  "providers": [
+    "codex:gpt-6-luna",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-17T23:20:15+00:00",
+    "attempt": 0,
+    "authors": [
+      "codex:gpt-6-luna"
+    ],
+    "exception": null,
+    "notes": "23 pruebas de registro pasan; revisión independiente pass. Limitación documentada: TTY y registro local no autentican frente a un proceso malicioso de la misma cuenta; gate y hooks son defensa para el flujo orquestado.",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "294a6c7d20a6",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "codex:gpt-6-luna",
+      "role": "runner",
+      "run_id": "580fd1d80210",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "294a6c7d20a6",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 105,
+  "task_id": "TASK-2302",
+  "title": "Registro protegido de propuestas y aprobaciones",
+  "verify": {
+    "command": "python -m unittest tests.test_addon_approval.ApprovalStoreTests && python tools/dev.py lint",
+    "duration_seconds": 13.163,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-2302-a1-2026-11-17T232037+0000.log",
+    "output_summary": "  kind: web\n  effect: animation\n  id: PROP-9D59F0A9CE39\n  sha256: 168945731e4f0a7c91857125373bc4db8e094a53f1e9af399a450eb137f9337f\n  description: Latido suave del aviso urgente\n�mbito exacto de aprobaci�n:\n  project: proyecto-4e72ffac0582\n  page: web/index.html\n  kind: web\n  effect: animation\n  id: PROP-7282A48E8748\n  sha256: aaa10d402ea16086867ba8b7ac76db5dbbb88931a0c9523d9c2e2293f7afe850\n  description: Latido suave del aviso urgente\nlint: shellcheck no está instalado; se omite el análisis de install.sh\nlint: OK (102 ficheros Python)\n.......................\n----------------------------------------------------------------------\nRan 23 tests in 11.705s\n\nOK",
+    "sha256": "b6048dac93b80edaeea6fbe3bdb85ce3e83a763e73f35b869529522dcfb479cf",
+    "trust": "auto"
+  }
+}

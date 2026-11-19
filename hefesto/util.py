@@ -6,6 +6,7 @@ import datetime as _dt
 import json
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -77,7 +78,43 @@ def require_tty(action: str) -> None:
         raise HefestoError(f"`{action}` exige una terminal interactiva (humana).", EXIT_BLOCKED)
 
 
+# Modos de consola de Windows que una lectura/escritura normal necesita.
+_CONSOLE_IN_COOKED = 0x0001 | 0x0002 | 0x0004   # ENABLE_PROCESSED_INPUT | LINE_INPUT | ECHO_INPUT
+_CONSOLE_OUT_COOKED = 0x0001 | 0x0002           # ENABLE_PROCESSED_OUTPUT | WRAP_AT_EOL_OUTPUT
+
+
+def restore_console() -> None:
+    """En Windows, reactiva el modo cocinado de la consola si un proceso hijo la dejó en crudo.
+
+    Sin esto, la salida pierde los saltos de línea y `input()` no ve el Enter. Fuera de Windows,
+    o si stdin/stdout no son una consola, no hace nada.
+    """
+    if os.name != "nt":
+        return
+    try:
+        import ctypes
+        from ctypes import wintypes
+
+        kernel32 = ctypes.windll.kernel32
+        for std_handle, required in ((-10, _CONSOLE_IN_COOKED), (-11, _CONSOLE_OUT_COOKED)):
+            handle = kernel32.GetStdHandle(std_handle)
+            mode = wintypes.DWORD()
+            if handle and kernel32.GetConsoleMode(handle, ctypes.byref(mode)) and (mode.value & required) != required:
+                kernel32.SetConsoleMode(handle, mode.value | required)
+    except Exception:  # noqa: BLE001 - restaurar la consola nunca debe romper la orden
+        pass
+
+
+def child_console_kwargs() -> dict[str, Any]:
+    """Argumentos de subprocess para que un hijo no herede la consola del usuario (stdin ni ventana)."""
+    kwargs: dict[str, Any] = {"stdin": subprocess.DEVNULL}
+    if os.name == "nt":
+        kwargs["creationflags"] = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)
+    return kwargs
+
+
 def confirm(question: str, default: bool = False) -> bool:
+    restore_console()
     suffix = " [S/n] " if default else " [s/N] "
     answer = input(question + suffix).strip().lower()
     if not answer:

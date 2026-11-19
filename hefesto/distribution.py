@@ -455,9 +455,54 @@ def self_update(root: Path, to: str | None = None, project: Path | None = None) 
     return f"Hefesto actualizado a {target_tag}."
 
 
-# Pasos de migración registrados entre versiones (vacía por ahora).
+# Pasos de migración registrados entre versiones.
 # Cada paso es una tupla: (versión_destino, función que recibe (project: Path, settings: dict[str, Any]))
-MIGRATION_STEPS: list[tuple[str, Callable[[Path, dict[str, Any]], None]]] = []
+def _migration_addon_defaults(_project: Path, settings: dict[str, Any]) -> None:
+    """Añade defaults del add-on sin reemplazar ninguna preferencia existente."""
+    visual = settings.setdefault("visual", {})
+    if isinstance(visual, dict):
+        visual.setdefault("motion", "static")
+    security = settings.setdefault("security", {})
+    if not isinstance(security, dict):
+        return
+    profiles = security.setdefault("profiles", {})
+    if not isinstance(profiles, dict):
+        return
+    defaults = {
+        "default": {"name": "default", "description": "Reglas generales de seguridad",
+                    "rules": ["dangerous-eval", "debug-enabled"], "adapters": [],
+                    "synthetic_only": False, "collections": ["documentos"], "frameworks": []},
+        "centuria-policial": {"name": "centuria-policial", "description": "Perfil policial con datos sintéticos",
+                              "rules": ["dangerous-eval", "debug-enabled", "personal-data"], "adapters": [],
+                              "synthetic_only": True, "collections": ["agentes", "avisos", "partes"],
+                              "frameworks": ["ENS", "RGPD", "LOPDGDD"]},
+    }
+    for name, values in defaults.items():
+        profile = profiles.setdefault(name, {})
+        if isinstance(profile, dict):
+            for key, value in values.items():
+                profile.setdefault(key, value)
+
+
+def _addon_defaults_missing(settings: dict[str, Any]) -> bool:
+    visual = settings.get("visual")
+    if not isinstance(visual, dict) or "motion" not in visual:
+        return True
+    security = settings.get("security")
+    profiles = security.get("profiles") if isinstance(security, dict) else None
+    if not isinstance(profiles, dict):
+        return True
+    required = {
+        "default": {"name", "description", "rules", "adapters", "synthetic_only", "collections", "frameworks"},
+        "centuria-policial": {"name", "description", "rules", "adapters", "synthetic_only", "collections", "frameworks"},
+    }
+    return any(not isinstance(profiles.get(name), dict) or not keys <= set(profiles[name])
+               for name, keys in required.items())
+
+
+MIGRATION_STEPS: list[tuple[str, Callable[[Path, dict[str, Any]], None]]] = [
+    ("2.1.0", _migration_addon_defaults),
+]
 
 
 def _parse_version(v: str | None) -> tuple[int, int, int]:
@@ -494,7 +539,9 @@ def migrate(project: Path) -> str:
     settings_path = config.project_settings_path(project_dir)
     settings = config.read_settings(settings_path)
 
-    if not needs_migration(settings):
+    defaults_missing = _addon_defaults_missing(settings)
+    version_migration = needs_migration(settings)
+    if not version_migration and not defaults_missing:
         return "El proyecto ya está al día con la versión actual de Hefesto."
 
     current_version = settings.get("hefesto_version")
@@ -516,6 +563,8 @@ def migrate(project: Path) -> str:
     for target_version, step_fn in MIGRATION_STEPS:
         if _parse_version(target_version) > proj_key:
             step_fn(project_dir, settings)
+    if defaults_missing:
+        _migration_addon_defaults(project_dir, settings)
 
     settings["hefesto_version"] = __version__
     config.write_settings(settings_path, settings)

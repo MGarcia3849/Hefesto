@@ -4,6 +4,10 @@ Framework de orquestación multiagente para trabajar con tus suscripciones de **
 
 > Estado: **v2.1.0 — framework multiagente determinista**. La especificación completa está en [`HEFESTO_V2_1.md`](HEFESTO_V2_1.md) y las desviaciones, en [`DECISIONS.md`](DECISIONS.md).
 
+### Add-on v2.5
+
+Las extensiones de aprobación de movimiento, análisis de referencias, escaneo pasivo de seguridad y experiencia visual, con sus límites y migración reversible, están descritas en [`docs/HEFESTO_ADDON_V2_5.md`](docs/HEFESTO_ADDON_V2_5.md).
+
 ## Requisitos
 
 - Python ≥ 3.11 (solo librería estándar) y git con `worktree`.

@@ -1,0 +1,62 @@
+{
+  "attempts": 1,
+  "base_commit": "e5dae05240bcd3e84686c4335eb207c8606649e5",
+  "branch": "hefesto/fase-24-replica-de-analisis-legitimo",
+  "commit": "5927fee96b17cdf96c4d7fa5ad091a7ba7758424",
+  "contract": [
+    "tests/test_addon_replica.py"
+  ],
+  "created_at": "2026-11-18T05:47:25+00:00",
+  "files": [
+    {
+      "path": "tests/test_addon_replica.py",
+      "sha256": "4ff8a86edd8cc0eeefa096874d4b83114ab190b5d73274aa1d67a5d3e92e4ed9"
+    }
+  ],
+  "phase": "Fase 24 — Replica de análisis legítimo",
+  "prev_sha256": "ce2eda6592212731b47e48d90096a16272121cf7c6361212b0da1a6a05e1865f",
+  "prev_task_id": "TASK-2304",
+  "providers": [
+    "claude:opus",
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-18T05:47:23+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Contrato completo y offline; ContractDefinitionTests 10/10",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "d6266e1efddf",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "claude:opus",
+      "role": "core",
+      "run_id": "e0aee703b3fd",
+      "success": true
+    },
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "d6266e1efddf",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 108,
+  "task_id": "TASK-2401",
+  "title": "Contrato de inventarios y matriz trazable",
+  "verify": {
+    "command": "python -m unittest tests.test_addon_replica.ContractDefinitionTests",
+    "duration_seconds": 1.166,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-2401-a1-2026-11-18T054725+0000.log",
+    "output_summary": "..........\n----------------------------------------------------------------------\nRan 10 tests in 0.265s\n\nOK",
+    "sha256": "7291b3b465fa50dac04fb5af1603df8fb76d2033bf76bd6e6482734a0f7c74e2",
+    "trust": "auto"
+  }
+}

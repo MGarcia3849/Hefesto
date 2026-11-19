@@ -1379,6 +1379,116 @@ def cmd_dashboard(args: argparse.Namespace) -> int:
     return dashboard.run(_project(args), once=args.once, interval=args.interval)
 
 
+def cmd_approval(args: argparse.Namespace) -> int:
+    from hefesto import approval
+
+    proj = _project(args)
+    if args.approval_cmd == "propose":
+        proposal = approval.propose(proj, args.page, args.kind, args.effect, args.description)
+        print(json.dumps(proposal, indent=2, ensure_ascii=False))
+    elif args.approval_cmd == "approve":
+        result = approval.approve(proj, args.id)
+        if result is not None:
+            print(json.dumps(result, indent=2, ensure_ascii=False))
+        else:
+            print("Propuesta no aprobada.")
+    elif args.approval_cmd == "revoke":
+        if not approval.revoke(proj, args.id):
+            raise HefestoError(f"Aprobación desconocida o ya revocada: {args.id}.", EXIT_INPUT)
+        print(f"Aprobación revocada: {args.id}")
+    else:
+        proposals = sorted(approval.proposals_dir(proj).glob("PROP-*.json")) if approval.proposals_dir(proj).exists() else []
+        approvals = approval.records(proj)
+        for path in proposals:
+            item = approval.load_proposal(proj, path.stem)
+            if item is None:
+                continue
+            record = next((r for r in approvals if r.get("proposal") == item["id"]), None)
+            status = ("revocada" if record and record.get("revoked_at") else
+                      "usada" if record and record.get("used_for") else "aprobada" if record else "pendiente")
+            print(f"{item['id']}\t{status}\t{item['page']}\t{item['effect']}\t{item['description']}")
+    return EXIT_OK
+
+
+def cmd_visual_experience(args: argparse.Namespace) -> int:
+    from hefesto import visual_experience as vx
+
+    proj = _project(args)
+    if args.vx_cmd == "inspect":
+        data = vx.inspect(proj, args.kind)
+        if args.json:
+            print(json.dumps(data, indent=2, ensure_ascii=False))
+        else:
+            print(f"Inspección escrita en {vx.inspection_path(proj)}: {len(data['pages'])} páginas, "
+                  f"{len(data['existing_motion'])} con movimiento existente.")
+    elif args.vx_cmd == "propose":
+        proposal = vx.propose(proj, args.page, args.kind, args.effect, args.description, steps=args.step)
+        print(json.dumps(proposal, indent=2, ensure_ascii=False))
+    elif args.vx_cmd == "apply":
+        result = vx.apply(proj, args.id, base=args.base)
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+    else:
+        findings = vx.verify(proj, base=args.base, kind=args.kind)
+        print(f"Gate de movimiento correcto: {len(findings)} hallazgos cubiertos.")
+    return EXIT_OK
+
+
+def cmd_security(args: argparse.Namespace) -> int:
+    from hefesto import security
+
+    proj = _project(args)
+    if args.security_cmd == "except":
+        result = security.add_exception(proj, args.id, args.person, args.reason, args.expires)
+        if result:
+            print(json.dumps(result, ensure_ascii=False))
+        return EXIT_OK
+    if args.security_cmd == "exceptions":
+        for record in security.exception_records(proj):
+            status = "vigente" if record["expires"] >= security.today().isoformat() else "caducada"
+            print(f"{record['id']} {record['finding']} {status} — {record['person']} — {record['expires']}")
+        return EXIT_OK
+    report = security.scan(proj, profile=args.profile)
+    rendered = security.report_json(report)
+    path = security.report_path(proj)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(rendered, encoding="utf-8")
+    print(rendered if args.json else security.render_text(report), end="" if args.json else "")
+    return EXIT_OK
+
+
+def cmd_replica(args: argparse.Namespace) -> int:
+    from hefesto import replica
+
+    proj = _project(args)
+    if args.replica_cmd == "authorize":
+        result = replica.authorize(proj, args.id, args.url)
+        if result:
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+    elif args.replica_cmd == "capture":
+        result = replica.capture_reference(proj, args.id, tuple(args.route or ()))
+        print(json.dumps({"reference": str(replica.replica_dir(proj, args.id) / "reference.json"),
+                          "items": sum(len(result[s]) for s in replica.SECTIONS)}, ensure_ascii=False))
+    elif args.replica_cmd == "inventory":
+        pages: dict[str, str] = {}
+        for value in args.page:
+            route, sep, filename = value.partition("=")
+            if not sep or not route or not filename:
+                raise HefestoError("--page debe tener formato RUTA=FICHERO.", EXIT_INPUT)
+            pages[route] = filename
+        result = replica.inventory_project(proj, args.id, pages)
+        print(json.dumps({"project": str(replica.replica_dir(proj, args.id) / "project.json"),
+                          "items": sum(len(result[s]) for s in replica.SECTIONS)}, ensure_ascii=False))
+    elif args.replica_cmd == "propose":
+        paths = replica.propose(proj, args.id)
+        matrix = json.loads(paths["matrix"].read_text(encoding="utf-8"))
+        print(json.dumps({"proposal": str(paths["proposal"]), "counts": matrix["counts"]}, ensure_ascii=False, indent=2))
+    elif args.replica_cmd == "accept":
+        result = replica.accept(proj, args.id)
+        if result:
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+    return EXIT_OK
+
+
 def cmd_vault_build(args: argparse.Namespace) -> int:
     from hefesto import vault
 
@@ -1807,6 +1917,73 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--once", action="store_true", help="imprime una instantánea y termina")
     p.add_argument("--interval", type=float, default=1.0, help="segundos entre fotogramas en TTY")
     p.set_defaults(func=cmd_dashboard)
+
+    p = sub.add_parser("approval", help="propone, aprueba, revoca y consulta permisos de movimiento")
+    asub = p.add_subparsers(dest="approval_cmd", metavar="ACCIÓN", required=True)
+    c = asub.add_parser("propose", help="crea una propuesta que no concede permiso")
+    c.add_argument("--page", required=True)
+    c.add_argument("--kind", required=True, choices=("app", "web"))
+    c.add_argument("--effect", required=True, choices=("animation", "video", "motion-graphic", "3d"))
+    c.add_argument("description")
+    c.set_defaults(func=cmd_approval)
+    c = asub.add_parser("approve", help="aprueba una propuesta desde una terminal humana interactiva")
+    c.add_argument("id")
+    c.set_defaults(func=cmd_approval)
+    c = asub.add_parser("revoke", help="revoca una aprobación")
+    c.add_argument("id")
+    c.set_defaults(func=cmd_approval)
+    c = asub.add_parser("list", help="lista propuestas y su estado")
+    c.set_defaults(func=cmd_approval)
+
+    p = sub.add_parser("visual-experience", help="inspecciona y propone experiencia visual sin implementarla")
+    vsub = p.add_subparsers(dest="vx_cmd", metavar="ACCIÓN", required=True)
+    c = vsub.add_parser("inspect", help="escribe la inspección de páginas y movimiento existente")
+    c.add_argument("--kind", default="web")
+    c.add_argument("--json", action="store_true")
+    c.set_defaults(func=cmd_visual_experience)
+    c = vsub.add_parser("propose", help="crea una propuesta estática que no concede permiso")
+    c.add_argument("--page", required=True)
+    c.add_argument("--kind", required=True)
+    c.add_argument("--effect", required=True)
+    c.add_argument("--step", action="append", default=None, help="fotograma del storyboard (repetible)")
+    c.add_argument("description")
+    c.set_defaults(func=cmd_visual_experience)
+    c = vsub.add_parser("apply", help="prepara la instrucción de una propuesta con aprobación puntual")
+    c.add_argument("id")
+    c.add_argument("--base")
+    c.set_defaults(func=cmd_visual_experience)
+    c = vsub.add_parser("verify", help="comprueba el gate de movimiento")
+    c.add_argument("--base")
+    c.add_argument("--kind", default="web")
+    c.set_defaults(func=cmd_visual_experience)
+
+    p = sub.add_parser("security", help="escaneo local pasivo del proyecto")
+    ssub = p.add_subparsers(dest="security_cmd", metavar="ACCIÓN", required=True)
+    c = ssub.add_parser("scan", help="genera un informe reproducible de seguridad")
+    c.add_argument("--profile")
+    c.add_argument("--json", action="store_true")
+    c.set_defaults(func=cmd_security)
+    c = ssub.add_parser("except", help="excepción humana con persona, motivo y caducidad")
+    c.add_argument("id")
+    c.add_argument("--person", required=True)
+    c.add_argument("--reason", required=True)
+    c.add_argument("--expires", required=True)
+    c.set_defaults(func=cmd_security)
+    c = ssub.add_parser("exceptions", help="lista las excepciones vigentes y caducadas")
+    c.set_defaults(func=cmd_security)
+
+    p = sub.add_parser("replica", help="analiza una referencia web autorizada sin copiarla ni aplicar cambios")
+    rsub = p.add_subparsers(dest="replica_cmd", metavar="ACCIÓN", required=True)
+    c = rsub.add_parser("authorize", help="autoriza un alcance público desde una terminal humana")
+    c.add_argument("id"); c.add_argument("url"); c.set_defaults(func=cmd_replica)
+    c = rsub.add_parser("capture", help="captura extractos de texto saneados")
+    c.add_argument("id"); c.add_argument("--route", action="append", default=[]); c.set_defaults(func=cmd_replica)
+    c = rsub.add_parser("inventory", help="inventaría páginas HTML del proyecto")
+    c.add_argument("id"); c.add_argument("--page", action="append", required=True); c.set_defaults(func=cmd_replica)
+    c = rsub.add_parser("propose", help="compara inventarios y genera una propuesta documental")
+    c.add_argument("id"); c.set_defaults(func=cmd_replica)
+    c = rsub.add_parser("accept", help="acepta el análisis para planificar tareas")
+    c.add_argument("id"); c.set_defaults(func=cmd_replica)
 
     p = sub.add_parser("research", help="investiga con el servicio Odysseus configurado")
     p.add_argument("question", help="pregunta de investigación")

@@ -274,6 +274,29 @@ def validate(cfg: Config) -> list[str]:
     data = cfg.data
     if data.get("schema_version") != 1:
         errors.append("schema_version debe ser 1")
+    security = data.get("security", {})
+    if not isinstance(security, dict):
+        errors.append("security debe ser una tabla")
+    else:
+        selected_profile = security.get("profile", "default")
+        if not isinstance(selected_profile, str) or not selected_profile.strip():
+            errors.append("security.profile debe ser un nombre de perfil")
+        profile_table = security.get("profiles", {})
+        if not isinstance(profile_table, dict):
+            errors.append("security.profiles debe ser una tabla")
+        else:
+            for name, profile in profile_table.items():
+                if not isinstance(profile, dict):
+                    errors.append(f"security.profiles.{name} debe ser una tabla")
+                    continue
+                for key in ("rules", "adapters", "collections", "frameworks"):
+                    values = profile.get(key)
+                    if values is not None and (not isinstance(values, list) or not all(isinstance(v, str) and v for v in values)):
+                        errors.append(f"security.profiles.{name}.{key} debe ser una lista de textos")
+                if "synthetic_only" in profile and not isinstance(profile["synthetic_only"], bool):
+                    errors.append(f"security.profiles.{name}.synthetic_only debe ser booleano")
+                if "description" in profile and not isinstance(profile["description"], str):
+                    errors.append(f"security.profiles.{name}.description debe ser texto")
     for role in ROLES:
         errors += _chain_errors(cfg.get("roles", role, "use"), f"roles.{role}.use")
     errors += _chain_errors(cfg.get("orchestrator", "use"), "orchestrator.use")

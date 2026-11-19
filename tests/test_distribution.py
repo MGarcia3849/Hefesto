@@ -299,6 +299,47 @@ class MigrateTests(HefestoTestCase):
         self.assertEqual(code, 0)
         self.assertEqual(len(list((self.project / ".hefesto" / "backups").iterdir())), 1)
 
+    def test_addon_migration_is_idempotent_and_preserves_user_values(self) -> None:
+        settings_path = config.project_settings_path(self.project)
+        settings = config.read_settings(settings_path)
+        settings["hefesto_version"] = __version__
+        settings["visual"] = {"motion": "custom"}
+        settings["security"] = {"profiles": {"default": {"description": "Mi perfil"}}}
+        config.write_settings(settings_path, settings)
+        self.assertEqual(self.cli("migrate")[0], 0)
+        migrated = config.read_settings(settings_path)
+        self.assertEqual(migrated["visual"]["motion"], "custom")
+        self.assertEqual(migrated["security"]["profiles"]["default"]["description"], "Mi perfil")
+        self.assertTrue(migrated["security"]["profiles"]["centuria-policial"]["synthetic_only"])
+        first = json.loads(settings_path.read_text(encoding="utf-8"))
+        self.assertEqual(self.cli("migrate")[0], 0)
+        self.assertEqual(json.loads(settings_path.read_text(encoding="utf-8")), first)
+        self.assertEqual(len(list((self.project / ".hefesto" / "backups").iterdir())), 1)
+
+    def test_migration_backup_can_restore_settings_manually(self) -> None:
+        settings_path = config.project_settings_path(self.project)
+        settings = config.read_settings(settings_path)
+        settings["hefesto_version"] = "2.0.0"
+        config.write_settings(settings_path, settings)
+        before = settings_path.read_bytes()
+        self.assertEqual(self.cli("migrate")[0], 0)
+        backups = list((self.project / ".hefesto" / "backups").glob("*/settings.json"))
+        self.assertEqual(len(backups), 1)
+        settings_path.write_bytes(backups[0].read_bytes())
+        self.assertEqual(settings_path.read_bytes(), before)
+
+    def test_existing_cli_commands_and_roles_remain_registered(self) -> None:
+        from hefesto.cli import build_parser
+        from hefesto import config as hefesto_config
+
+        parser = build_parser()
+        subparsers = next(action for action in parser._actions if action.dest == "command")
+        for command in ("init", "start", "run", "review", "done", "finish", "approval", "replica",
+                        "security", "visual-experience"):
+            with self.subTest(command=command):
+                self.assertIn(command, subparsers.choices)
+        self.assertEqual(tuple(subparsers.choices["run"]._actions[1].choices), hefesto_config.ROLES)
+
 
 class InstallTests(HefestoTestCase):
     def test_install_from_git_clone_is_idempotent(self) -> None:

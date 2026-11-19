@@ -280,6 +280,11 @@ def run(project: Path, role: str, instruction: str, task_id: str | None = None, 
         raise HefestoError("La instrucción contiene un secreto; no se envía a ningún proveedor.", EXIT_BLOCKED)
     task, rm, data, ctx_workdir, ctx_task_run_id = _task_context(project, task_id)
     eff_workdir = workdir if workdir is not None else ctx_workdir
+    from hefesto import approval
+
+    if role == "visual" or task is not None and task.kind in approval.KINDS:
+        instruction += "\n\n" + approval.STATIC_RULE
+    motion_base = data.get("task_base") or "HEAD"
     eff_task_run_id = task_run_id if task_run_id is not None else ctx_task_run_id
     authors = _author_providers(project, role, eff_task_run_id) if role == "reviewer" else set()
     hops: list[Hop] = []
@@ -375,6 +380,12 @@ def run(project: Path, role: str, instruction: str, task_id: str | None = None, 
         log.record(project, "delegations", {"event": "start", **event})
         try:
             result = adapters.get(cfg, provider).run(call)
+            try:
+                approval.gate(project, eff_workdir, motion_base, task.kind if task else "code", "delegation")
+            except HefestoError as exc:
+                result.success = False
+                result.error_type = "denied_by_policy"
+                result.summary = str(exc)
         except Exception as exc:
             log.record(project, "delegations", {"event": "end", **event, "success": False,
                                                   "error_type": type(exc).__name__})
