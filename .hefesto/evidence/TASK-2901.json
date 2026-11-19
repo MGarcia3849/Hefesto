@@ -1,0 +1,57 @@
+{
+  "attempts": 1,
+  "base_commit": "b5aed4f0fc49e7e498f8f42020ff068a20859d91",
+  "branch": "hefesto/fase-29-higiene-del-repositorio",
+  "commit": "3e338c87a01b5a64d29ecbe6e054155480699507",
+  "contract": [],
+  "created_at": "2026-11-19T08:47:46+00:00",
+  "files": [
+    {
+      "path": ".gitignore",
+      "sha256": "77bbc0385da53c6c5a7ad04abd68ee16e09dbaf4e3650968cd9dfa829d1ef67a"
+    },
+    {
+      "path": "tests/test_gitignore_hygiene.py",
+      "sha256": "c33e59973f96cdad9341cfdfd31d72d5e9d409dee6288586d6682d71671a7d9f"
+    }
+  ],
+  "phase": "Fase 29 — Higiene del repositorio",
+  "prev_sha256": "f441549aa30cab15cb208f6387f69abf5a2e0d39c37cddf14a624ee41c06d183",
+  "prev_task_id": "TASK-2801",
+  "providers": [
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T08:47:37+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Ignorar skills personales promovidas y backups de migrate",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "4c6a35b3e758",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "4c6a35b3e758",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 123,
+  "task_id": "TASK-2901",
+  "title": "Ignorar skills personales promovidas y copias de seguridad de migrate",
+  "verify": {
+    "command": "python -m unittest tests.test_gitignore_hygiene -v",
+    "duration_seconds": 0.387,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-2901-a1-2026-11-19T084739+0000.log",
+    "output_summary": "test_already_tracked_skills_are_not_affected (tests.test_gitignore_hygiene.GitignoreHygieneTest.test_already_tracked_skills_are_not_affected) ... ok\ntest_generated_hefesto_skills_stay_versioned (tests.test_gitignore_hygiene.GitignoreHygieneTest.test_generated_hefesto_skills_stay_versioned) ... ok\ntest_migrate_backups_are_ignored (tests.test_gitignore_hygiene.GitignoreHygieneTest.test_migrate_backups_are_ignored) ... ok\ntest_other_entries_are_not_ignored (tests.test_gitignore_hygiene.GitignoreHygieneTest.test_other_entries_are_not_ignored) ... ok\ntest_personal_promoted_skills_are_ignored (tests.test_gitignore_hygiene.GitignoreHygieneTest.test_personal_promoted_skills_are_ignored) ... ok\n\n----------------------------------------------------------------------\nRan 5 tests in 0.220s\n\nOK",
+    "sha256": "b3267370be3c23910e0a4ed0c3812c82f2615b2b35291be016e2d38a5a49ebb7",
+    "trust": "auto"
+  }
+}

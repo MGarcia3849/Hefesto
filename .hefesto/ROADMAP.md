@@ -1066,3 +1066,13 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - size: S
   - parallel: false
   - accept: `__version__` pasa a 2.5.0 y el proyecto se migra con `hefesto migrate`; el CHANGELOG agrupa todo lo posterior a v2.1.0 en una sección `## v2.5.0 — 2026-11-19` al principio (preámbulo arriba, textos sin caracteres corruptos); el README muestra el estado v2.5.0, fija la instalación en `v2.5.0` y usa v2.5.0 en las instrucciones de publicación; la migración de valores por defecto del add-on se asocia a 2.5.0 para que un proyecto en 2.1.x la reciba al migrar; sin tag, push ni release automáticos
+
+## Fase 29 — Higiene del repositorio
+- [x] TASK-2901: Ignorar skills personales promovidas y copias de seguridad de migrate
+  - verify: `python -m unittest tests.test_gitignore_hygiene -v`
+  - files: .gitignore, tests/test_gitignore_hygiene.py
+  - role: runner
+  - depends_on: TASK-2801
+  - size: S
+  - parallel: false
+  - accept: `.gitignore` ignora `.hefesto/backups/` y las skills que `hefesto sync` copia desde `~/hefesto/skills/promoted` a `.claude/skills/` y `.agents/skills/`, salvo las `hefesto-*` generadas; los ficheros ya versionados no se ven afectados

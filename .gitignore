@@ -19,3 +19,12 @@ skills/find-cache.json
 skills/_proposals/
 skills/promoted/
 skills/auto.jsonl
+
+# Copias de seguridad que crea `hefesto migrate`
+.hefesto/backups/
+# Skills personales que `hefesto sync` copia desde ~/hefesto/skills/promoted. Las hefesto-* se versionan
+# y las que ya estaban versionadas no se ven afectadas.
+/.claude/skills/*/
+!/.claude/skills/hefesto-*/
+/.agents/skills/*/
+!/.agents/skills/hefesto-*/
