@@ -1,0 +1,85 @@
+{
+  "attempts": 1,
+  "base_commit": "b1b9be635543d156118f872b67c19091c4d044a1",
+  "branch": "hefesto/fase-28-publicacion-v2-5-0",
+  "commit": "fc24966ef66253e5722cdeda85e54f0e8500fb7f",
+  "contract": [],
+  "created_at": "2026-11-19T08:16:51+00:00",
+  "files": [
+    {
+      "path": ".agents/skills/hefesto-plan/SKILL.md",
+      "sha256": "58d3301f4f927358bd8ec2a36487722fd5797ad7d73c8e21fe692041d74f340b"
+    },
+    {
+      "path": ".claude/skills/hefesto-plan/SKILL.md",
+      "sha256": "58d3301f4f927358bd8ec2a36487722fd5797ad7d73c8e21fe692041d74f340b"
+    },
+    {
+      "path": ".gemini/commands/hefesto/plan.toml",
+      "sha256": "1ef38897d785cc5b0d642cae0e94aeb71a5f8d5189b1e6bb3ab97644eb73c895"
+    },
+    {
+      "path": "BOOTSTRAP.md",
+      "sha256": "f370fc08e214db78628471453da3b39593a349bcbc43d140df24a6f0d3b21e86"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "d0c542c69d12e5ac3209a1f1b5690508c55c5f52720494067f234c1692299206"
+    },
+    {
+      "path": "README.md",
+      "sha256": "ffa71d5887770d7aac1096d6f8fb949c82c4e9c4b88fe0eeb74252a4642ba09f"
+    },
+    {
+      "path": "hefesto/__init__.py",
+      "sha256": "7cc67f3d8b14b1cf718a6dea7cc7df1b800f40ff777cf5ce20b02d5752cc9c70"
+    },
+    {
+      "path": "hefesto/distribution.py",
+      "sha256": "2821a2d2c41ce870554ea6e48ad40f84d07231c345741216d9346d579f159332"
+    },
+    {
+      "path": "tests/test_release_version.py",
+      "sha256": "1bd8d33690bccef4aa469e961774830d8abff494440bb5ffbd093efcfb03a4bb"
+    }
+  ],
+  "phase": "Fase 28 — Publicación v2.5.0",
+  "prev_sha256": "1268017676be9eaa94f90e97c4147178baee708e2d90a4e9b555dd8f4968c53e",
+  "prev_task_id": "TASK-2707",
+  "providers": [
+    "gemini:gemini-3.8-flash-medium"
+  ],
+  "review": {
+    "at": "2026-11-19T08:16:32+00:00",
+    "attempt": 0,
+    "authors": [
+      "claude:opus"
+    ],
+    "exception": null,
+    "notes": "Subida a 2.5.0: versión, CHANGELOG, README, migración",
+    "reviewer": "gemini:gemini-3.8-flash-medium",
+    "run_id": "af573d1a64b5",
+    "verdict": "pass"
+  },
+  "runs": [
+    {
+      "model_id": "gemini:gemini-3.8-flash-medium",
+      "role": "reviewer",
+      "run_id": "af573d1a64b5",
+      "success": true
+    }
+  ],
+  "schema_version": 1,
+  "seq": 122,
+  "task_id": "TASK-2801",
+  "title": "Subir Hefesto a la versión 2.5.0",
+  "verify": {
+    "command": "python -m unittest tests.test_release_version tests.test_distribution -v",
+    "duration_seconds": 14.089,
+    "exit_code": 0,
+    "log_path": ".hefesto/logs/verify/TASK-2801-a1-2026-11-19T081646+0000.log",
+    "output_summary": "test_migrate_runs_sync (tests.test_distribution.MigrateTests.test_migrate_runs_sync) ... ok\ntest_migration_backup_can_restore_settings_manually (tests.test_distribution.MigrateTests.test_migration_backup_can_restore_settings_manually) ... ok\ntest_up_to_date_does_nothing (tests.test_distribution.MigrateTests.test_up_to_date_does_nothing) ... ok\ntest_code_without_hefesto_is_improve (tests.test_distribution.ModeTests.test_code_without_hefesto_is_improve) ... ok\ntest_empty_or_docs_only_is_create (tests.test_distribution.ModeTests.test_empty_or_docs_only_is_create) ... ok\ntest_existing_hefesto_is_continue (tests.test_distribution.ModeTests.test_existing_hefesto_is_continue) ... ok\ntest_available_tags_sorted (tests.test_distribution.SelfUpdateTests.test_available_tags_sorted) ... ok\ntest_confirmed_update_checks_out_tag_and_writes_version (tests.test_distribution.SelfUpdateTests.test_confirmed_update_checks_out_tag_and_writes_version) ... ok\ntest_declined_confirmation_keeps_version (tests.test_distribution.SelfUpdateTests.test_declined_confirmation_keeps_version) ... ok\ntest_explicit_target_and_dirty_copy (tests.test_distribution.SelfUpdateTests.test_explicit_target_and_dirty_copy) ... ok\ntest_runs_sync_in_the_current_project (tests.test_distribution.SelfUpdateTests.test_runs_sync_in_the_current_project) ... ok\ntest_without_tty_nothing_changes (tests.test_distribution.SelfUpdateTests.test_without_tty_nothing_changes) ... ok\ntest_flutter_python_rust_go (tests.test_distribution.StackTests.test_flutter_python_rust_go) ... ok\ntest_node_uses_existing_scripts_only (tests.test_distribution.StackTests.test_node_uses_existing_scripts_only) ... ok\ntest_unknown_stack (tests.test_distribution.StackTests.test_unknown_stack) ... ok\n\n----------------------------------------------------------------------\nRan 30 tests in 13.756s\n\nOK",
+    "sha256": "9f1b250c0541698692f00f5bf3a59fb05065653c90f5c157ffa8244f3aae4910",
+    "trust": "human"
+  }
+}

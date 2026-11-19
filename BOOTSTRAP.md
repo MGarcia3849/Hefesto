@@ -11,7 +11,7 @@ Sigue rigurosamente estos pasos en orden antes de escribir código.
 
 Pregunta al usuario, en **UNA sola interacción** al comienzo, la confirmación de estos cuatro puntos:
 1. **URL del repositorio:** la URL de Hefesto (por defecto `https://github.com/MGarcia3849/Hefesto`).
-2. **Versión / Tag:** la versión a instalar (por defecto la última release etiquetada, por ejemplo `v2.1.0`; **nunca `main` sin fijar**).
+2. **Versión / Tag:** la versión a instalar (por defecto la última release etiquetada, por ejemplo `v2.5.0`; **nunca `main` sin fijar**).
 3. **Proveedores externos:** si autoriza enviar código a Gemini y Codex (por defecto `gemini,codex`).
 4. **PATH del sistema:** autorización para añadir `~/.local/bin` al PATH del usuario si `hefesto` no se encuentra tras la instalación.
 

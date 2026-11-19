@@ -1,43 +1,45 @@
 # Changelog
 
-## Add-on v2.5
+Todas las novedades notables de Hefesto se documentan en este archivo.
+
+El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
+
+## v2.5.0 — 2026-11-19
+
+### Add-on v2.5
 
 - Documenta `approval`, `replica`, `security` y `visual-experience`, sus comandos reales, límites, pruebas y recuperación manual.
 - `hefesto migrate` añade por defecto `visual.motion = static` y los perfiles de seguridad ausentes; preserva los valores existentes y crea primero una copia en `.hefesto/backups/`.
 - Los flujos mantienen sus confirmaciones humanas; Hefesto no hace push, merge ni despliegue automáticos.
 
-## Fase 22 — Tablero animado de la forja
+### Fase 22 — Tablero animado de la forja
 
 - Añade `hefesto dashboard` para consultar el progreso y la actividad real de delegaciones; `hefesto dashboard --once` imprime una instantánea estática.
 - Registra inicio y fin de cada delegación con proveedor, modelo, CLI, rol, proceso y resultado, con textos redactados.
 
-## Odysseus
+### Odysseus
 
 - Documenta la investigación externa opcional por API HTTP, el token de entorno, los límites y el tratamiento de los informes como datos no fiables.
 - Explica cómo configurar `adapters.local` con el servidor de modelos de Odysseus u Ollama y habilitar `last_resort` para continuar localmente cuando no haya cuota.
 - Aclara que Hefesto no instala Odysseus ni incluye su código AGPL-3.0.
 
-## Bóveda Obsidian
+### Bóveda Obsidian
 
 - **Documentación de la bóveda (`TASK-1706`, `README.md`):** Explica la exportación unidireccional de solo lectura, cómo abrir en Obsidian `.hefesto/vault/` y `~/hefesto/memory/`, generar el Canvas del ROADMAP, revisar candidatas mediante `revision` con TTY y confirmación humana, y usar la CLI de Obsidian opcional.
 
-## Fase 21 — Guías web actuales
+### Fase 21 — Guías web actuales
 
 - Añade `hefesto web-guidance search|retrieve|legacy-scan` para Modern Web Guidance 1.0.0 preinstalado, con telemetría desactivada, validación de rutas, salida acotada y redactada. La ausencia del binario no afecta al resto de Hefesto.
 - Registra la skill fijada para tareas web. No se duplica ECC ni Playwright: sus funciones ya están cubiertas por el orquestador y las skills existentes.
 
-## Fase 20 ? Entrega aut?noma por proyecto
+### Fase 20 — Entrega autónoma por proyecto
 
 - Documenta autorizaciones humanas persistentes de una sola vez para PR y despliegue.
-- Describe el destino expl?cito por proyecto en `.hefesto/deploy.toml`, el PR idempotente y el despliegue desde el worktree verificado, sin prometer detecci?n autom?tica del hosting.
-- Explica pausas por destino ausente o ambiguo, recuperaci?n de interrupciones y l?mites de reintentos.
-- A?ade comprobaci?n de gu?a y smoke offline con CLIs falsas, sin llamadas comerciales ni consumo de cuota.
+- Describe el destino explícito por proyecto en `.hefesto/deploy.toml`, el PR idempotente y el despliegue desde el worktree verificado, sin prometer detección automática del hosting.
+- Explica pausas por destino ausente o ambiguo, recuperación de interrupciones y límites de reintentos.
+- Añade comprobación de guía y smoke offline con CLIs falsas, sin llamadas comerciales ni consumo de cuota.
 
-Todas las novedades notables de Hefesto se documentan en este archivo.
-
-El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
-
-## Diseño y verificación visual
+### Diseño y verificación visual
 
 - **Contratos de diseño y verificación visual (`TASK-1601`, `tests/test_visual.py`):** Contratos para el contexto `DESIGN.md`/`PRODUCT.md`, las referencias de diseño, las capturas con `playwright-cli`, `impeccable detect`, el flujo `design pass` y la evidencia visual que recibe el revisor.
 - **`DESIGN.md` y `PRODUCT.md` como contexto fijo (`TASK-1602`, `hefesto/packet.py`, `hefesto/project.py`, `hefesto/distribution.py`):** Los documentos existentes se incluyen en los paquetes de tareas visuales `app`/`web` para los roles visual y reviewer dentro del presupuesto. Sin un `PRODUCT.md` sustantivo, solo el Core propone `impeccable init` con el humano; en proyectos existentes se puede delegar `impeccable document` para crear `DESIGN.md`, sin sobrescribir documentos. `adopt` añade las rutas locales de impeccable a `.gitignore`.
@@ -48,7 +50,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 - **Evidencia visual disponible para el revisor (`TASK-1607`, `hefesto/packet.py`, `hefesto/visual.py`, `hefesto/router.py`, adaptadores):** El paquete de revisión de tareas visuales incluye el informe del detector y las rutas de capturas; los adaptadores que admiten imágenes las adjuntan, los demás reciben el texto y se respeta el máximo `[visual] max_images`.
 - **Documentación de diseño y verificación visual (`TASK-1608`, `README.md`):** Documentación del contexto `DESIGN.md`/`PRODUCT.md`, `design ref`, `[visual]`, las capturas `playwright-cli`, el verify `impeccable detect` y el flujo `design pass`.
 
-## Catálogo de skills
+### Catálogo de skills
 
 - **Contratos del catálogo de skills (`TASK-1501`, `tests/test_skill_catalog.py`):** Suite de contratos para el campo `kind` de las tareas del ROADMAP, la carga y validación de `catalog/skills.toml` (sin propiedad exclusiva de proveedor y con commits fijados), la selección determinista por rol, modo, `kind` y preferencia de proveedor, la sincronización segura con `hefesto skill sync` y el escaneo opcional con fallo cerrado de AgentShield.
 - **Campo `kind` en las tareas del ROADMAP (`TASK-1502`, `hefesto/roadmap.py`):** Soporte y validación del campo opcional `kind` (`app`, `web`, `backend`, `docs`, `infra`) en `Task.kind`, con deducción determinista desde `files` (`roadmap.infer_kind`) por mayoría y orden de desempate (`app > web > backend > infra > docs`; sin ficheros → `backend`).
@@ -59,7 +61,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 - **Documentación y protocolo actualizados (`TASK-1507`, `README.md`, `CHANGELOG.md`, `prompts/protocol/plan.md`):** Nueva subsección «Catálogo de skills por rol y modo (`catalog/skills.toml`)» y tabla resumida en `README.md`, incorporación del campo `kind` en `prompts/protocol/plan.md` y registro de la Fase 15 en `CHANGELOG.md`.
 - **Aislamiento del contrato antiguo de la sección de skills (`TASK-1508`, `tests/test_skill_select.py`):** Aislamiento de `test_no_section_without_selected_skills` respecto al catálogo real sustituyendo `skill_catalog.load` por un catálogo vacío para que las tareas visuales de prueba sin skills locales sigan verificando la omisión de la sección.
 
-## Aprendizaje
+### Aprendizaje
 
 - **Contratos del aprendizaje (`TASK-1401`, `TASK-1410`, `tests/test_learning.py`):** Suite de contratos para el extractor de lecciones, promoción a global y borradores de skills, selección de lecciones y reglas del stack en el paquete, enrutado por historial `pass@k`, revisión adversarial `--challenge`, avisos de escritorio `[notify]` y piloto automático `autopilot` (incluyendo la llegada al bloqueo por el camino real en `test_refuses_with_blocked_task`).
 - **Extractor determinista de lecciones (`TASK-1402`, `hefesto/learning.py`, `hefesto/memory.py`, `hefesto/workflow.py`, `hefesto/cli.py`):** Registro de cada fallo (`fail`, `verify`, `review`) con error redactado en `.hefesto/logs/failures.jsonl` (`workflow.register_failure`); `learning.extract(project)` y `hefesto learn extract` generan o actualizan sin LLM notas candidatas en `~/hefesto/memory/_pendientes/` con `confianza` (`0.3` → `0.9` según fuentes distintas `<proyecto>:<TASK>`), `alcance: proyecto`, `stack`, `tipo: errores-resueltos`, `tarea`, `fuentes` y `clave`, sin tocar notas aprobadas.
@@ -71,21 +73,21 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 - **Piloto automático con el planificador del sistema (`TASK-1408`, `hefesto/autopilot.py`, `hefesto/cli.py`):** `hefesto autopilot schedule|status|cancel` programa, consulta o cancela una única ejecución de `hefesto loop` a la hora local de `earliest_cooldown` mediante `schtasks` en Windows o `crontab` en Linux/macOS (con retirada automática tras correr una vez y sin daemon), negándose ante tareas bloqueadas o `verify` sin confiar.
 - **Documentación y protocolo actualizados (`TASK-1409`, `README.md`, `CHANGELOG.md`, `prompts/protocol/retro.md`):** Nueva sección «Aprendizaje» y tabla de configuración en `README.md`, actualización del paso `prompts/protocol/retro.md` con `hefesto learn extract` y `hefesto memory review`, y registro de la Fase 14 en `CHANGELOG.md`.
 
-## Dependencias compartidas en los worktrees
+### Dependencias compartidas en los worktrees
 
 - **Contratos de enlaces en worktrees (`TASK-1301`, `tests/test_worktree_links.py`):** Suite de contratos para el enlazado de carpetas ignoradas, validación de rutas seguras, preservación del contenido al eliminar worktrees e integración en `finish`, fase y paralelo.
 - **Enlaces y borrado seguro (`TASK-1302`):** Nueva clave `execution.worktree_links` (por defecto `[]`), con validación de rutas seguras. `gitops.link_worktree` enlaza carpetas existentes e ignoradas por git mediante junctions en Windows o symlinks en el resto; `gitops.remove_worktree` retira los enlaces antes del borrado, preservando su contenido.
 - **Integración en worktrees (`TASK-1303`):** Dependencias compartidas en el worktree temporal de `finish` antes de la suite y los `verify`, en el de fase y en los de tareas en paralelo. Todos los borrados pasan por `gitops.remove_worktree`.
 - **Documentación actualizada (`TASK-1304`, `README.md`, `CHANGELOG.md`):** Documentación de `execution.worktree_links`, uso en worktrees y borrado seguro en `README.md` y registro de cambios en `CHANGELOG.md`.
 
-## Instalación automática de skills
+### Instalación automática de skills
 
 - **Contratos de instalación automática (`TASK-1201`, `tests/test_skill_auto.py`):** Suite de contratos para la búsqueda, filtrado por calidad, descarte ante riesgos, promoción sin preguntar y barreras de seguridad (ADR 2026-10-16).
 - **Búsqueda, filtrado, auditoría y promoción automática (`TASK-1202`, `hefesto/skill_auto.py`, `hefesto.toml`, `hefesto/config.py`):** Función `skill_auto.ensure(project, cfg, role, task)` gobernada por `[skills_auto]` (`enabled = true`, `min_installs = 1000`, `min_stars = 100`, `max_per_task = 1`, `good_score = 6`, `search_ttl_hours = 24`) que busca en `skills.sh` con las dos primeras palabras clave de la tarea cuando ninguna de las skills que la selección elige para la tarea (las mismas que muestra `hefesto skill suggest`) alcanza `good_score`, descarta candidatas con métricas desconocidas o bajas, intenta en cada ejecución (`start` o `skill auto`) hasta 3 descargas con `skills.fetch` y hasta `max_per_task` instalaciones (límite por ejecución, no total acumulado de la tarea), elimina propuestas con cualquier riesgo y promueve las limpias a `~/hefesto/skills/promoted` registrando todo en `skills/auto.jsonl`, sin ejecutar nunca `npx skills add` ni instalar desde un trabajador delegado (`HEFESTO_ROLE`).
 - **Integración en `start` y subcomando `hefesto skill auto TASK` (`TASK-1203`, `hefesto/cli.py`):** Invocación automática en `hefesto start TASK` (sin alterar su código de salida ante errores de red, `npx` o `git`) y comando bajo demanda `hefesto skill auto TASK`.
 - **Documentación y protocolo actualizados (`TASK-1204`, `README.md`, `CHANGELOG.md`, `prompts/protocol/next.md`):** Documentación del circuito automático y la tabla `[skills_auto]` en `README.md`, y actualización de `prompts/protocol/next.md` para reflejar que `start` ya instala automáticamente las skills que falten.
 
-## Skills en el paquete de tarea
+### Skills en el paquete de tarea
 
 - **Descubrimiento y selección determinista (`hefesto/skill_select.py`):** Descubrimiento de skills instaladas en carpetas del proyecto (`.claude/skills`, `.agents/skills`), promovidas (`~/hefesto/skills/promoted`), framework (`skills/`) y carpetas del usuario configurables (`skills_selection.user_roots`, por defecto `["~/.claude/skills", "~/.codex/skills"]`), deduplicando por nombre en ese orden de preferencia (`proyecto` > `promovida` > `framework` > `usuario`).
 - **Puntuación por palabras clave y configuración `[skills_selection]`:** Selección sin LLM mediante coincidencia de palabra entera entre palabras clave de la tarea (título, `accept`, extensiones de `files` y `role`) y los metadatos de cada skill, donde cada palabra clave suma una sola vez en el primer campo donde casa (`name` +3, si no `tags` +2, si no `description` +1; no se acumulan), gobernada por `enabled`, `max_skills`, `min_score`, `max_chars_per_skill`, `user_roots` y `exclude` (excluyendo siempre las skills de protocolo).

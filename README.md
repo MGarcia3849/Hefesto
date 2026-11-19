@@ -2,7 +2,7 @@
 
 Framework de orquestación multiagente para trabajar con tus suscripciones de **Claude**, **ChatGPT (Codex)** y **Google (Gemini)**, sin usar la API de pago. El estado, los intentos, la verificación y los commits los gestiona la CLI `hefesto`, con lógica determinista y cubierta por tests. Ningún prompt es fuente de verdad.
 
-> Estado: **v2.1.0 — framework multiagente determinista**. La especificación completa está en [`HEFESTO_V2_1.md`](HEFESTO_V2_1.md) y las desviaciones, en [`DECISIONS.md`](DECISIONS.md).
+> Estado: **v2.5.0 — framework multiagente determinista**. La especificación completa está en [`HEFESTO_V2_1.md`](HEFESTO_V2_1.md) y las desviaciones, en [`DECISIONS.md`](DECISIONS.md).
 
 ### Add-on v2.5
 
@@ -33,7 +33,7 @@ Para usar Hefesto en cualquier proyecto (nuevo o existente), abre tu orquestador
 > *"Instala Hefesto desde https://github.com/MGarcia3849/Hefesto y úsalo en este proyecto"*
 
 El agente seguirá automáticamente las instrucciones de [`BOOTSTRAP.md`](BOOTSTRAP.md):
-1. Te pedirá una única autorización inicial para confirmar la URL, la versión fijada (`v2.1.0`, nunca `main` sin fijar), los proveedores autorizados (`gemini,codex`) y la autorización para configurar el PATH si hace falta.
+1. Te pedirá una única autorización inicial para confirmar la URL, la versión fijada (`v2.5.0`, nunca `main` sin fijar), los proveedores autorizados (`gemini,codex`) y la autorización para configurar el PATH si hace falta.
 2. Clonará e instalará Hefesto en `~/hefesto` con `install.sh` (o actualizará el clon existente con `git fetch`/`checkout` e `install.sh`).
 3. Ejecutará `hefesto doctor` para comprobar el entorno.
 4. Ejecutará `hefesto bootstrap --yes --providers <lista>`, que detecta de forma determinista si debe **crear** (`init` + `/hefesto-plan`), **continuar** (`hefesto resume`) o **mejorar** (`hefesto adopt` sin tocar tu código).
@@ -527,13 +527,13 @@ Para publicar una nueva versión una vez integradas las fases:
    ```
 3. Crea y sube la etiqueta anotada de la versión:
    ```bash
-   git tag -a v2.1.0 -m "Hefesto v2.1.0"
-   git push origin v2.1.0
+   git tag -a v2.5.0 -m "Hefesto v2.5.0"
+   git push origin v2.5.0
    ```
 4. Publica la release en GitHub utilizando únicamente la sección correspondiente a dicha versión en `CHANGELOG.md` (no pases el changelog entero):
    ```bash
    # Extrae solo la sección de la versión a un fichero temporal de notas
-   gh release create v2.1.0 --title "Hefesto v2.1.0" --notes-file <fichero-con-seccion-v2.1.0>
+   gh release create v2.5.0 --title "Hefesto v2.5.0" --notes-file <fichero-con-seccion-v2.5.0>
    ```
 
 *(Solo si aún no tienes repositorio remoto)*:

@@ -1056,3 +1056,13 @@ Hitos 1 y 2 se construyeron directamente (ADR-016); desde aquí, con el propio c
   - size: S
   - parallel: false
   - accept: test_respects_global_and_per_model_limits deja de depender de que cuatro trabajos coincidan en una ventana fija de 0,6 s (falló bajo la carga de la suite de finish: 3 != 4); cada trabajo espera, con un límite holgado, a que haya cuatro activos, de modo que el test solo falla si el planificador realmente no abre el cuarto hueco
+
+## Fase 28 — Publicación v2.5.0
+- [x] TASK-2801: Subir Hefesto a la versión 2.5.0
+  - verify: `python -m unittest tests.test_release_version tests.test_distribution -v`
+  - files: hefesto/__init__.py, hefesto/distribution.py, CHANGELOG.md, README.md, BOOTSTRAP.md, tests/test_release_version.py, .hefesto/settings.json, .hefesto/generated.json, .agents/skills/hefesto-plan/SKILL.md, .claude/skills/hefesto-plan/SKILL.md, .gemini/commands/hefesto/plan.toml
+  - role: runner
+  - depends_on: TASK-2707
+  - size: S
+  - parallel: false
+  - accept: `__version__` pasa a 2.5.0 y el proyecto se migra con `hefesto migrate`; el CHANGELOG agrupa todo lo posterior a v2.1.0 en una sección `## v2.5.0 — 2026-11-19` al principio (preámbulo arriba, textos sin caracteres corruptos); el README muestra el estado v2.5.0, fija la instalación en `v2.5.0` y usa v2.5.0 en las instrucciones de publicación; la migración de valores por defecto del add-on se asocia a 2.5.0 para que un proyecto en 2.1.x la reciba al migrar; sin tag, push ni release automáticos

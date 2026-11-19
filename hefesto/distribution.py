@@ -501,7 +501,7 @@ def _addon_defaults_missing(settings: dict[str, Any]) -> bool:
 
 
 MIGRATION_STEPS: list[tuple[str, Callable[[Path, dict[str, Any]], None]]] = [
-    ("2.1.0", _migration_addon_defaults),
+    ("2.5.0", _migration_addon_defaults),
 ]
 
 

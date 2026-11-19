@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "hefesto_version": "2.1.0-dev",
+  "hefesto_version": "2.5.0",
   "approved_external_providers": [
     "codex",
     "gemini"
@@ -12,6 +12,48 @@
     },
     "limits": {
       "verify_timeout_seconds": 1800
+    }
+  },
+  "visual": {
+    "motion": "static"
+  },
+  "security": {
+    "profiles": {
+      "default": {
+        "name": "default",
+        "description": "Reglas generales de seguridad",
+        "rules": [
+          "dangerous-eval",
+          "debug-enabled"
+        ],
+        "adapters": [],
+        "synthetic_only": false,
+        "collections": [
+          "documentos"
+        ],
+        "frameworks": []
+      },
+      "centuria-policial": {
+        "name": "centuria-policial",
+        "description": "Perfil policial con datos sintéticos",
+        "rules": [
+          "dangerous-eval",
+          "debug-enabled",
+          "personal-data"
+        ],
+        "adapters": [],
+        "synthetic_only": true,
+        "collections": [
+          "agentes",
+          "avisos",
+          "partes"
+        ],
+        "frameworks": [
+          "ENS",
+          "RGPD",
+          "LOPDGDD"
+        ]
+      }
     }
   }
 }
